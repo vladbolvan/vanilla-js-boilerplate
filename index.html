@@ -1,162 +1,305 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <title>Telegram Mini Apps Vanilla JS Sample App</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Boomzy Mines</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
-            --bg-color: var(--tg-theme-bg-color);
-            font: 12px/18px "Lucida Grande", "Lucida Sans Unicode", Arial, Helvetica, Verdana, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--tg-theme-text-color);
-            margin: 48px 24px;
-            padding: 0;
-            color-scheme: var(--tg-color-scheme);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--tg-theme-bg-color, #1a1a2e);
+            color: var(--tg-theme-text-color, #fff);
+            padding: 16px;
+            min-height: 100vh;
         }
-
-        a {
-            color: var(--tg-theme-link-color);
+        .balance {
+            font-size: 28px;
+            font-weight: bold;
+            color: #4ade80;
+            text-align: center;
+            margin-bottom: 16px;
         }
-        #viewport {
-            position: fixed;
-            left: 0;
-            right: 0;
-            top: 0;
-            height: var(--tg-viewport-stable-height, 100vh);
-            pointer-events: none;
-            transition: all .2s ease;
+        .controls { display: flex; gap: 8px; margin-bottom: 12px; }
+        .control {
+            flex: 1;
+            background: var(--tg-theme-secondary-bg-color, #2a2a4a);
+            border-radius: 12px;
+            padding: 10px;
         }
-        #viewport:after {
-            content: '';
+        .control label {
             display: block;
-            position: absolute;
-            left: 0;
-            right: 0;
-            top: 0;
-            bottom: 0;
-            border-width: 4px;
-            border-style: solid;
-            border-image: linear-gradient(45deg, rgba(64, 224, 208, .5), rgba(173, 255, 47, .5)) 1;
+            font-size: 12px;
+            opacity: 0.7;
+            margin-bottom: 6px;
+            text-align: center;
         }
-
-        #viewport-params-size,
-        #viewport-params-expand {
-            content: attr(text);
-            position: absolute;
-            display: inline-block;
-            background: var(--tg-theme-link-color, rgb(64, 224, 208));
-            right: 4px;
-            left: auto;
-            font-size: 8px;
-            padding: 4px;
-            vertical-align: top;
+        .control-btns {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
-        #viewport-params-size {
-            top: 4px;
+        .control-btns button {
+            background: none;
+            border: none;
+            color: var(--tg-theme-text-color, #fff);
+            font-size: 20px;
+            cursor: pointer;
+            padding: 4px 12px;
         }
-        #viewport-params-expand {
-            top: 30px;
+        .control-value { font-weight: bold; font-size: 16px; }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin: 16px 0;
+        }
+        .cell {
+            aspect-ratio: 1;
+            background: var(--tg-theme-secondary-bg-color, #2a2a4a);
+            border: none;
+            border-radius: 12px;
+            font-size: 28px;
+            cursor: pointer;
+            transition: transform 0.1s, background 0.2s;
+            color: white;
+        }
+        .cell:active:not(:disabled) { transform: scale(0.95); }
+        .cell.revealed { background: #4ade80; cursor: default; }
+        .cell.bomb { background: #ef4444; }
+        .cell:disabled { cursor: default; }
+        .play-btn {
+            width: 100%;
+            padding: 16px;
+            font-size: 18px;
+            font-weight: bold;
+            border: none;
+            border-radius: 12px;
+            background: var(--tg-theme-button-color, #2481cc);
+            color: var(--tg-theme-button-text-color, #fff);
+            cursor: pointer;
+            margin-top: 8px;
+        }
+        .play-btn:disabled { opacity: 0.5; cursor: default; }
+        .play-btn.cashout { background: #f59e0b; }
+        .status {
+            text-align: center;
+            font-size: 14px;
+            margin: 8px 0;
+            min-height: 20px;
+            opacity: 0.9;
         }
     </style>
 </head>
-
 <body>
-    <main>
-        <div align="center">
-            <a href="https://ton.org/"><img width="48" src="./assets/tapps.png" alt="logo of telegram web apps"></a>
+    <div class="balance">💰 <span id="balance">1000</span></div>
+
+    <div class="controls">
+        <div class="control">
+            <label>Ставка</label>
+            <div class="control-btns">
+                <button onclick="changeBet(-1)">◀</button>
+                <span class="control-value" id="bet">100</span>
+                <button onclick="changeBet(1)">▶</button>
+            </div>
         </div>
-        <h1>Modals</h1>
-        <button onclick="Telegram.WebApp.showAlert('Hello World!');">Launch Alert</button>
-        <button onclick="showPopup();">Launch Popup</button>
+        <div class="control">
+            <label>Мины</label>
+            <div class="control-btns">
+                <button onclick="changeMines(-1)">◀</button>
+                <span class="control-value" id="mines">3</span>
+                <button onclick="changeMines(1)">▶</button>
+            </div>
+        </div>
+    </div>
 
-        <h1>Links</h1>
-        <ul>
-            <li>
-                <a href="javascript:Telegram.WebApp.openTelegramLink('https://t.me/trendingapps');">Open link within Telegram</a>
-            </li>
-            <li>
-                <a href="javascript:Telegram.WebApp.openLink('https://ton.org/');">Open link in external browser</a>
-            </li>
-            <li>
-                <a href="javascript:Telegram.WebApp.openLink('https://telegra.ph/api',{try_instant_view:true});">Open link inside Telegram webview</a>
-            </li>
-        </ul>
+    <div class="status" id="status">Настрой ставку и жми «Играть»</div>
 
-        <h1>Buttons</h1>
-        <button onclick="Telegram.WebApp.expand();">Expand Webview</button>
-        <button onclick="toggleMainButton();">Toggle Main Button</button>
-    </main>
-    <div id="viewport"></div>
-    <div id="viewport-params-size"></div>
-    <div id="viewport-params-expand"></div>
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <div class="grid" id="grid"></div>
+
+    <button class="play-btn" id="playBtn" onclick="handlePlay()">🎮 Играть</button>
+
     <script>
-        // Init TWA
-        Telegram.WebApp.ready();
+        const tg = window.Telegram.WebApp;
+        tg.ready();
+        tg.expand();
 
-        // Event occurs whenever theme settings are changed in the user's Telegram app (including switching to night mode).
-        Telegram.WebApp.onEvent('themeChanged', function() {
-            document.documentElement.className = Telegram.WebApp.colorScheme;
-        });
+        const BET_OPTIONS = [100, 500, 1000, 5000, 10000];
+        const MINES_OPTIONS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+        const TOTAL_CELLS = 16;
 
-        // Show main button
-        Telegram.WebApp.MainButton.setParams({
-            text: 'Main Button'
-        });
-        Telegram.WebApp.MainButton.onClick(function () {
-            Telegram.WebApp.showAlert('Main Button was clicked')
-        });	
-        Telegram.WebApp.MainButton.show();
+        let balance = 1000;
+        let betIdx = 0;
+        let minesIdx = 2;
+        let game = null;
+        let inGame = false;
 
-        // Function to call showPopup API
-        function showPopup() {
-            Telegram.WebApp.showPopup({
-                title: 'Title',
-                message: 'Some message',
-                buttons: [
-                    {id: 'link', type: 'default', text: 'Open ton.org'},
-                    {type: 'cancel'},
-                ]
-            }, function(btn) {
-                if (btn === 'link') {
-                    Telegram.WebApp.openLink('https://ton.org/');
-                }
-            });
-        };
-
-        // Function to toggle main TWA button
-        function toggleMainButton() {
-            if (Telegram.WebApp.MainButton.isVisible) {
-                Telegram.WebApp.MainButton.hide();
-            } else {
-                Telegram.WebApp.MainButton.show();
-            }
-        };
-
-        function setViewportData() {
-            var sizeEl = document.getElementById('viewport-params-size');
-            sizeEl.innerText = 'width: ' + window.innerWidth + ' x ' + 
-                'height: ' + Telegram.WebApp.viewportStableHeight;
-
-            var expandEl = document.querySelector('#viewport-params-expand');
-            expandEl.innerText = 'Is Expanded: ' + (Telegram.WebApp.isExpanded ? 'true' : 'false');
+        async function loadBalance() {
+            try {
+                const result = await tg.CloudStorage.getItem('balance');
+                if (result) balance = parseInt(result);
+                else await tg.CloudStorage.setItem('balance', '1000');
+            } catch(e) { console.log('CloudStorage error', e); }
+            updateUI();
         }
 
-        Telegram.WebApp.setHeaderColor('secondary_bg_color');
+        async function saveBalance() {
+            try { await tg.CloudStorage.setItem('balance', String(balance)); } catch(e) {}
+        }
 
-        setViewportData();
-        Telegram.WebApp.onEvent('viewportChanged', setViewportData);
+        function updateUI() {
+            document.getElementById('balance').textContent = balance;
+            document.getElementById('bet').textContent = BET_OPTIONS[betIdx];
+            document.getElementById('mines').textContent = MINES_OPTIONS[minesIdx];
+        }
 
-        Telegram.WebApp.onEvent('themeChanged', function() {
-            document.body.setAttribute('style', '--bg-color:' + Telegram.WebApp.backgroundColor);
-        });
+        function changeBet(dir) {
+            if (inGame) return;
+            betIdx = Math.max(0, Math.min(BET_OPTIONS.length - 1, betIdx + dir));
+            updateUI();
+        }
 
+        function changeMines(dir) {
+            if (inGame) return;
+            minesIdx = Math.max(0, Math.min(MINES_OPTIONS.length - 1, minesIdx + dir));
+            updateUI();
+        }
+
+        function multiplier(opened, mines) {
+            if (opened === 0) return 1.0;
+            const safe = TOTAL_CELLS - mines;
+            let m = 1.0;
+            for (let i = 0; i < opened; i++) m *= (TOTAL_CELLS - i) / (safe - i);
+            return Math.round(m * 0.96 * 100) / 100;
+        }
+
+        function renderGrid() {
+            const grid = document.getElementById('grid');
+            grid.innerHTML = '';
+            for (let i = 0; i < TOTAL_CELLS; i++) {
+                const btn = document.createElement('button');
+                btn.className = 'cell';
+                btn.onclick = () => openCell(i, btn);
+                grid.appendChild(btn);
+            }
+        }
+
+        function handlePlay() {
+            if (!inGame) startGame();
+            else cashout();
+        }
+
+        function startGame() {
+            const bet = BET_OPTIONS[betIdx];
+            const mines = MINES_OPTIONS[minesIdx];
+
+            if (balance < bet) { tg.showAlert('Недостаточно монет!'); return; }
+
+            balance -= bet;
+            saveBalance();
+            updateUI();
+
+            const mineSet = new Set();
+            while (mineSet.size < mines) mineSet.add(Math.floor(Math.random() * TOTAL_CELLS));
+
+            game = { mines: mineSet, opened: new Set(), bet, minesCount: mines };
+            inGame = true;
+
+            renderGrid();
+            const btn = document.getElementById('playBtn');
+            btn.textContent = '💰 Забрать 0';
+            btn.classList.add('cashout');
+            btn.disabled = true;
+            document.getElementById('status').textContent = `Мин на поле: ${mines}. Открывай клетки!`;
+        }
+
+        function openCell(idx, btn) {
+            if (!inGame || !game || game.opened.has(idx)) return;
+
+            if (game.mines.has(idx)) {
+                btn.textContent = '💥';
+                btn.classList.add('bomb');
+                const mineSet = game.mines;
+                const bet = game.bet;
+
+                document.querySelectorAll('.cell').forEach((cell, i) => {
+                    cell.disabled = true;
+                    if (mineSet.has(i) && cell.textContent !== '💥') {
+                        cell.textContent = '💣';
+                        cell.classList.add('bomb');
+                    }
+                });
+
+                document.getElementById('status').textContent = `💥 Бомба! Ты потерял ${bet} монет.`;
+                const pb = document.getElementById('playBtn');
+                pb.textContent = '🔄 Играть снова';
+                pb.classList.remove('cashout');
+                pb.disabled = false;
+                inGame = false;
+                game = null;
+                return;
+            }
+
+            game.opened.add(idx);
+            btn.textContent = '💎';
+            btn.classList.add('revealed');
+            btn.disabled = true;
+
+            const opened = game.opened.size;
+            const mult = multiplier(opened, game.minesCount);
+            const win = Math.floor(game.bet * mult);
+
+            if (opened === TOTAL_CELLS - game.minesCount) {
+                balance += win;
+                saveBalance();
+                updateUI();
+                document.getElementById('status').textContent = `🎉 Победа! +${win} монет (x${mult})`;
+                const pb = document.getElementById('playBtn');
+                pb.textContent = '🔄 Играть снова';
+                pb.classList.remove('cashout');
+                inGame = false;
+                game = null;
+                return;
+            }
+
+            const pb = document.getElementById('playBtn');
+            pb.textContent = `💰 Забрать ${win}`;
+            pb.disabled = false;
+            document.getElementById('status').textContent = `Открыто: ${opened} | Множитель: x${mult}`;
+        }
+
+        function cashout() {
+            if (!game) return;
+            const opened = game.opened.size;
+            if (opened === 0) { tg.showAlert('Открой хотя бы одну клетку'); return; }
+
+            const mult = multiplier(opened, game.minesCount);
+            const win = Math.floor(game.bet * mult);
+            const mineSet = game.mines;
+
+            balance += win;
+            saveBalance();
+            updateUI();
+
+            document.getElementById('status').textContent = `💰 Забрал ${win} монет (x${mult})`;
+            const pb = document.getElementById('playBtn');
+            pb.textContent = '🔄 Играть снова';
+            pb.classList.remove('cashout');
+            inGame = false;
+
+            document.querySelectorAll('.cell').forEach((cell, i) => {
+                cell.disabled = true;
+                if (mineSet.has(i) && cell.textContent !== '💎') {
+                    cell.textContent = '💣';
+                    cell.classList.add('bomb');
+                }
+            });
+            game = null;
+        }
+
+        loadBalance();
+        renderGrid();
     </script>
-
-    <!-- Eruda is console for mobile browsers -->
-    <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
-    <script>eruda.init();</script>
 </body>
 </html>
