@@ -83,12 +83,29 @@
         }
         .play-btn:disabled { opacity: 0.5; cursor: default; }
         .play-btn.cashout { background: #f59e0b; }
+        .buy-btn {
+            width: 100%;
+            padding: 14px;
+            font-size: 16px;
+            font-weight: bold;
+            border: none;
+            border-radius: 12px;
+            background: #8b5cf6;
+            color: white;
+            cursor: pointer;
+            margin-top: 8px;
+        }
         .status {
             text-align: center;
             font-size: 14px;
             margin: 8px 0;
             min-height: 20px;
             opacity: 0.9;
+        }
+        .loading {
+            text-align: center;
+            padding: 20px;
+            opacity: 0.7;
         }
     </style>
 </head>
@@ -114,56 +131,71 @@
         </div>
     </div>
 
-    <div class="status" id="status">Настрой ставку и жми «Играть»</div>
+    <div class="status" id="status">Загрузка...</div>
 
     <div class="grid" id="grid"></div>
 
-    <button class="play-btn" id="playBtn" onclick="handlePlay()">🎮 Играть</button>
+    <button class="play-btn" id="playBtn" onclick="handlePlay()" disabled>🎮 Играть</button>
+    <button class="buy-btn" onclick="buyCoins()">💎 Купить монеты</button>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.ready();
         tg.expand();
 
+        // ===== НАСТРОЙКИ =====
+        const API_URL = "https://buoyantly-tasteful-titmouse.cloudpub.ru";
         const BET_OPTIONS = [100, 500, 1000, 5000, 10000];
         const MINES_OPTIONS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
         const TOTAL_CELLS = 16;
 
-        let balance = 1000;
+        let balance = 0;
         let betIdx = 0;
         let minesIdx = 2;
         let game = null;
         let inGame = false;
+        let userId = null;
 
-        // ===== ЗАГРУЗКА / СОХРАНЕНИЕ БАЛАНСА =====
-        function loadBalance() {
+        // ===== API =====
+        async function apiGetBalance() {
+            if (!userId) return 0;
             try {
-                tg.CloudStorage.getItem('balance', (err, result) => {
-                    if (err || result === null || result === undefined || result === '') {
-                        balance = 1000;
-                        tg.CloudStorage.setItem('balance', '1000');
-                    } else {
-                        const parsed = parseInt(result);
-                        balance = isNaN(parsed) ? 1000 : parsed;
-                    }
-                    updateUI();
+                const r = await fetch(`${API_URL}/api/balance/${userId}`);
+                const d = await r.json();
+                return d.balance || 0;
+            } catch (e) {
+                console.error("Ошибка API:", e);
+                return null;
+            }
+        }
+
+        async function apiBet(amount) {
+            try {
+                const r = await fetch(`${API_URL}/api/bet?user_id=${userId}&amount=${amount}`, {
+                    method: 'POST'
                 });
+                const d = await r.json();
+                return d;
             } catch (e) {
-                console.log('CloudStorage error:', e);
-                balance = 1000;
-                updateUI();
+                console.error("Ошибка ставки:", e);
+                return { ok: false };
             }
         }
 
-        function saveBalance() {
+        async function apiWin(amount) {
             try {
-                tg.CloudStorage.setItem('balance', String(balance));
+                const r = await fetch(`${API_URL}/api/win?user_id=${userId}&amount=${amount}`, {
+                    method: 'POST'
+                });
+                const d = await r.json();
+                return d;
             } catch (e) {
-                console.log('Save error:', e);
+                console.error("Ошибка выигрыша:", e);
+                return { ok: false };
             }
         }
 
-        // ===== ОБНОВЛЕНИЕ ИНТЕРФЕЙСА =====
+        // ===== UI =====
         function updateUI() {
             document.getElementById('balance').textContent = balance;
             document.getElementById('bet').textContent = BET_OPTIONS[betIdx];
@@ -182,7 +214,7 @@
             updateUI();
         }
 
-        // ===== ИГРОВАЯ ЛОГИКА =====
+        // ===== ИГРА =====
         function multiplier(opened, mines) {
             if (opened === 0) return 1.0;
             const safe = TOTAL_CELLS - mines;
@@ -202,12 +234,12 @@
             }
         }
 
-        function handlePlay() {
-            if (!inGame) startGame();
-            else cashout();
+        async function handlePlay() {
+            if (!inGame) await startGame();
+            else await cashout();
         }
 
-        function startGame() {
+        async function startGame() {
             const bet = BET_OPTIONS[betIdx];
             const mines = MINES_OPTIONS[minesIdx];
 
@@ -216,8 +248,15 @@
                 return;
             }
 
-            balance -= bet;
-            saveBalance();
+            // Списываем ставку на сервере
+            const result = await apiBet(bet);
+            if (!result.ok) {
+                tg.showAlert('Не удалось сделать ставку. Возможно, недостаточно монет.');
+                balance = result.balance ?? balance;
+                updateUI();
+                return;
+            }
+            balance = result.balance;
             updateUI();
 
             const mineSet = new Set();
@@ -271,15 +310,7 @@
             const win = Math.floor(game.bet * mult);
 
             if (opened === TOTAL_CELLS - game.minesCount) {
-                balance += win;
-                saveBalance();
-                updateUI();
-                document.getElementById('status').textContent = `🎉 Победа! +${win} монет (x${mult})`;
-                const pb = document.getElementById('playBtn');
-                pb.textContent = '🔄 Играть снова';
-                pb.classList.remove('cashout');
-                inGame = false;
-                game = null;
+                finishWin(win, mult);
                 return;
             }
 
@@ -289,17 +320,21 @@
             document.getElementById('status').textContent = `Открыто: ${opened} | Множитель: x${mult}`;
         }
 
-        function cashout() {
+        async function cashout() {
             if (!game) return;
             const opened = game.opened.size;
             if (opened === 0) { tg.showAlert('Открой хотя бы одну клетку'); return; }
 
             const mult = multiplier(opened, game.minesCount);
             const win = Math.floor(game.bet * mult);
-            const mineSet = game.mines;
 
-            balance += win;
-            saveBalance();
+            await finishWin(win, mult);
+        }
+
+        async function finishWin(win, mult) {
+            const result = await apiWin(win);
+            if (result.ok) balance = result.balance;
+            else balance += win;
             updateUI();
 
             document.getElementById('status').textContent = `💰 Забрал ${win} монет (x${mult})`;
@@ -308,19 +343,78 @@
             pb.classList.remove('cashout');
             inGame = false;
 
-            document.querySelectorAll('.cell').forEach((cell, i) => {
-                cell.disabled = true;
-                if (mineSet.has(i) && cell.textContent !== '💎') {
-                    cell.textContent = '💣';
-                    cell.classList.add('bomb');
-                }
-            });
+            if (game) {
+                const mineSet = game.mines;
+                document.querySelectorAll('.cell').forEach((cell, i) => {
+                    cell.disabled = true;
+                    if (mineSet.has(i) && cell.textContent !== '💎') {
+                        cell.textContent = '💣';
+                        cell.classList.add('bomb');
+                    }
+                });
+            }
             game = null;
         }
 
-        // ===== ЗАПУСК =====
-        loadBalance();
-        renderGrid();
+        // ===== ПОКУПКА STARS =====
+        async function buyCoins() {
+            if (!userId) return;
+
+            // Пока один пакет — можно потом сделать выбор
+            const packageKey = "small";
+
+            try {
+                const r = await fetch(
+                    `${API_URL}/api/create-invoice?user_id=${userId}&package_key=${packageKey}`,
+                    { method: 'POST' }
+                );
+                const data = await r.json();
+
+                if (!data.ok) {
+                    tg.showAlert('Ошибка создания счета');
+                    return;
+                }
+
+                tg.openInvoice(data.invoice_link, async (status) => {
+                    if (status === 'paid') {
+                        tg.showAlert('Оплата прошла! Монеты зачислены.');
+                        await refreshBalance();
+                    } else {
+                        tg.showAlert('Оплата не завершена');
+                    }
+                });
+            } catch (e) {
+                console.error(e);
+                tg.showAlert('Ошибка соединения');
+            }
+        }
+
+        // ===== СТАРТ =====
+        async function refreshBalance() {
+            const b = await apiGetBalance();
+            if (b !== null) {
+                balance = b;
+                updateUI();
+            }
+        }
+
+        async function init() {
+            const user = tg.initDataUnsafe?.user;
+            if (!user) {
+                document.getElementById('status').textContent = 'Открой через Telegram';
+                return;
+            }
+            userId = user.id;
+
+            await refreshBalance();
+
+            document.getElementById('status').textContent = 'Настрой ставку и жми «Играть»';
+            document.getElementById('playBtn').disabled = false;
+
+            renderGrid();
+        }
+
+        init();
     </script>
 </body>
 </html>
