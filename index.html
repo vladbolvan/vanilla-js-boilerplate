@@ -9,7 +9,16 @@
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
         body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--tg-theme-bg-color, #1a1a2e); color: var(--tg-theme-text-color, #fff); padding: 16px 12px 90px 12px; min-height: 100vh; max-width: 500px; margin: 0 auto; }
-        .balance { font-size: 26px; font-weight: bold; color: #4ade80; text-align: center; margin-bottom: 12px; }
+        .balance { font-size: 26px; font-weight: bold; color: #4ade80; text-align: center; margin-bottom: 4px; transition: transform 0.15s; }
+        .balance.pop { transform: scale(1.15); }
+        .topline { display: flex; justify-content: center; gap: 12px; font-size: 11px; opacity: 0.7; margin-bottom: 10px; }
+        .topline span { display: inline-flex; align-items: center; gap: 4px; }
+        .ticker { background: var(--tg-theme-secondary-bg-color, #2a2a4a); border-radius: 10px; padding: 8px 10px; margin-bottom: 12px; overflow: hidden; height: 34px; position: relative; }
+        .ticker-track { display: flex; gap: 22px; position: absolute; left: 0; top: 50%; transform: translateY(-50%); white-space: nowrap; animation: tickerScroll 45s linear infinite; font-size: 12px; }
+        .ticker-track:hover { animation-play-state: paused; }
+        .ticker-item { display: inline-flex; gap: 4px; opacity: 0.85; }
+        .ticker-item b { color: #fbbf24; }
+        @keyframes tickerScroll { from { transform: translate(100%, -50%); } to { transform: translate(-100%, -50%); } }
         .main-tabs { display: flex; gap: 3px; margin-bottom: 14px; background: var(--tg-theme-secondary-bg-color, #2a2a4a); border-radius: 12px; padding: 3px; overflow-x: auto; }
         .main-tab { flex: 1; min-width: 60px; padding: 8px 4px; border: none; border-radius: 8px; background: transparent; color: var(--tg-theme-text-color, #fff); font-size: 11px; font-weight: 600; cursor: pointer; }
         .main-tab.active { background: var(--tg-theme-button-color, #2481cc); }
@@ -59,7 +68,6 @@
         .plinko-slots { display: flex; gap: 2px; margin-bottom: 12px; }
         .slot { flex: 1; padding: 8px 1px; background: var(--tg-theme-secondary-bg-color, #2a2a4a); border-radius: 6px; text-align: center; font-size: 10px; font-weight: bold; color: #4ade80; transition: all 0.2s; }
         .slot.hit { background: #fbbf24; color: #000; transform: scale(1.15); }
-        .slot.pulse { background: #fbbf24; color: #000; transform: scale(1.3); }
         .clicker-area { background: linear-gradient(135deg, #f59e0b, #ec4899); border-radius: 20px; padding: 20px; text-align: center; margin: 12px 0; position: relative; overflow: hidden; }
         .clicker-btn { width: 100%; aspect-ratio: 1; max-width: 280px; margin: 0 auto; border: none; border-radius: 50%; cursor: pointer; background: radial-gradient(circle, #fbbf24, #f59e0b); font-size: 90px; user-select: none; box-shadow: 0 8px 0 #b45309, 0 0 40px rgba(251,191,36,0.5); transition: transform 0.05s, box-shadow 0.05s; display: flex; align-items: center; justify-content: center; }
         .clicker-btn:active { transform: translateY(6px); box-shadow: 0 2px 0 #b45309, 0 0 30px rgba(251,191,36,0.7); }
@@ -106,6 +114,7 @@
         .xp-bar { margin-top: 12px; height: 10px; background: rgba(0,0,0,0.3); border-radius: 5px; overflow: hidden; }
         .xp-bar-fill { height: 100%; background: linear-gradient(90deg, #4ade80, #22d3ee); border-radius: 5px; transition: width 0.5s; }
         .xp-text { font-size: 11px; margin-top: 6px; opacity: 0.9; }
+        .streak-badge { display: inline-block; background: rgba(0,0,0,0.3); padding: 4px 10px; border-radius: 8px; font-size: 12px; margin-top: 8px; }
         .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; }
         .stat-box { background: var(--tg-theme-secondary-bg-color, #2a2a4a); border-radius: 12px; padding: 12px; text-align: center; }
         .stat-value { font-size: 20px; font-weight: bold; color: #4ade80; }
@@ -139,10 +148,24 @@
         .daily-reward { font-size: 32px; font-weight: bold; color: #ec4899; margin: 10px 0; }
         .daily-claim-btn { width: 100%; padding: 16px; font-size: 18px; font-weight: bold; border: none; border-radius: 12px; background: #ec4899; color: white; cursor: pointer; margin-top: 16px; }
         .daily-claim-btn:disabled { opacity: 0.5; }
+        .streak-dots { display: flex; justify-content: center; gap: 6px; margin: 14px 0; }
+        .streak-dot { width: 30px; height: 30px; border-radius: 50%; background: rgba(255,255,255,0.08); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: bold; }
+        .streak-dot.done { background: #4ade80; color: #000; }
+        .streak-dot.today { background: #fbbf24; color: #000; box-shadow: 0 0 12px rgba(251,191,36,0.7); }
+        #confetti { position: fixed; inset: 0; pointer-events: none; z-index: 9999; display: none; }
     </style>
 </head>
 <body>
-    <div class="balance">💰 <span id="balance">...</span></div>
+    <canvas id="confetti"></canvas>
+
+    <div class="balance" id="balanceEl">💰 <span id="balance">...</span></div>
+    <div class="topline">
+        <span>🟢 Онлайн: <b id="onlineCount">…</b></span>
+    </div>
+
+    <div class="ticker" id="ticker" style="display:none;">
+        <div class="ticker-track" id="tickerTrack"></div>
+    </div>
 
     <div class="main-tabs">
         <button class="main-tab active" onclick="switchMain('game')">🎮 Игра</button>
@@ -284,6 +307,7 @@
             <h2>🎁 Ежедневный бонус</h2>
             <div class="daily-emoji">💎</div>
             <div class="daily-reward" id="dailyReward">+1000</div>
+            <div class="streak-dots" id="streakDots"></div>
             <div style="opacity:0.7;font-size:14px;" id="dailyStatus">Загрузка...</div>
             <button class="daily-claim-btn" id="dailyClaimBtn" onclick="claimDaily()">Забрать</button>
             <button class="close-btn" onclick="closeModal('dailyModal')">Закрыть</button>
@@ -306,23 +330,120 @@
             medium: [33, 11, 4, 2, 1.1, 0.6, 0.3, 0.6, 1.1, 2, 4, 11, 33],
             high:   [170, 24, 8.1, 2, 0.7, 0.2, 0.2, 0.2, 0.7, 2, 8.1, 24, 170],
         };
+        const INIT_DATA = tg.initData || "";
 
         let balance = 0, betIdx = 0, minesIdx = 2, plinkoRiskIdx = 0, plinkoSpeed = 'normal';
         let game = null, inGame = false, userId = null, plinkoBusy = false, chatInterval = null;
+        let tickerInterval = null, onlineInterval = null;
 
-        async function apiGetBalance() { if (!userId) return 0; try { const r = await fetch(`${API_URL}/api/balance/${userId}`); const d = await r.json(); return d.balance || 0; } catch (e) { return null; } }
-        async function apiBet(a, g) { try { const r = await fetch(`${API_URL}/api/bet?user_id=${userId}&amount=${a}&game=${g}`, { method: 'POST' }); return await r.json(); } catch (e) { return { ok: false }; } }
-        async function apiWin(a, m) { try { const r = await fetch(`${API_URL}/api/win?user_id=${userId}&amount=${a}&multiplier=${m || 0}`, { method: 'POST' }); return await r.json(); } catch (e) { return { ok: false }; } }
-        async function apiLose() { try { const r = await fetch(`${API_URL}/api/lose?user_id=${userId}`, { method: 'POST' }); return await r.json(); } catch (e) { return { ok: false }; } }
-        function notifyAchievements(a) { if (!a || a.length === 0) return; a.forEach((x, i) => setTimeout(() => tg.showAlert(`🎖️ Ачивка: ${x.emoji} ${x.name}`), i * 1500)); }
-        function notifyLevelUp(l) { if (!l || !l.leveled_up) return; if (l.levels_gained && l.levels_gained.length > 0) setTimeout(() => tg.showAlert(`🎉 Уровень ${l.new_level}!\n💰 +${l.total_level_reward.toLocaleString('ru-RU')} монет`), 500); }
+        // ===== ОБЁРТКА FETCH С INITDATA =====
+        async function apiFetch(url, opts = {}) {
+            opts.headers = opts.headers || {};
+            if (INIT_DATA) opts.headers["X-Init-Data"] = INIT_DATA;
+            return fetch(url, opts);
+        }
+
+        async function apiGetBalance() { if (!userId) return 0; try { const r = await apiFetch(`${API_URL}/api/balance/${userId}`); const d = await r.json(); return d.balance || 0; } catch (e) { return null; } }
+        async function apiBet(a, g) { try { const r = await apiFetch(`${API_URL}/api/bet?user_id=${userId}&amount=${a}&game=${g}`, { method: 'POST' }); return await r.json(); } catch (e) { return { ok: false }; } }
+        async function apiWin(a, m) { try { const r = await apiFetch(`${API_URL}/api/win?user_id=${userId}&amount=${a}&multiplier=${m || 0}`, { method: 'POST' }); return await r.json(); } catch (e) { return { ok: false }; } }
+        async function apiLose() { try { const r = await apiFetch(`${API_URL}/api/lose?user_id=${userId}`, { method: 'POST' }); return await r.json(); } catch (e) { return { ok: false }; } }
+
+        // ===== ХЕЛПЕРЫ UI =====
+        function haptic(type = 'light') {
+            try {
+                if (!tg.HapticFeedback) return;
+                if (type === 'light') tg.HapticFeedback.impactOccurred('light');
+                else if (type === 'medium') tg.HapticFeedback.impactOccurred('medium');
+                else if (type === 'heavy') tg.HapticFeedback.impactOccurred('heavy');
+                else if (type === 'success') tg.HapticFeedback.notificationOccurred('success');
+                else if (type === 'error') tg.HapticFeedback.notificationOccurred('error');
+            } catch (e) {}
+        }
+
+        function animateBalance() {
+            const el = document.getElementById('balanceEl');
+            el.classList.remove('pop');
+            void el.offsetWidth;
+            el.classList.add('pop');
+            setTimeout(() => el.classList.remove('pop'), 160);
+        }
+
+        // ===== КОНФЕТТИ =====
+        const confettiCanvas = document.getElementById('confetti');
+        const cctx = confettiCanvas.getContext('2d');
+        let confettiParticles = [], confettiRaf = null;
+
+        function resizeConfetti() {
+            confettiCanvas.width = window.innerWidth;
+            confettiCanvas.height = window.innerHeight;
+        }
+        resizeConfetti();
+        window.addEventListener('resize', resizeConfetti);
+
+        function launchConfetti(intensity = 80) {
+            const colors = ['#fbbf24', '#4ade80', '#60a5fa', '#f87171', '#a78bfa', '#ec4899'];
+            for (let i = 0; i < intensity; i++) {
+                confettiParticles.push({
+                    x: Math.random() * confettiCanvas.width,
+                    y: -10 - Math.random() * 100,
+                    vx: (Math.random() - 0.5) * 3,
+                    vy: 2 + Math.random() * 4,
+                    size: 5 + Math.random() * 6,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    rot: Math.random() * Math.PI,
+                    vr: (Math.random() - 0.5) * 0.25,
+                    life: 140,
+                });
+            }
+            confettiCanvas.style.display = 'block';
+            if (!confettiRaf) confettiLoop();
+        }
+
+        function confettiLoop() {
+            cctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+            for (let i = confettiParticles.length - 1; i >= 0; i--) {
+                const p = confettiParticles[i];
+                p.x += p.vx; p.y += p.vy; p.vy += 0.12; p.rot += p.vr; p.life--;
+                cctx.save();
+                cctx.translate(p.x, p.y);
+                cctx.rotate(p.rot);
+                cctx.fillStyle = p.color;
+                cctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.6);
+                cctx.restore();
+                if (p.life <= 0 || p.y > confettiCanvas.height + 20) {
+                    confettiParticles.splice(i, 1);
+                }
+            }
+            if (confettiParticles.length > 0) {
+                confettiRaf = requestAnimationFrame(confettiLoop);
+            } else {
+                confettiRaf = null;
+                confettiCanvas.style.display = 'none';
+            }
+        }
+
+        function notifyAchievements(a) {
+            if (!a || a.length === 0) return;
+            haptic('success');
+            a.forEach((x, i) => setTimeout(() => tg.showAlert(`🎖️ Ачивка: ${x.emoji} ${x.name}`), i * 1500));
+        }
+        function notifyLevelUp(l) {
+            if (!l || !l.leveled_up) return;
+            if (l.levels_gained && l.levels_gained.length > 0) {
+                haptic('success');
+                launchConfetti(60);
+                setTimeout(() => tg.showAlert(`🎉 Уровень ${l.new_level}!\n💰 +${l.total_level_reward.toLocaleString('ru-RU')} монет`), 400);
+            }
+        }
         function getPlinkoBet() { const v = parseInt(document.getElementById('plinkoBetInput').value) || 100; return Math.max(10, v); }
+
         function updateUI() {
             document.getElementById('balance').textContent = balance.toLocaleString('ru-RU');
             document.getElementById('bet').textContent = BET_OPTIONS[betIdx].toLocaleString('ru-RU');
             document.getElementById('mines').textContent = MINES_OPTIONS[minesIdx];
             document.getElementById('plinkoRisk').textContent = PLINKO_RISK_NAMES[PLINKO_RISKS[plinkoRiskIdx]];
         }
+
         function switchMain(n) {
             const arr = ['game', 'missions', 'shop', 'chat', 'top', 'profile'];
             document.querySelectorAll('.main-tab').forEach((t, i) => t.classList.toggle('active', arr[i] === n));
@@ -345,9 +466,9 @@
             document.getElementById('weeklyTop').classList.toggle('active', n === 'weekly');
             document.getElementById('monthlyTop').classList.toggle('active', n === 'monthly');
         }
-        function changeBet(d) { if (inGame) return; betIdx = Math.max(0, Math.min(BET_OPTIONS.length - 1, betIdx + d)); updateUI(); }
-        function changeMines(d) { if (inGame) return; minesIdx = Math.max(0, Math.min(MINES_OPTIONS.length - 1, minesIdx + d)); updateUI(); }
-        function changeRisk(d) { if (plinkoBusy) return; plinkoRiskIdx = Math.max(0, Math.min(PLINKO_RISKS.length - 1, plinkoRiskIdx + d)); updateUI(); renderPlinkoSlots(); }
+        function changeBet(d) { if (inGame) return; betIdx = Math.max(0, Math.min(BET_OPTIONS.length - 1, betIdx + d)); updateUI(); haptic(); }
+        function changeMines(d) { if (inGame) return; minesIdx = Math.max(0, Math.min(MINES_OPTIONS.length - 1, minesIdx + d)); updateUI(); haptic(); }
+        function changeRisk(d) { if (plinkoBusy) return; plinkoRiskIdx = Math.max(0, Math.min(PLINKO_RISKS.length - 1, plinkoRiskIdx + d)); updateUI(); renderPlinkoSlots(); haptic(); }
         function setSpeed(m) { plinkoSpeed = m; document.getElementById('speedNormal').classList.toggle('active', m === 'normal'); document.getElementById('speedFast').classList.toggle('active', m === 'fast'); }
         function adjustPlinkoBet(d) { const i = document.getElementById('plinkoBetInput'); let v = (parseInt(i.value) || 100) + d; v = Math.max(10, v); i.value = v; }
         function setPlinkoBet(m) {
@@ -370,12 +491,14 @@
             for (let i = 0; i < TOTAL_CELLS; i++) { const b = document.createElement('button'); b.className = 'cell'; b.onclick = () => openCell(i, b); g.appendChild(b); }
         }
         async function handlePlay() { if (!inGame) await startGame(); else await cashout(); }
+
         async function startGame() {
             const b = BET_OPTIONS[betIdx], m = MINES_OPTIONS[minesIdx];
             if (balance < b) { tg.showAlert('Недостаточно монет!'); return; }
+            haptic('medium');
             const r = await apiBet(b, 'mines');
             if (!r.ok) { tg.showAlert('Не удалось сделать ставку.'); balance = r.balance ?? balance; updateUI(); return; }
-            balance = r.balance; updateUI();
+            balance = r.balance; updateUI(); animateBalance();
             if (r.level_info) notifyLevelUp(r.level_info);
             const ms = new Set(); while (ms.size < m) ms.add(Math.floor(Math.random() * TOTAL_CELLS));
             game = { mines: ms, opened: new Set(), bet: b, minesCount: m }; inGame = true;
@@ -384,9 +507,11 @@
             p.textContent = '💰 Забрать 0'; p.classList.add('cashout'); p.disabled = true;
             document.getElementById('status').textContent = `Мин: ${m}. Открывай!`;
         }
+
         function openCell(idx, btn) {
             if (!inGame || !game || game.opened.has(idx)) return;
             if (game.mines.has(idx)) {
+                haptic('error');
                 btn.textContent = '💥'; btn.classList.add('bomb');
                 const ms = game.mines, b = game.bet;
                 document.querySelectorAll('.cell').forEach((c, i) => { c.disabled = true; if (ms.has(i) && c.textContent !== '💥') { c.textContent = '💣'; c.classList.add('bomb'); } });
@@ -396,42 +521,51 @@
                 apiLose().then(x => { if (x.achievements) notifyAchievements(x.achievements); });
                 return;
             }
+            haptic('light');
             game.opened.add(idx); btn.textContent = '💎'; btn.classList.add('revealed'); btn.disabled = true;
             const o = game.opened.size, mu = multiplier(o, game.minesCount), w = Math.floor(game.bet * mu);
             if (o === TOTAL_CELLS - game.minesCount) { finishWin(w, mu); return; }
             const p = document.getElementById('playBtn'); p.textContent = `💰 Забрать ${w.toLocaleString('ru-RU')}`; p.disabled = false;
             document.getElementById('status').textContent = `Открыто: ${o} | x${mu}`;
         }
+
         async function cashout() {
             if (!game) return; const o = game.opened.size;
             if (o === 0) { tg.showAlert('Открой хотя бы одну клетку'); return; }
             const mu = multiplier(o, game.minesCount), w = Math.floor(game.bet * mu);
             await finishWin(w, mu);
         }
+
         async function finishWin(w, mu) {
             const r = await apiWin(w, mu);
             if (r.ok) balance = r.balance; else balance += w;
-            updateUI(); document.getElementById('status').textContent = `💰 Забрал ${w.toLocaleString('ru-RU')} (x${mu})`;
+            updateUI(); animateBalance();
+            document.getElementById('status').textContent = `💰 Забрал ${w.toLocaleString('ru-RU')} (x${mu})`;
             const p = document.getElementById('playBtn'); p.textContent = '🔄 Играть снова'; p.classList.remove('cashout'); inGame = false;
             if (game) { const ms = game.mines; document.querySelectorAll('.cell').forEach((c, i) => { c.disabled = true; if (ms.has(i) && c.textContent !== '💎') { c.textContent = '💣'; c.classList.add('bomb'); } }); }
             game = null;
+            if (w >= 5000) { haptic('success'); launchConfetti(90); }
             if (r.achievements) notifyAchievements(r.achievements);
+            loadBigWins();
         }
 
+        // ===== КЛИКЕР =====
         let clickerClicks = 0, clickerLimit = 5000, clickerBusy = false;
         async function doClick() {
             if (clickerBusy) return;
             if (clickerClicks >= clickerLimit) { tg.showAlert('⏳ Лимит кликера!'); return; }
             clickerBusy = true;
+            haptic('light');
             try {
-                const r = await fetch(`${API_URL}/api/click?user_id=${userId}`, { method: 'POST' });
+                const r = await apiFetch(`${API_URL}/api/click?user_id=${userId}`, { method: 'POST' });
                 const d = await r.json();
-                if (d.ok) { balance = d.balance; clickerClicks = d.clicks; updateUI(); document.getElementById('clickerProgress').textContent = `${clickerClicks}/${clickerLimit}`; document.getElementById('clickerStatus').textContent = `+1 монета (всего: ${clickerClicks})`; }
+                if (d.ok) { balance = d.balance; clickerClicks = d.clicks; updateUI(); animateBalance(); document.getElementById('clickerProgress').textContent = `${clickerClicks}/${clickerLimit}`; document.getElementById('clickerStatus').textContent = `+1 монета (всего: ${clickerClicks})`; }
                 else if (d.error === 'daily_limit') { clickerClicks = d.clicks; document.getElementById('clickerProgress').textContent = `${clickerClicks}/${clickerLimit}`; tg.showAlert(`⏳ Лимит ${clickerLimit} кликов!`); }
             } catch (e) {}
             finally { clickerBusy = false; }
         }
 
+        // ===== PLINKO: доска =====
         function renderPlinkoBoard() {
             const b = document.getElementById('plinkoBoard'); if (!b) return;
             b.innerHTML = '';
@@ -450,7 +584,7 @@
         }
         function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
-        // ===== ЕДИНЫЙ ЦИКЛ АНИМАЦИИ ШАРОВ ПЛИНКО =====
+        // ===== ЕДИНЫЙ ЦИКЛ АНИМАЦИИ ШАРОВ =====
         const _plinkoBalls = [];
         let _plinkoLoopRunning = false;
 
@@ -473,7 +607,6 @@
                 const nrp = r + 3, nrw = (nrp - 1) * cg, nsx = (w - nrw) / 2;
                 pos.push({ x: nsx + (p + 0.5) * cg, y: (r + 1) * rg });
             }
-            // финальное падение в слот
             const last = pos[pos.length - 1];
             pos.push({ x: last.x, y: h });
             return pos;
@@ -484,20 +617,15 @@
                 const B = _plinkoBalls[k];
                 const elapsed = now - B.startTime - B.startDelay;
                 if (elapsed < 0) continue;
-
                 const seg = elapsed / B.stepDuration;
                 const i = Math.floor(seg);
                 const t = seg - i;
-
                 if (i >= B.pos.length - 1) {
-                    // шар достиг конца
                     const last = B.pos[B.pos.length - 1];
                     B.el.style.left = last.x + 'px';
                     B.el.style.top  = last.y + 'px';
-
                     const s = document.getElementById('slot' + B.finalPos);
                     if (s) s.classList.add('hit');
-
                     B.el.style.transition = 'opacity 0.25s';
                     B.el.style.opacity = '0';
                     const el = B.el;
@@ -505,34 +633,22 @@
                     setTimeout(() => { try { el.remove(); } catch (e) {} B.resolve(); }, 280);
                     continue;
                 }
-
                 const p0 = B.pos[i], p1 = B.pos[i + 1];
                 const x = p0.x + (p1.x - p0.x) * t;
                 const y = p0.y + (p1.y - p0.y) * t;
                 B.el.style.left = x + 'px';
                 B.el.style.top  = y + 'px';
             }
-
-            if (_plinkoBalls.length > 0) {
-                requestAnimationFrame(_plinkoLoop);
-            } else {
-                _plinkoLoopRunning = false;
-            }
+            if (_plinkoBalls.length > 0) requestAnimationFrame(_plinkoLoop);
+            else _plinkoLoopRunning = false;
         }
 
         function animateOneBall(path, finalPos, color, stepDuration, startDelay) {
             return new Promise((resolve) => {
                 const board = document.getElementById('plinkoBoard');
                 if (!board) { resolve(); return; }
-
                 const { w, h } = _plinkoGeom();
-                if (w === 0 || h === 0) {
-                    const s = document.getElementById('slot' + finalPos);
-                    if (s) s.classList.add('hit');
-                    resolve();
-                    return;
-                }
-
+                if (w === 0 || h === 0) { const s = document.getElementById('slot' + finalPos); if (s) s.classList.add('hit'); resolve(); return; }
                 const pos = computePathPositions(path);
                 const ball = document.createElement('div');
                 ball.className = 'ball';
@@ -541,25 +657,17 @@
                 ball.style.left = pos[0].x + 'px';
                 ball.style.top  = pos[0].y + 'px';
                 board.appendChild(ball);
-
                 _plinkoBalls.push({
-                    el: ball,
-                    pos,
+                    el: ball, pos,
                     stepDuration: Math.max(16, stepDuration),
                     startDelay: startDelay || 0,
                     startTime: performance.now(),
-                    finalPos,
-                    resolve
+                    finalPos, resolve
                 });
-
-                if (!_plinkoLoopRunning) {
-                    _plinkoLoopRunning = true;
-                    requestAnimationFrame(_plinkoLoop);
-                }
+                if (!_plinkoLoopRunning) { _plinkoLoopRunning = true; requestAnimationFrame(_plinkoLoop); }
             });
         }
 
-        // Волна шаров (x5, x10)
         async function animateBallWave(results, stepDuration, startInterval) {
             const colors = ['#fbbf24','#60a5fa','#f87171','#a78bfa','#34d399','#fb923c','#22d3ee','#e879f9','#facc15','#4ade80'];
             const promises = [];
@@ -573,7 +681,6 @@
             await Promise.all(promises);
         }
 
-        // Несколько перекрывающихся волн (x50, x100)
         async function animateBallWaves(results, waveSize, stepDuration, startInterval, waveGap) {
             const colors = ['#fbbf24','#60a5fa','#f87171','#a78bfa','#34d399','#fb923c','#22d3ee','#e879f9','#facc15','#4ade80'];
             const promises = [];
@@ -596,6 +703,7 @@
             const bet = getPlinkoBet(), risk = PLINKO_RISKS[plinkoRiskIdx], totalBet = bet * count;
             if (balance < totalBet) { tg.showAlert(`Недостаточно монет (нужно ${totalBet.toLocaleString('ru-RU')})`); return; }
             plinkoBusy = true;
+            haptic('medium');
             const buttons = ['plinkoBtn', 'plinkoX5', 'plinkoX10', 'plinkoX50', 'plinkoX100'];
             buttons.forEach(id => { const b = document.getElementById(id); if (b) b.disabled = true; });
             document.getElementById('plinkoStatus').textContent = count > 1 ? `Бросаем ${count} шаров...` : '...';
@@ -606,12 +714,12 @@
                 if (count > 1) url += `&count=${count}`;
                 const ctl = new AbortController(); const tid = setTimeout(() => ctl.abort(), 60000);
                 let r;
-                try { r = await fetch(url, { method: 'POST', signal: ctl.signal }); }
+                try { r = await apiFetch(url, { method: 'POST', signal: ctl.signal }); }
                 finally { clearTimeout(tid); }
                 if (!r.ok) { tg.showAlert(`Ошибка сервера ${r.status}`); return; }
                 const data = await r.json();
                 if (!data.ok) { tg.showAlert('Ошибка: ' + (data.error || data.detail || 'неизвестная')); if (data.balance !== undefined) { balance = data.balance; updateUI(); } return; }
-                balance = data.balance; updateUI();
+                balance = data.balance; updateUI(); animateBalance();
                 if (data.level_info) notifyLevelUp(data.level_info);
 
                 if (plinkoSpeed === 'fast') {
@@ -628,11 +736,9 @@
                         try { await animateBallWave(data.results, sd, si); }
                         catch (e) { data.results.forEach(res => { const s = document.getElementById('slot' + res.position); if (s) s.classList.add('hit'); }); }
                     } else if (count <= 50) {
-                        // x50: 5 волн по 10 шаров
                         try { await animateBallWaves(data.results, 10, 70, 120, 500); }
                         catch (e) { data.results.forEach(res => { const s = document.getElementById('slot' + res.position); if (s) s.classList.add('hit'); }); }
                     } else {
-                        // x100: 10 волн по 10 шаров
                         try { await animateBallWaves(data.results, 10, 60, 100, 350); }
                         catch (e) { data.results.forEach(res => { const s = document.getElementById('slot' + res.position); if (s) s.classList.add('hit'); }); }
                     }
@@ -645,7 +751,10 @@
                     const ws = data.total_win, net = ws - totalBet, sign = net >= 0 ? '+' : '';
                     document.getElementById('plinkoStatus').textContent = `🎰 ${count} шаров: ${totalBet.toLocaleString('ru-RU')} → ${ws.toLocaleString('ru-RU')} (${sign}${net.toLocaleString('ru-RU')})`;
                 }
+                const winAmount = count === 1 ? data.win : data.total_win;
+                if (winAmount >= 5000) { haptic('success'); launchConfetti(winAmount >= 50000 ? 130 : 80); }
                 if (data.achievements) notifyAchievements(data.achievements);
+                if (winAmount >= 5000) loadBigWins();
             } catch (e) {
                 if (e.name === 'AbortError') tg.showAlert('⏱ Сервер долго не отвечает');
                 else tg.showAlert('Ошибка: ' + (e.message || 'неизвестная'));
@@ -655,10 +764,11 @@
             }
         }
 
+        // ===== МИССИИ =====
         async function loadMissions() {
             const l = document.getElementById('missionsList'); l.innerHTML = '<div class="loading-text">Загрузка...</div>';
             try {
-                const r = await fetch(`${API_URL}/api/missions/${userId}`), d = await r.json();
+                const r = await apiFetch(`${API_URL}/api/missions/${userId}`), d = await r.json();
                 if (!d.ok) { l.innerHTML = '<div class="loading-text">Ошибка</div>'; return; }
                 l.innerHTML = '';
                 d.missions.forEach(m => {
@@ -674,13 +784,27 @@
                 else ab.style.display = 'none';
             } catch (e) { l.innerHTML = '<div class="loading-text">Ошибка</div>'; }
         }
-        async function claimMission(k) { try { const r = await fetch(`${API_URL}/api/missions/claim?user_id=${userId}&mission_key=${k}`, { method: 'POST' }), d = await r.json(); if (d.ok) { balance = d.balance; updateUI(); tg.showAlert(`+${d.reward} монет!`); loadMissions(); } else tg.showAlert('Ошибка'); } catch (e) {} }
-        async function claimAllBonus() { try { const r = await fetch(`${API_URL}/api/missions/claim?user_id=${userId}&mission_key=all_bonus`, { method: 'POST' }), d = await r.json(); if (d.ok) { balance = d.balance; updateUI(); tg.showAlert(`🎉 +${d.reward}!`); loadMissions(); } } catch (e) {} }
+        async function claimMission(k) {
+            try {
+                const r = await apiFetch(`${API_URL}/api/missions/claim?user_id=${userId}&mission_key=${k}`, { method: 'POST' });
+                const d = await r.json();
+                if (d.ok) { balance = d.balance; updateUI(); animateBalance(); haptic('success'); tg.showAlert(`+${d.reward} монет!`); loadMissions(); }
+                else tg.showAlert('Ошибка');
+            } catch (e) {}
+        }
+        async function claimAllBonus() {
+            try {
+                const r = await apiFetch(`${API_URL}/api/missions/claim?user_id=${userId}&mission_key=all_bonus`, { method: 'POST' });
+                const d = await r.json();
+                if (d.ok) { balance = d.balance; updateUI(); animateBalance(); haptic('success'); launchConfetti(100); tg.showAlert(`🎉 +${d.reward}!`); loadMissions(); }
+            } catch (e) {}
+        }
 
+        // ===== МАГАЗИН ТИТУЛОВ =====
         async function loadShop() {
             const l = document.getElementById('shopList'); l.innerHTML = '<div class="loading-text">Загрузка...</div>';
             try {
-                const r = await fetch(`${API_URL}/api/shop/titles?user_id=${userId}`), d = await r.json();
+                const r = await apiFetch(`${API_URL}/api/shop/titles?user_id=${userId}`), d = await r.json();
                 if (!d.ok) { l.innerHTML = '<div class="loading-text">Ошибка</div>'; return; }
                 balance = d.balance; updateUI(); l.innerHTML = '';
                 d.titles.forEach(t => {
@@ -694,9 +818,24 @@
                 });
             } catch (e) { l.innerHTML = '<div class="loading-text">Ошибка</div>'; }
         }
-        async function buyTitle(id) { if (!confirm('Купить?')) return; try { const r = await fetch(`${API_URL}/api/shop/buy-title?user_id=${userId}&title_id=${id}`, { method: 'POST' }), d = await r.json(); if (d.ok) { balance = d.balance; updateUI(); tg.showAlert('✅'); loadShop(); } else tg.showAlert('Ошибка: ' + d.error); } catch (e) {} }
-        async function equipTitle(id) { try { const r = await fetch(`${API_URL}/api/shop/equip-title?user_id=${userId}&title_id=${id}`, { method: 'POST' }), d = await r.json(); if (d.ok) { tg.showAlert(id ? '✅ Надет!' : '✅ Снят'); loadShop(); } } catch (e) {} }
+        async function buyTitle(id) {
+            if (!confirm('Купить?')) return;
+            try {
+                const r = await apiFetch(`${API_URL}/api/shop/buy-title?user_id=${userId}&title_id=${id}`, { method: 'POST' });
+                const d = await r.json();
+                if (d.ok) { balance = d.balance; updateUI(); haptic('success'); tg.showAlert('✅'); loadShop(); }
+                else tg.showAlert('Ошибка: ' + d.error);
+            } catch (e) {}
+        }
+        async function equipTitle(id) {
+            try {
+                const r = await apiFetch(`${API_URL}/api/shop/equip-title?user_id=${userId}&title_id=${id}`, { method: 'POST' });
+                const d = await r.json();
+                if (d.ok) { tg.showAlert(id ? '✅ Надет!' : '✅ Снят'); loadShop(); }
+            } catch (e) {}
+        }
 
+        // ===== ЧАТ =====
         function escapeHtml(t) { const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
         function renderChat(m) {
             const b = document.getElementById('chatMessages');
@@ -712,17 +851,30 @@
             });
             b.scrollTop = b.scrollHeight;
         }
-        async function loadChat() { try { const r = await fetch(`${API_URL}/api/chat/messages`), d = await r.json(); if (d.ok) renderChat(d.messages); } catch (e) {} }
-        async function sendChat() { const i = document.getElementById('chatInput'); const t = i.value.trim(); if (!t) return; i.value = ''; try { const r = await fetch(`${API_URL}/api/chat/send?user_id=${userId}&text=${encodeURIComponent(t)}`, { method: 'POST' }), d = await r.json(); if (!d.ok) tg.showAlert('Ошибка'); else loadChat(); } catch (e) {} }
+        async function loadChat() { try { const r = await apiFetch(`${API_URL}/api/chat/messages`), d = await r.json(); if (d.ok) renderChat(d.messages); } catch (e) {} }
+        async function sendChat() {
+            const i = document.getElementById('chatInput'); const t = i.value.trim(); if (!t) return; i.value = '';
+            try {
+                const r = await apiFetch(`${API_URL}/api/chat/send?user_id=${userId}&text=${encodeURIComponent(t)}`, { method: 'POST' });
+                const d = await r.json();
+                if (!d.ok) tg.showAlert('Ошибка'); else loadChat();
+            } catch (e) {}
+        }
         document.addEventListener('keydown', e => { if (e.key === 'Enter' && document.activeElement.id === 'chatInput') sendChat(); });
         function startChat() { loadChat(); if (chatInterval) clearInterval(chatInterval); chatInterval = setInterval(loadChat, 4000); }
         function stopChat() { if (chatInterval) { clearInterval(chatInterval); chatInterval = null; } }
 
-        function formatTime(s) { const d = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600), m = Math.floor((s % 3600) / 60); if (d > 0) return `${d}д ${h}ч ${m}м`; if (h > 0) return `${h}ч ${m}м`; return `${m}м`; }
+        // ===== ТОП =====
+        function formatTime(s) {
+            const d = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600), m = Math.floor((s % 3600) / 60);
+            if (d > 0) return `${d}д ${h}ч ${m}м`;
+            if (h > 0) return `${h}ч ${m}м`;
+            return `${m}м`;
+        }
         async function loadTournament() {
             const l = document.getElementById('tournList'), t = document.getElementById('tournTimer'); l.innerHTML = '<div class="loading-text">Загрузка...</div>';
             try {
-                const r = await fetch(`${API_URL}/api/tournament`), d = await r.json();
+                const r = await apiFetch(`${API_URL}/api/tournament`), d = await r.json();
                 if (!d.ok || !d.leaders || d.leaders.length === 0) { l.innerHTML = '<div class="loading-text">Будь первым! 🏆</div>'; if (d.seconds_left) t.textContent = `⏰ ${formatTime(d.seconds_left)}`; return; }
                 t.textContent = `⏰ До конца: ${formatTime(d.seconds_left)}`; l.innerHTML = '';
                 d.leaders.forEach(p => {
@@ -736,7 +888,7 @@
         async function loadMonthly() {
             const l = document.getElementById('monthlyList'); l.innerHTML = '<div class="loading-text">Загрузка...</div>';
             try {
-                const r = await fetch(`${API_URL}/api/monthly-top`), d = await r.json();
+                const r = await apiFetch(`${API_URL}/api/monthly-top`), d = await r.json();
                 if (!d.ok || !d.leaders || d.leaders.length === 0) { l.innerHTML = '<div class="loading-text">Пока никого. Попади в TOP-10! 👑</div>'; return; }
                 l.innerHTML = '';
                 d.leaders.forEach(p => {
@@ -748,53 +900,143 @@
             } catch (e) {}
         }
 
+        // ===== ПРОФИЛЬ =====
         async function loadProfile() {
             const c = document.getElementById('profileContent'); c.innerHTML = '<div class="loading-text">Загрузка...</div>';
             try {
-                const r = await fetch(`${API_URL}/api/profile/${userId}`), d = await r.json();
+                const r = await apiFetch(`${API_URL}/api/profile/${userId}`), d = await r.json();
                 if (!d.ok) { c.innerHTML = '<div class="loading-text">Ошибка</div>'; return; }
                 const xp = Math.round((d.xp_in_level / d.xp_for_next) * 100);
                 const wr = d.games_played > 0 ? Math.round(d.games_won / d.games_played * 100) : 0;
                 const th = d.equipped_title ? `<div class="profile-title" style="color:${d.equipped_title_color}">${d.equipped_title}</div>` : '';
-                c.innerHTML = `<div class="profile-header"><div class="profile-avatar">🎮</div><div class="profile-name">${escapeHtml(d.name)}</div>${th}<div class="profile-level">Уровень ${d.level}</div><div class="xp-bar"><div class="xp-bar-fill" style="width:${xp}%"></div></div><div class="xp-text">${d.xp_in_level} / ${d.xp_for_next} XP (${xp}%)</div></div><button class="daily-claim-btn" onclick="openDaily()" style="margin-top:0;margin-bottom:16px;">🎁 Ежедневный бонус</button><div class="stats-grid"><div class="stat-box"><div class="stat-value">${d.games_played}</div><div class="stat-label">Игр</div></div><div class="stat-box"><div class="stat-value">${wr}%</div><div class="stat-label">Винрейт</div></div><div class="stat-box"><div class="stat-value">x${d.best_multiplier}</div><div class="stat-label">Лучший x</div></div><div class="stat-box"><div class="stat-value">${d.referrals}</div><div class="stat-label">Друзей</div></div><div class="stat-box"><div class="stat-value">${d.total_stars}</div><div class="stat-label">Stars</div></div><div class="stat-box"><div class="stat-value">${d.ads_watched}</div><div class="stat-label">Реклам</div></div></div><div class="section-title">🎖️ Ачивки</div><div class="achievements-grid">${d.achievements.map(a => `<div class="ach${a.unlocked ? ' unlocked' : ''}" title="${a.name}">${a.emoji}</div>`).join('')}</div>`;
+                const streak = d.daily_streak || 0;
+                const streakBadge = streak > 0 ? `<div class="streak-badge">🔥 Серия: ${streak} дн.</div>` : '';
+                c.innerHTML = `<div class="profile-header"><div class="profile-avatar">🎮</div><div class="profile-name">${escapeHtml(d.name)}</div>${th}<div class="profile-level">Уровень ${d.level}</div>${streakBadge}<div class="xp-bar"><div class="xp-bar-fill" style="width:${xp}%"></div></div><div class="xp-text">${d.xp_in_level} / ${d.xp_for_next} XP (${xp}%)</div></div><button class="daily-claim-btn" onclick="openDaily()" style="margin-top:0;margin-bottom:16px;">🎁 Ежедневный бонус</button><div class="stats-grid"><div class="stat-box"><div class="stat-value">${d.games_played}</div><div class="stat-label">Игр</div></div><div class="stat-box"><div class="stat-value">${wr}%</div><div class="stat-label">Винрейт</div></div><div class="stat-box"><div class="stat-value">x${d.best_multiplier}</div><div class="stat-label">Лучший x</div></div><div class="stat-box"><div class="stat-value">${d.referrals}</div><div class="stat-label">Друзей</div></div><div class="stat-box"><div class="stat-value">${d.total_stars}</div><div class="stat-label">Stars</div></div><div class="stat-box"><div class="stat-value">${d.ads_watched}</div><div class="stat-label">Реклам</div></div></div><div class="section-title">🎖️ Ачивки</div><div class="achievements-grid">${d.achievements.map(a => `<div class="ach${a.unlocked ? ' unlocked' : ''}" title="${a.name}">${a.emoji}</div>`).join('')}</div>`;
             } catch (e) {}
         }
 
+        // ===== ЕЖЕДНЕВНЫЙ БОНУС СО STREAK =====
         async function openDaily() {
             document.getElementById('dailyModal').classList.add('active');
             const s = document.getElementById('dailyStatus'), b = document.getElementById('dailyClaimBtn');
+            const rew = document.getElementById('dailyReward');
+            const dots = document.getElementById('streakDots');
             s.textContent = 'Проверка...'; b.disabled = true; b.textContent = 'Забрать';
-            try { const r = await fetch(`${API_URL}/api/daily-status?user_id=${userId}`), d = await r.json(); if (d.available) { s.textContent = 'Бонус доступен! 🎉'; b.disabled = false; } else { s.textContent = `Следующий через ${formatTime(d.wait)}`; b.disabled = true; } } catch (e) {}
+            try {
+                const r = await apiFetch(`${API_URL}/api/daily-status?user_id=${userId}`), d = await r.json();
+                if (d.available) {
+                    const nextReward = d.next_reward || 1000;
+                    rew.textContent = `+${nextReward.toLocaleString('ru-RU')}`;
+                    s.textContent = `День ${d.streak + 1} серии из ${d.max_streak} 🎉`;
+                    b.disabled = false;
+                } else {
+                    rew.textContent = '—';
+                    s.textContent = `Следующий через ${formatTime(d.wait)}`;
+                    b.disabled = true;
+                }
+                // Отрисовка точек серии
+                dots.innerHTML = '';
+                const curStreak = d.streak || 0;
+                const maxS = d.max_streak || 7;
+                for (let i = 1; i <= maxS; i++) {
+                    const dot = document.createElement('div');
+                    dot.className = 'streak-dot';
+                    if (i <= curStreak) dot.classList.add('done');
+                    else if (i === curStreak + 1 && d.available) dot.classList.add('today');
+                    dot.textContent = i;
+                    dots.appendChild(dot);
+                }
+            } catch (e) {}
         }
         async function claimDaily() {
             const b = document.getElementById('dailyClaimBtn'); b.disabled = true;
             try {
-                const r = await fetch(`${API_URL}/api/daily-bonus?user_id=${userId}`, { method: 'POST' }), d = await r.json();
-                if (d.ok) { balance = d.balance; updateUI(); tg.showAlert(`🎁 +${d.reward}!`); if (d.level_info) notifyLevelUp(d.level_info); if (d.achievements) notifyAchievements(d.achievements); closeModal('dailyModal'); if (document.getElementById('profileTab').classList.contains('active')) loadProfile(); }
-                else if (d.error === 'cooldown') tg.showAlert(`⏳ ${formatTime(d.wait)}`);
+                const r = await apiFetch(`${API_URL}/api/daily-bonus?user_id=${userId}`, { method: 'POST' });
+                const d = await r.json();
+                if (d.ok) {
+                    balance = d.balance; updateUI(); animateBalance();
+                    haptic('success'); launchConfetti(80);
+                    tg.showAlert(`🎁 +${d.reward}!\n🔥 Серия: ${d.streak} дн.`);
+                    if (d.level_info) notifyLevelUp(d.level_info);
+                    if (d.achievements) notifyAchievements(d.achievements);
+                    closeModal('dailyModal');
+                    if (document.getElementById('profileTab').classList.contains('active')) loadProfile();
+                } else if (d.error === 'cooldown') tg.showAlert(`⏳ ${formatTime(d.wait)}`);
             } catch (e) {}
             finally { b.disabled = false; }
         }
 
+        // ===== МОДАЛКИ / ПОКУПКИ =====
         function openShop() { document.getElementById('shopModal').classList.add('active'); }
         function closeModal(id) { document.getElementById(id).classList.remove('active'); }
-        async function buyPackage(k) { if (!userId) return; closeModal('shopModal'); try { const r = await fetch(`${API_URL}/api/create-invoice?user_id=${userId}&package_key=${k}`, { method: 'POST' }), d = await r.json(); if (!d.ok) { tg.showAlert('Ошибка'); return; } tg.openInvoice(d.invoice_link, async st => { if (st === 'paid') { tg.showAlert('✅ Оплата!'); await refreshBalance(); } else if (st === 'cancelled') tg.showAlert('Отменено'); }); } catch (e) {} }
+        async function buyPackage(k) {
+            if (!userId) return;
+            closeModal('shopModal');
+            try {
+                const r = await apiFetch(`${API_URL}/api/create-invoice?user_id=${userId}&package_key=${k}`, { method: 'POST' });
+                const d = await r.json();
+                if (!d.ok) { tg.showAlert('Ошибка'); return; }
+                tg.openInvoice(d.invoice_link, async st => {
+                    if (st === 'paid') { tg.showAlert('✅ Оплата!'); await refreshBalance(); }
+                    else if (st === 'cancelled') tg.showAlert('Отменено');
+                });
+            } catch (e) {}
+        }
 
+        // ===== РЕКЛАМА =====
         async function watchAd() {
             if (!userId) return;
             const b = document.getElementById('adBtn'); b.disabled = true; b.textContent = '⏳...';
             try {
                 if (typeof show_11801124 !== 'function') throw new Error('SDK');
                 await show_11801124();
-                const r = await fetch(`${API_URL}/api/ad-reward?user_id=${userId}`, { method: 'POST' }), d = await r.json();
-                if (d.ok) { balance = d.balance; updateUI(); tg.showAlert(`✅ +${d.reward}! (${d.ads_today}/${d.ads_limit})`); if (d.level_info) notifyLevelUp(d.level_info); if (d.achievements) notifyAchievements(d.achievements); }
+                const r = await apiFetch(`${API_URL}/api/ad-reward?user_id=${userId}`, { method: 'POST' });
+                const d = await r.json();
+                if (d.ok) {
+                    balance = d.balance; updateUI(); animateBalance();
+                    haptic('success');
+                    tg.showAlert(`✅ +${d.reward}! (${d.ads_today}/${d.ads_limit})`);
+                    if (d.level_info) notifyLevelUp(d.level_info);
+                    if (d.achievements) notifyAchievements(d.achievements);
+                }
                 else if (d.error === 'cooldown') tg.showAlert(`⏳ ${d.wait} сек`);
                 else if (d.error === 'daily_limit') tg.showAlert(`📺 Лимит: ${d.limit}`);
             } catch (e) { tg.showAlert('Реклама недоступна'); }
             finally { b.disabled = false; b.textContent = '📺 +2000'; }
         }
 
+        // ===== ТИКЕР БОЛЬШИХ ВЫИГРЫШЕЙ =====
+        function renderTicker(wins) {
+            const track = document.getElementById('tickerTrack');
+            const t = document.getElementById('ticker');
+            if (!wins || wins.length === 0) { t.style.display = 'none'; return; }
+            t.style.display = 'block';
+            const gameEmoji = { mines: '💣', plinko: '🎰', clicker: '👆' };
+            const html = wins.map(w =>
+                `<span class="ticker-item">${gameEmoji[w.game] || '🎮'} ${escapeHtml(w.name)} выиграл <b>${w.amount.toLocaleString('ru-RU')}</b> 🪙</span>`
+            ).join('');
+            track.innerHTML = html + html; // дублируем для бесшовной прокрутки
+        }
+        async function loadBigWins() {
+            try {
+                const r = await apiFetch(`${API_URL}/api/big-wins`);
+                const d = await r.json();
+                if (d.ok) renderTicker(d.wins);
+            } catch (e) {}
+        }
+
+        // ===== ОНЛАЙН =====
+        async function loadOnline() {
+            try {
+                const r = await apiFetch(`${API_URL}/api/online`);
+                const d = await r.json();
+                if (d.ok) document.getElementById('onlineCount').textContent = d.online;
+            } catch (e) {}
+        }
+
+        // ===== ОБЩЕЕ =====
         async function refreshBalance() { const b = await apiGetBalance(); if (b !== null) { balance = b; updateUI(); } }
+
         async function init() {
             const u = tg.initDataUnsafe?.user;
             if (!u) { document.getElementById('status').textContent = 'Открой через Telegram'; return; }
@@ -802,6 +1044,11 @@
             await refreshBalance();
             document.getElementById('playBtn').disabled = false;
             renderGrid(); renderPlinkoBoard();
+            // Запускаем периодические таймеры
+            loadBigWins();
+            loadOnline();
+            tickerInterval = setInterval(loadBigWins, 8000);
+            onlineInterval = setInterval(loadOnline, 20000);
         }
         init();
         window.addEventListener('resize', renderPlinkoBoard);
