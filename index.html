@@ -90,7 +90,7 @@
         .play-btn.cashout { background: #f59e0b; }
 
         .multi-row { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
-        .multi-row button { flex: 1; min-width: 70px; padding: 11px 6px; font-size: 13px; font-weight: bold; border: none; border-radius: 12px; background: #0891b2; color: white; cursor: pointer; }
+        .multi-row button { flex: 1; min-width: 60px; padding: 11px 6px; font-size: 13px; font-weight: bold; border: none; border-radius: 12px; background: #0891b2; color: white; cursor: pointer; }
         .multi-row button:disabled { opacity: 0.5; }
 
         .row-btns { display: flex; gap: 8px; margin-top: 8px; }
@@ -168,28 +168,17 @@
             word-break: break-word;
         }
         .chat-time { font-size: 10px; opacity: 0.5; margin-top: 4px; text-align: right; }
-        .chat-input-row {
-            display: flex; gap: 6px;
-        }
+        .chat-input-row { display: flex; gap: 6px; }
         .chat-input-row input {
-            flex: 1;
-            padding: 12px;
-            border: none;
-            border-radius: 10px;
+            flex: 1; padding: 12px; border: none; border-radius: 10px;
             background: rgba(255,255,255,0.08);
             color: var(--tg-theme-text-color, #fff);
-            font-size: 14px;
-            outline: none;
+            font-size: 14px; outline: none;
         }
         .chat-input-row button {
-            padding: 12px 18px;
-            border: none;
-            border-radius: 10px;
-            background: var(--tg-theme-button-color, #2481cc);
-            color: #fff;
-            font-weight: bold;
-            cursor: pointer;
-            font-size: 16px;
+            padding: 12px 18px; border: none; border-radius: 10px;
+            background: var(--tg-theme-button-color, #2481cc); color: #fff;
+            font-weight: bold; cursor: pointer; font-size: 16px;
         }
 
         /* Cards */
@@ -297,7 +286,7 @@
         <button class="main-tab" onclick="switchMain('profile')">👤 Профиль</button>
     </div>
 
-    <!-- ===== GAME ===== -->
+    <!-- GAME -->
     <div id="gameTab" class="tab-content active">
         <div class="sub-tabs">
             <button class="sub-tab active" onclick="switchSub('mines')">💣 Мины</button>
@@ -390,7 +379,7 @@
         </div>
     </div>
 
-    <!-- ===== MISSIONS ===== -->
+    <!-- MISSIONS -->
     <div id="missionsTab" class="tab-content">
         <h2 style="margin-bottom:16px;font-size:18px;">📋 Ежедневные миссии</h2>
         <div id="missionsList"><div class="loading-text">Загрузка...</div></div>
@@ -401,13 +390,13 @@
         </div>
     </div>
 
-    <!-- ===== SHOP (IN-GAME) ===== -->
+    <!-- SHOP -->
     <div id="shopTab" class="tab-content">
         <h2 style="margin-bottom:16px;font-size:18px;">🛒 Магазин титулов</h2>
         <div id="shopList"><div class="loading-text">Загрузка...</div></div>
     </div>
 
-    <!-- ===== CHAT ===== -->
+    <!-- CHAT -->
     <div id="chatTab" class="tab-content">
         <h2 style="margin-bottom:12px;font-size:18px;">💬 Общий чат</h2>
         <div class="chat-box">
@@ -421,7 +410,7 @@
         </div>
     </div>
 
-    <!-- ===== TOP ===== -->
+    <!-- TOP -->
     <div id="topTab" class="tab-content">
         <div class="sub-tabs">
             <button class="sub-tab active" onclick="switchTopSub('weekly')">🏆 Турнир недели</button>
@@ -446,7 +435,7 @@
         </div>
     </div>
 
-    <!-- ===== PROFILE ===== -->
+    <!-- PROFILE -->
     <div id="profileTab" class="tab-content">
         <div id="profileContent"><div class="loading-text">Загрузка...</div></div>
     </div>
@@ -519,7 +508,6 @@
         let userId = null;
         let plinkoBusy = false;
         let chatInterval = null;
-        let chatLastId = 0;
 
         async function apiGetBalance() {
             if (!userId) return 0;
@@ -581,8 +569,7 @@
             if (name === 'game') renderPlinkoBoard();
             if (name === 'missions') loadMissions();
             if (name === 'shop') loadShop();
-            if (name === 'chat') { startChat(); }
-            else { stopChat(); }
+            if (name === 'chat') startChat(); else stopChat();
             if (name === 'top') { loadTournament(); loadMonthly(); }
             if (name === 'profile') loadProfile();
         }
@@ -592,7 +579,7 @@
             document.querySelectorAll('#gameTab .sub-tab').forEach((t, i) => t.classList.toggle('active', arr[i] === name));
             arr.forEach(n => document.getElementById(n + 'Sub').classList.toggle('active', n === name));
             if (name === 'plinko') renderPlinkoBoard();
-            if (name === 'clicker') loadClickerStatus();
+            if (name === 'clicker') updateClickerUI();
         }
 
         function switchTopSub(name) {
@@ -719,11 +706,7 @@
         let clickerLimit = 5000;
         let clickerBusy = false;
 
-        async function loadClickerStatus() {
-            try {
-                const r = await fetch(`${API_URL}/api/click?user_id=0`, { method: 'POST' });
-                // Заглушка — просто показываем текущий прогресс
-            } catch (e) {}
+        function updateClickerUI() {
             document.getElementById('clickerProgress').textContent = `${clickerClicks}/${clickerLimit}`;
         }
 
@@ -734,7 +717,6 @@
                 return;
             }
             clickerBusy = true;
-            const btn = document.getElementById('clickerBtn');
             try {
                 const r = await fetch(`${API_URL}/api/click?user_id=${userId}`, { method: 'POST' });
                 const data = await r.json();
@@ -742,11 +724,11 @@
                     balance = data.balance;
                     clickerClicks = data.clicks;
                     updateUI();
-                    document.getElementById('clickerProgress').textContent = `${clickerClicks}/${clickerLimit}`;
+                    updateClickerUI();
                     document.getElementById('clickerStatus').textContent = `+1 монета (всего: ${clickerClicks})`;
                 } else if (data.error === 'daily_limit') {
                     clickerClicks = data.clicks;
-                    document.getElementById('clickerProgress').textContent = `${clickerClicks}/${clickerLimit}`;
+                    updateClickerUI();
                     tg.showAlert(`⏳ Лимит ${clickerLimit} кликов в день достигнут!`);
                 } else {
                     tg.showAlert('Ошибка клика');
@@ -797,7 +779,7 @@
 
         function sleep(ms) { return new Promise(res => setTimeout(res, ms)); }
 
-        async function animateBall(path, finalPos, color) {
+        async function animateSingleBall(path, finalPos) {
             const board = document.getElementById('plinkoBoard');
             const w = board.clientWidth || 340;
             const h = board.clientHeight || 280;
@@ -806,8 +788,8 @@
             const colGap = w / (rows + 2);
             const ball = document.createElement('div');
             ball.className = 'ball';
-            ball.style.background = color || '#fbbf24';
-            ball.style.boxShadow = `0 0 10px ${color || '#fbbf24'}`;
+            ball.style.background = '#fbbf24';
+            ball.style.boxShadow = '0 0 10px #fbbf24';
             board.appendChild(ball);
             const firstRowPegs = 2;
             const firstRowWidth = (firstRowPegs - 1) * colGap;
@@ -831,25 +813,61 @@
             ball.remove();
         }
 
+        function highlightResultSlots(results) {
+            // Считаем, сколько шаров упало в каждый слот, подсвечиваем пропорционально
+            const counts = {};
+            results.forEach(res => {
+                counts[res.position] = (counts[res.position] || 0) + 1;
+            });
+            Object.keys(counts).forEach(pos => {
+                const slot = document.getElementById('slot' + pos);
+                if (slot) {
+                    slot.classList.add('hit');
+                    if (counts[pos] > 1) {
+                        slot.textContent = slot.textContent.replace(/\s\(\d+\)$/, '') + ` (${counts[pos]})`;
+                    }
+                }
+            });
+        }
+
         async function playPlinko(count = 1) {
             if (plinkoBusy || !userId) return;
             const bet = getPlinkoBet();
             const risk = PLINKO_RISKS[plinkoRiskIdx];
             const totalBet = bet * count;
             if (balance < totalBet) { tg.showAlert(`Недостаточно монет (нужно ${totalBet.toLocaleString('ru-RU')})`); return; }
+
             plinkoBusy = true;
-            document.getElementById('plinkoBtn').disabled = true;
-            document.getElementById('plinkoX5').disabled = true;
-            document.getElementById('plinkoX10').disabled = true;
-            document.getElementById('plinkoX50').disabled = true;
-            document.getElementById('plinkoX100').disabled = true;
+            const buttons = ['plinkoBtn', 'plinkoX5', 'plinkoX10', 'plinkoX50', 'plinkoX100'];
+            buttons.forEach(id => { const b = document.getElementById(id); if (b) b.disabled = true; });
             document.getElementById('plinkoStatus').textContent = count > 1 ? `Бросаем ${count} шаров...` : '...';
             document.querySelectorAll('.slot.hit').forEach(s => s.classList.remove('hit'));
+            // сбросить счётчики слотов
+            document.querySelectorAll('.slot').forEach(s => {
+                s.textContent = s.textContent.replace(/\s\(\d+\)$/, '');
+            });
+
             try {
                 const endpoint = count === 1 ? 'play' : 'multi';
                 let url = `${API_URL}/api/plinko/${endpoint}?user_id=${userId}&amount=${bet}&risk=${risk}`;
                 if (count > 1) url += `&count=${count}`;
-                const r = await fetch(url, { method: 'POST' });
+
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 30000);
+
+                let r;
+                try {
+                    r = await fetch(url, { method: 'POST', signal: controller.signal });
+                } finally {
+                    clearTimeout(timeoutId);
+                }
+
+                if (!r.ok) {
+                    console.error('HTTP Error', r.status);
+                    tg.showAlert(`Ошибка сервера ${r.status}. Перезапусти bot.py.`);
+                    return;
+                }
+
                 const data = await r.json();
                 if (!data.ok) {
                     tg.showAlert('Ошибка: ' + (data.error || data.detail || 'неизвестная'));
@@ -859,31 +877,29 @@
                 balance = data.balance;
                 updateUI();
                 if (data.level_info) notifyLevelUp(data.level_info);
+
                 if (count === 1) {
+                    // 1 шар — с анимацией
                     if (plinkoSpeed === 'fast') {
                         await sleep(200);
                         const slot = document.getElementById('slot' + data.position);
                         if (slot) slot.classList.add('hit');
                     } else {
-                        await animateBall(data.path, data.position);
+                        try {
+                            await animateSingleBall(data.path, data.position);
+                        } catch (e) {
+                            console.error('Anim error', e);
+                            const slot = document.getElementById('slot' + data.position);
+                            if (slot) slot.classList.add('hit');
+                        }
                     }
                     document.getElementById('plinkoStatus').textContent = data.multiplier >= 1
                         ? `🎉 x${data.multiplier} — выигрыш ${data.win.toLocaleString('ru-RU')}!`
                         : `😢 x${data.multiplier} — потерял ${(bet - data.win).toLocaleString('ru-RU')}`;
                 } else {
-                    if (plinkoSpeed === 'fast' || count > 20) {
-                        await sleep(300);
-                        data.results.forEach(res => {
-                            const slot = document.getElementById('slot' + res.position);
-                            if (slot) slot.classList.add('hit');
-                        });
-                    } else {
-                        const colors = ['#fbbf24', '#60a5fa', '#f87171', '#a78bfa', '#34d399', '#fb923c', '#22d3ee', '#e879f9', '#facc15', '#4ade80'];
-                        const promises = data.results.map((res, i) =>
-                            (async () => { await sleep(i * 60); await animateBall(res.path, res.position, colors[i % colors.length]); })()
-                        );
-                        await Promise.all(promises);
-                    }
+                    // Много шаров — просто подсветить слоты
+                    await sleep(200);
+                    highlightResultSlots(data.results);
                     const winSum = data.total_win;
                     const net = winSum - totalBet;
                     const sign = net >= 0 ? '+' : '';
@@ -891,14 +907,13 @@
                         `🎰 ${count} шаров: ${totalBet.toLocaleString('ru-RU')} → ${winSum.toLocaleString('ru-RU')} (${sign}${net.toLocaleString('ru-RU')})`;
                 }
                 if (data.achievements) notifyAchievements(data.achievements);
-            } catch (e) { tg.showAlert('Ошибка соединения'); }
-            finally {
+            } catch (e) {
+                console.error('Plinko catch:', e);
+                if (e.name === 'AbortError') tg.showAlert('⏱ Сервер долго не отвечает');
+                else tg.showAlert('Ошибка: ' + (e.message || 'неизвестная'));
+            } finally {
                 plinkoBusy = false;
-                document.getElementById('plinkoBtn').disabled = false;
-                document.getElementById('plinkoX5').disabled = false;
-                document.getElementById('plinkoX10').disabled = false;
-                document.getElementById('plinkoX50').disabled = false;
-                document.getElementById('plinkoX100').disabled = false;
+                buttons.forEach(id => { const b = document.getElementById(id); if (b) b.disabled = false; });
             }
         }
 
@@ -958,7 +973,7 @@
             } catch (e) { tg.showAlert('Ошибка соединения'); }
         }
 
-        // ===== SHOP (IN-GAME) =====
+        // ===== SHOP =====
         async function loadShop() {
             const list = document.getElementById('shopList');
             list.innerHTML = '<div class="loading-text">Загрузка...</div>';
@@ -966,20 +981,15 @@
                 const r = await fetch(`${API_URL}/api/shop/titles?user_id=${userId}`);
                 const data = await r.json();
                 if (!data.ok) { list.innerHTML = '<div class="loading-text">Ошибка</div>'; return; }
-                balance = data.balance;
-                updateUI();
+                balance = data.balance; updateUI();
                 list.innerHTML = '';
                 data.titles.forEach(t => {
                     const el = document.createElement('div');
                     el.className = 'shop-item' + (t.equipped ? ' equipped' : (t.owned ? ' owned' : ''));
                     let btnHtml = '';
-                    if (t.equipped) {
-                        btnHtml = `<button class="shop-item-btn equipped" onclick="equipTitle('')">Снять</button>`;
-                    } else if (t.owned) {
-                        btnHtml = `<button class="shop-item-btn equip" onclick="equipTitle('${t.id}')">Надеть</button>`;
-                    } else {
-                        btnHtml = `<button class="shop-item-btn buy" onclick="buyTitle('${t.id}')">${t.price.toLocaleString('ru-RU')} 🪙</button>`;
-                    }
+                    if (t.equipped) btnHtml = `<button class="shop-item-btn equipped" onclick="equipTitle('')">Снять</button>`;
+                    else if (t.owned) btnHtml = `<button class="shop-item-btn equip" onclick="equipTitle('${t.id}')">Надеть</button>`;
+                    else btnHtml = `<button class="shop-item-btn buy" onclick="buyTitle('${t.id}')">${t.price.toLocaleString('ru-RU')} 🪙</button>`;
                     el.innerHTML = `
                         <div>
                             <div class="shop-title-name" style="color:${t.color}">${t.name}</div>
@@ -1021,21 +1031,16 @@
 
         function renderChatMessages(messages) {
             const box = document.getElementById('chatMessages');
-            const wasEmpty = box.querySelector('.loading-text');
             if (messages.length === 0) {
-                if (wasEmpty) box.innerHTML = '<div class="loading-text">Сообщений пока нет. Будь первым!</div>';
+                box.innerHTML = '<div class="loading-text">Сообщений пока нет. Будь первым!</div>';
                 return;
             }
-            if (wasEmpty) box.innerHTML = '';
-            const currentLastId = messages.length > 0 ? messages[messages.length - 1].created_at : null;
             box.innerHTML = '';
             messages.forEach(m => {
                 const el = document.createElement('div');
                 el.className = 'chat-message' + (m.user_id === userId ? ' own' : '');
                 let nameHtml = `<span style="color:${m.title_color || '#60a5fa'}">${escapeHtml(m.name)}</span>`;
-                if (m.title) {
-                    nameHtml += ` <span style="color:${m.title_color};font-size:11px;">[${m.title}]</span>`;
-                }
+                if (m.title) nameHtml += ` <span style="color:${m.title_color};font-size:11px;">[${m.title}]</span>`;
                 const time = new Date(m.created_at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
                 el.innerHTML = `
                     <div class="chat-name">${nameHtml}</div>
@@ -1077,10 +1082,7 @@
             if (chatInterval) clearInterval(chatInterval);
             chatInterval = setInterval(loadChat, 4000);
         }
-
-        function stopChat() {
-            if (chatInterval) { clearInterval(chatInterval); chatInterval = null; }
-        }
+        function stopChat() { if (chatInterval) { clearInterval(chatInterval); chatInterval = null; } }
 
         // ===== TOP =====
         function formatTime(seconds) {
@@ -1219,7 +1221,7 @@
             finally { btn.disabled = false; }
         }
 
-        // ===== SHOP (STARS) =====
+        // ===== SHOP STARS =====
         function openShop() { document.getElementById('shopModal').classList.add('active'); }
         function closeModal(id) { document.getElementById(id).classList.remove('active'); }
 
@@ -1254,9 +1256,9 @@
                     if (data.level_info) notifyLevelUp(data.level_info);
                     if (data.achievements) notifyAchievements(data.achievements);
                 } else if (data.error === 'cooldown') { tg.showAlert(`⏳ Подожди ${data.wait} секунд`); }
-                else if (data.error === 'daily_limit') { tg.showAlert(`📺 Лимит рекламы на сегодня: ${data.limit}`); }
+                else if (data.error === 'daily_limit') { tg.showAlert(`📺 Лимит рекламы: ${data.limit}`); }
                 else { tg.showAlert('Ошибка начисления'); }
-            } catch (e) { tg.showAlert('Реклама временно недоступна. Попробуй позже.'); }
+            } catch (e) { tg.showAlert('Реклама временно недоступна'); }
             finally { adBtn.disabled = false; adBtn.textContent = '📺 +2000'; }
         }
 
@@ -1274,7 +1276,7 @@
             document.getElementById('playBtn').disabled = false;
             renderGrid();
             renderPlinkoBoard();
-            loadClickerStatus();
+            updateClickerUI();
         }
 
         init();
