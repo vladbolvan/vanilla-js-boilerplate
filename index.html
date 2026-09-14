@@ -93,7 +93,7 @@
     </style>
 </head>
 <body>
-    <div class="balance">💰 <span id="balance">1000</span></div>
+    <div class="balance">💰 <span id="balance">...</span></div>
 
     <div class="controls">
         <div class="control">
@@ -135,19 +135,35 @@
         let game = null;
         let inGame = false;
 
-        async function loadBalance() {
+        // ===== ЗАГРУЗКА / СОХРАНЕНИЕ БАЛАНСА =====
+        function loadBalance() {
             try {
-                const result = await tg.CloudStorage.getItem('balance');
-                if (result) balance = parseInt(result);
-                else await tg.CloudStorage.setItem('balance', '1000');
-            } catch(e) { console.log('CloudStorage error', e); }
-            updateUI();
+                tg.CloudStorage.getItem('balance', (err, result) => {
+                    if (err || result === null || result === undefined || result === '') {
+                        balance = 1000;
+                        tg.CloudStorage.setItem('balance', '1000');
+                    } else {
+                        const parsed = parseInt(result);
+                        balance = isNaN(parsed) ? 1000 : parsed;
+                    }
+                    updateUI();
+                });
+            } catch (e) {
+                console.log('CloudStorage error:', e);
+                balance = 1000;
+                updateUI();
+            }
         }
 
-        async function saveBalance() {
-            try { await tg.CloudStorage.setItem('balance', String(balance)); } catch(e) {}
+        function saveBalance() {
+            try {
+                tg.CloudStorage.setItem('balance', String(balance));
+            } catch (e) {
+                console.log('Save error:', e);
+            }
         }
 
+        // ===== ОБНОВЛЕНИЕ ИНТЕРФЕЙСА =====
         function updateUI() {
             document.getElementById('balance').textContent = balance;
             document.getElementById('bet').textContent = BET_OPTIONS[betIdx];
@@ -166,6 +182,7 @@
             updateUI();
         }
 
+        // ===== ИГРОВАЯ ЛОГИКА =====
         function multiplier(opened, mines) {
             if (opened === 0) return 1.0;
             const safe = TOTAL_CELLS - mines;
@@ -194,7 +211,10 @@
             const bet = BET_OPTIONS[betIdx];
             const mines = MINES_OPTIONS[minesIdx];
 
-            if (balance < bet) { tg.showAlert('Недостаточно монет!'); return; }
+            if (balance < bet) {
+                tg.showAlert('Недостаточно монет!');
+                return;
+            }
 
             balance -= bet;
             saveBalance();
@@ -298,6 +318,7 @@
             game = null;
         }
 
+        // ===== ЗАПУСК =====
         loadBalance();
         renderGrid();
     </script>
