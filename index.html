@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Boomzy Mines</title>
+    <title>Boomzy Play</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <script src="//libtl.com/sdk.js" data-zone="11801124" data-sdk="show_11801124"></script>
     <style>
@@ -18,6 +18,29 @@
             margin: 0 auto;
         }
         .balance { font-size: 28px; font-weight: bold; color: #4ade80; text-align: center; margin-bottom: 16px; }
+        .tabs {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 16px;
+            background: var(--tg-theme-secondary-bg-color, #2a2a4a);
+            border-radius: 12px;
+            padding: 4px;
+        }
+        .tab {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 8px;
+            background: transparent;
+            color: var(--tg-theme-text-color, #fff);
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .tab.active { background: var(--tg-theme-button-color, #2481cc); }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
         .controls { display: flex; gap: 8px; margin-bottom: 12px; }
         .control { flex: 1; background: var(--tg-theme-secondary-bg-color, #2a2a4a); border-radius: 12px; padding: 10px; }
         .control label { display: block; font-size: 12px; opacity: 0.7; margin-bottom: 6px; text-align: center; }
@@ -25,7 +48,7 @@
         .control-btns button { background: none; border: none; color: var(--tg-theme-text-color, #fff); font-size: 20px; cursor: pointer; padding: 4px 12px; }
         .control-value { font-weight: bold; font-size: 16px; }
         .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 16px 0; }
-        .cell { aspect-ratio: 1; background: var(--tg-theme-secondary-bg-color, #2a2a4a); border: none; border-radius: 12px; font-size: 28px; cursor: pointer; transition: transform 0.1s, background 0.2s; color: white; }
+        .cell { aspect-ratio: 1; background: var(--tg-theme-secondary-bg-color, #2a2a4a); border: none; border-radius: 12px; font-size: 28px; cursor: pointer; color: white; transition: transform 0.1s, background 0.2s; }
         .cell:active:not(:disabled) { transform: scale(0.95); }
         .cell.revealed { background: #4ade80; cursor: default; }
         .cell.bomb { background: #ef4444; }
@@ -40,12 +63,58 @@
         .ad-btn { background: #10b981; }
         .ad-btn:disabled { opacity: 0.5; cursor: default; }
         .status { text-align: center; font-size: 14px; margin: 8px 0; min-height: 20px; opacity: 0.9; }
+        /* Plinko */
+        .plinko-board {
+            position: relative;
+            width: 100%;
+            height: 320px;
+            background: var(--tg-theme-secondary-bg-color, #2a2a4a);
+            border-radius: 12px;
+            margin: 12px 0;
+            overflow: hidden;
+        }
+        .peg {
+            position: absolute;
+            width: 6px;
+            height: 6px;
+            background: #888;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+        }
+        .ball {
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            background: #fbbf24;
+            border-radius: 50%;
+            box-shadow: 0 0 12px #fbbf24;
+            transform: translate(-50%, -50%);
+            z-index: 10;
+            transition: left 0.13s linear, top 0.13s linear;
+        }
+        .plinko-slots {
+            display: flex;
+            gap: 2px;
+            margin-bottom: 12px;
+        }
+        .slot {
+            flex: 1;
+            padding: 8px 1px;
+            background: var(--tg-theme-secondary-bg-color, #2a2a4a);
+            border-radius: 6px;
+            text-align: center;
+            font-size: 10px;
+            font-weight: bold;
+            color: #4ade80;
+            transition: all 0.3s;
+        }
+        .slot.hit { background: #fbbf24; color: #000; transform: scale(1.15); }
+        /* Modal */
         .modal-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.7); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 16px; }
         .modal-overlay.active { display: flex; }
         .modal { background: var(--tg-theme-bg-color, #1a1a2e); border-radius: 16px; padding: 20px; width: 100%; max-width: 400px; max-height: 80vh; overflow-y: auto; }
         .modal h2 { font-size: 20px; margin-bottom: 16px; text-align: center; }
         .package { background: var(--tg-theme-secondary-bg-color, #2a2a4a); border-radius: 12px; padding: 14px; margin-bottom: 10px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
-        .package:active { transform: scale(0.98); }
         .package-coins { font-weight: bold; font-size: 16px; }
         .package-stars { color: #fbbf24; font-weight: bold; }
         .close-btn { width: 100%; padding: 12px; margin-top: 10px; font-size: 16px; border: none; border-radius: 12px; background: transparent; color: var(--tg-theme-text-color, #fff); border: 1px solid rgba(255, 255, 255, 0.2); cursor: pointer; }
@@ -62,69 +131,85 @@
 <body>
     <div class="balance">💰 <span id="balance">...</span></div>
 
-    <div class="controls">
-        <div class="control">
-            <label>Ставка</label>
-            <div class="control-btns">
-                <button onclick="changeBet(-1)">◀</button>
-                <span class="control-value" id="bet">100</span>
-                <button onclick="changeBet(1)">▶</button>
-            </div>
-        </div>
-        <div class="control">
-            <label>Мины</label>
-            <div class="control-btns">
-                <button onclick="changeMines(-1)">◀</button>
-                <span class="control-value" id="mines">3</span>
-                <button onclick="changeMines(1)">▶</button>
-            </div>
-        </div>
+    <div class="tabs">
+        <button class="tab active" onclick="switchTab('mines')">💣 Мины</button>
+        <button class="tab" onclick="switchTab('plinko')">🎰 Плинко</button>
     </div>
 
-    <div class="status" id="status">Загрузка...</div>
+    <!-- ===== MINES TAB ===== -->
+    <div id="minesTab" class="tab-content active">
+        <div class="controls">
+            <div class="control">
+                <label>Ставка</label>
+                <div class="control-btns">
+                    <button onclick="changeBet(-1)">◀</button>
+                    <span class="control-value" id="bet">100</span>
+                    <button onclick="changeBet(1)">▶</button>
+                </div>
+            </div>
+            <div class="control">
+                <label>Мины</label>
+                <div class="control-btns">
+                    <button onclick="changeMines(-1)">◀</button>
+                    <span class="control-value" id="mines">3</span>
+                    <button onclick="changeMines(1)">▶</button>
+                </div>
+            </div>
+        </div>
+        <div class="status" id="status">Настрой ставку и жми «Играть»</div>
+        <div class="grid" id="grid"></div>
+        <button class="play-btn" id="playBtn" onclick="handlePlay()" disabled>🎮 Играть</button>
+    </div>
 
-    <div class="grid" id="grid"></div>
-
-    <button class="play-btn" id="playBtn" onclick="handlePlay()" disabled>🎮 Играть</button>
+    <!-- ===== PLINKO TAB ===== -->
+    <div id="plinkoTab" class="tab-content">
+        <div class="controls">
+            <div class="control">
+                <label>Ставка</label>
+                <div class="control-btns">
+                    <button onclick="changePlinkoBet(-1)">◀</button>
+                    <span class="control-value" id="plinkoBet">100</span>
+                    <button onclick="changePlinkoBet(1)">▶</button>
+                </div>
+            </div>
+            <div class="control">
+                <label>Риск</label>
+                <div class="control-btns">
+                    <button onclick="changeRisk(-1)">◀</button>
+                    <span class="control-value" id="plinkoRisk">Низкий</span>
+                    <button onclick="changeRisk(1)">▶</button>
+                </div>
+            </div>
+        </div>
+        <div class="status" id="plinkoStatus">Жми «Бросить шар»!</div>
+        <div class="plinko-board" id="plinkoBoard"></div>
+        <div class="plinko-slots" id="plinkoSlots"></div>
+        <button class="play-btn" id="plinkoBtn" onclick="playPlinko()">🎰 Бросить шар</button>
+    </div>
 
     <div class="row-btns">
         <button class="buy-btn" onclick="openShop()">💎 Магазин</button>
         <button class="top-btn" onclick="openLeaderboard()">🏆 Топ</button>
     </div>
-
     <div class="row-btns">
         <button class="ad-btn" id="adBtn" onclick="watchAd()">📺 +200 монет за рекламу</button>
     </div>
 
+    <!-- Modals -->
     <div class="modal-overlay" id="shopModal">
         <div class="modal">
             <h2>💎 Магазин монет</h2>
-            <div class="package" onclick="buyPackage('small')">
-                <span class="package-coins">💎 1 000 монет</span>
-                <span class="package-stars">25 ⭐</span>
-            </div>
-            <div class="package" onclick="buyPackage('medium')">
-                <span class="package-coins">💎 5 000 монет</span>
-                <span class="package-stars">100 ⭐</span>
-            </div>
-            <div class="package" onclick="buyPackage('large')">
-                <span class="package-coins">💎 15 000 монет</span>
-                <span class="package-stars">250 ⭐</span>
-            </div>
-            <div class="package" onclick="buyPackage('mega')">
-                <span class="package-coins">💎 50 000 монет</span>
-                <span class="package-stars">750 ⭐</span>
-            </div>
+            <div class="package" onclick="buyPackage('small')"><span class="package-coins">💎 1 000 монет</span><span class="package-stars">25 ⭐</span></div>
+            <div class="package" onclick="buyPackage('medium')"><span class="package-coins">💎 5 000 монет</span><span class="package-stars">100 ⭐</span></div>
+            <div class="package" onclick="buyPackage('large')"><span class="package-coins">💎 15 000 монет</span><span class="package-stars">250 ⭐</span></div>
+            <div class="package" onclick="buyPackage('mega')"><span class="package-coins">💎 50 000 монет</span><span class="package-stars">750 ⭐</span></div>
             <button class="close-btn" onclick="closeModal('shopModal')">Закрыть</button>
         </div>
     </div>
-
     <div class="modal-overlay" id="leaderModal">
         <div class="modal">
             <h2>🏆 Топ-10 игроков</h2>
-            <div id="leadersList">
-                <div class="loading-text">Загрузка...</div>
-            </div>
+            <div id="leadersList"><div class="loading-text">Загрузка...</div></div>
             <button class="close-btn" onclick="closeModal('leaderModal')">Закрыть</button>
         </div>
     </div>
@@ -139,12 +224,24 @@
         const MINES_OPTIONS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
         const TOTAL_CELLS = 16;
 
+        const PLINKO_BETS = [100, 500, 1000, 5000];
+        const PLINKO_RISKS = ["low", "medium", "high"];
+        const PLINKO_RISK_NAMES = { low: "Низкий", medium: "Средний", high: "Высокий" };
+        const PLINKO_MULTIPLIERS = {
+            low:    [10, 3, 1.6, 1.4, 1.1, 1.0, 0.5, 1.0, 1.1, 1.4, 1.6, 3, 10],
+            medium: [33, 11, 4, 2, 1.1, 0.6, 0.3, 0.6, 1.1, 2, 4, 11, 33],
+            high:   [170, 24, 8.1, 2, 0.7, 0.2, 0.2, 0.2, 0.7, 2, 8.1, 24, 170],
+        };
+
         let balance = 0;
         let betIdx = 0;
         let minesIdx = 2;
+        let plinkoBetIdx = 0;
+        let plinkoRiskIdx = 0;
         let game = null;
         let inGame = false;
         let userId = null;
+        let plinkoBusy = false;
 
         // ===== API =====
         async function apiGetBalance() {
@@ -153,21 +250,19 @@
                 const r = await fetch(`${API_URL}/api/balance/${userId}`);
                 const d = await r.json();
                 return d.balance || 0;
-            } catch (e) { console.error(e); return null; }
+            } catch (e) { return null; }
         }
-
         async function apiBet(amount) {
             try {
                 const r = await fetch(`${API_URL}/api/bet?user_id=${userId}&amount=${amount}`, { method: 'POST' });
                 return await r.json();
-            } catch (e) { console.error(e); return { ok: false }; }
+            } catch (e) { return { ok: false }; }
         }
-
         async function apiWin(amount) {
             try {
                 const r = await fetch(`${API_URL}/api/win?user_id=${userId}&amount=${amount}`, { method: 'POST' });
                 return await r.json();
-            } catch (e) { console.error(e); return { ok: false }; }
+            } catch (e) { return { ok: false }; }
         }
 
         // ===== UI =====
@@ -175,6 +270,17 @@
             document.getElementById('balance').textContent = balance.toLocaleString('ru-RU');
             document.getElementById('bet').textContent = BET_OPTIONS[betIdx].toLocaleString('ru-RU');
             document.getElementById('mines').textContent = MINES_OPTIONS[minesIdx];
+            document.getElementById('plinkoBet').textContent = PLINKO_BETS[plinkoBetIdx].toLocaleString('ru-RU');
+            document.getElementById('plinkoRisk').textContent = PLINKO_RISK_NAMES[PLINKO_RISKS[plinkoRiskIdx]];
+        }
+
+        function switchTab(name) {
+            document.querySelectorAll('.tab').forEach((t, i) => {
+                t.classList.toggle('active', (name === 'mines' && i === 0) || (name === 'plinko' && i === 1));
+            });
+            document.getElementById('minesTab').classList.toggle('active', name === 'mines');
+            document.getElementById('plinkoTab').classList.toggle('active', name === 'plinko');
+            if (name === 'plinko') renderPlinkoBoard();
         }
 
         function changeBet(dir) {
@@ -182,14 +288,24 @@
             betIdx = Math.max(0, Math.min(BET_OPTIONS.length - 1, betIdx + dir));
             updateUI();
         }
-
         function changeMines(dir) {
             if (inGame) return;
             minesIdx = Math.max(0, Math.min(MINES_OPTIONS.length - 1, minesIdx + dir));
             updateUI();
         }
+        function changePlinkoBet(dir) {
+            if (plinkoBusy) return;
+            plinkoBetIdx = Math.max(0, Math.min(PLINKO_BETS.length - 1, plinkoBetIdx + dir));
+            updateUI();
+        }
+        function changeRisk(dir) {
+            if (plinkoBusy) return;
+            plinkoRiskIdx = Math.max(0, Math.min(PLINKO_RISKS.length - 1, plinkoRiskIdx + dir));
+            updateUI();
+            renderPlinkoSlots();
+        }
 
-        // ===== ИГРА =====
+        // ===== MINES =====
         function multiplier(opened, mines) {
             if (opened === 0) return 1.0;
             const safe = TOTAL_CELLS - mines;
@@ -217,75 +333,48 @@
         async function startGame() {
             const bet = BET_OPTIONS[betIdx];
             const mines = MINES_OPTIONS[minesIdx];
-
             if (balance < bet) { tg.showAlert('Недостаточно монет!'); return; }
-
             const result = await apiBet(bet);
-            if (!result.ok) {
-                tg.showAlert('Не удалось сделать ставку.');
-                balance = result.balance ?? balance;
-                updateUI();
-                return;
-            }
+            if (!result.ok) { tg.showAlert('Не удалось сделать ставку.'); balance = result.balance ?? balance; updateUI(); return; }
             balance = result.balance;
             updateUI();
-
             const mineSet = new Set();
             while (mineSet.size < mines) mineSet.add(Math.floor(Math.random() * TOTAL_CELLS));
-
             game = { mines: mineSet, opened: new Set(), bet, minesCount: mines };
             inGame = true;
-
             renderGrid();
             const btn = document.getElementById('playBtn');
             btn.textContent = '💰 Забрать 0';
             btn.classList.add('cashout');
             btn.disabled = true;
-            document.getElementById('status').textContent = `Мин на поле: ${mines}. Открывай клетки!`;
+            document.getElementById('status').textContent = `Мин: ${mines}. Открывай!`;
         }
 
         function openCell(idx, btn) {
             if (!inGame || !game || game.opened.has(idx)) return;
-
             if (game.mines.has(idx)) {
-                btn.textContent = '💥';
-                btn.classList.add('bomb');
-                const mineSet = game.mines;
-                const bet = game.bet;
-
+                btn.textContent = '💥'; btn.classList.add('bomb');
+                const mineSet = game.mines, bet = game.bet;
                 document.querySelectorAll('.cell').forEach((cell, i) => {
                     cell.disabled = true;
-                    if (mineSet.has(i) && cell.textContent !== '💥') {
-                        cell.textContent = '💣';
-                        cell.classList.add('bomb');
-                    }
+                    if (mineSet.has(i) && cell.textContent !== '💥') { cell.textContent = '💣'; cell.classList.add('bomb'); }
                 });
-
-                document.getElementById('status').textContent = `💥 Бомба! Ты потерял ${bet.toLocaleString('ru-RU')} монет.`;
+                document.getElementById('status').textContent = `💥 Бомба! Потерял ${bet.toLocaleString('ru-RU')} монет.`;
                 const pb = document.getElementById('playBtn');
-                pb.textContent = '🔄 Играть снова';
-                pb.classList.remove('cashout');
-                pb.disabled = false;
-                inGame = false;
-                game = null;
+                pb.textContent = '🔄 Играть снова'; pb.classList.remove('cashout'); pb.disabled = false;
+                inGame = false; game = null;
                 return;
             }
-
             game.opened.add(idx);
-            btn.textContent = '💎';
-            btn.classList.add('revealed');
-            btn.disabled = true;
-
+            btn.textContent = '💎'; btn.classList.add('revealed'); btn.disabled = true;
             const opened = game.opened.size;
             const mult = multiplier(opened, game.minesCount);
             const win = Math.floor(game.bet * mult);
-
             if (opened === TOTAL_CELLS - game.minesCount) { finishWin(win, mult); return; }
-
             const pb = document.getElementById('playBtn');
             pb.textContent = `💰 Забрать ${win.toLocaleString('ru-RU')}`;
             pb.disabled = false;
-            document.getElementById('status').textContent = `Открыто: ${opened} | Множитель: x${mult}`;
+            document.getElementById('status').textContent = `Открыто: ${opened} | x${mult}`;
         }
 
         async function cashout() {
@@ -299,30 +388,168 @@
 
         async function finishWin(win, mult) {
             const result = await apiWin(win);
-            if (result.ok) balance = result.balance;
-            else balance += win;
+            if (result.ok) balance = result.balance; else balance += win;
             updateUI();
-
-            document.getElementById('status').textContent = `💰 Забрал ${win.toLocaleString('ru-RU')} монет (x${mult})`;
+            document.getElementById('status').textContent = `💰 Забрал ${win.toLocaleString('ru-RU')} (x${mult})`;
             const pb = document.getElementById('playBtn');
-            pb.textContent = '🔄 Играть снова';
-            pb.classList.remove('cashout');
+            pb.textContent = '🔄 Играть снова'; pb.classList.remove('cashout');
             inGame = false;
-
             if (game) {
                 const mineSet = game.mines;
                 document.querySelectorAll('.cell').forEach((cell, i) => {
                     cell.disabled = true;
-                    if (mineSet.has(i) && cell.textContent !== '💎') {
-                        cell.textContent = '💣';
-                        cell.classList.add('bomb');
-                    }
+                    if (mineSet.has(i) && cell.textContent !== '💎') { cell.textContent = '💣'; cell.classList.add('bomb'); }
                 });
             }
             game = null;
         }
 
-        // ===== МОДАЛКИ =====
+        // ===== PLINKO =====
+        function renderPlinkoBoard() {
+            const board = document.getElementById('plinkoBoard');
+            board.innerHTML = '';
+            const w = board.clientWidth || 340;
+            const h = board.clientHeight || 320;
+            const rows = 12;
+            const rowGap = h / (rows + 2);
+            const colGap = w / (rows + 2);
+            const pegSize = 6;
+
+            for (let r = 0; r <= rows; r++) {
+                const pegsInRow = r + 2;
+                const rowWidth = (pegsInRow - 1) * colGap;
+                const startX = (w - rowWidth) / 2;
+                const y = (r + 1) * rowGap;
+                for (let p = 0; p < pegsInRow; p++) {
+                    const peg = document.createElement('div');
+                    peg.className = 'peg';
+                    peg.style.left = (startX + p * colGap) + 'px';
+                    peg.style.top = y + 'px';
+                    peg.style.width = pegSize + 'px';
+                    peg.style.height = pegSize + 'px';
+                    board.appendChild(peg);
+                }
+            }
+
+            // Ball (hidden by default)
+            const ball = document.createElement('div');
+            ball.className = 'ball';
+            ball.id = 'plinkoBall';
+            ball.style.left = '50%';
+            ball.style.top = '0px';
+            ball.style.display = 'none';
+            board.appendChild(ball);
+
+            renderPlinkoSlots();
+        }
+
+        function renderPlinkoSlots() {
+            const risk = PLINKO_RISKS[plinkoRiskIdx];
+            const mults = PLINKO_MULTIPLIERS[risk];
+            const slots = document.getElementById('plinkoSlots');
+            slots.innerHTML = '';
+            mults.forEach((m, i) => {
+                const slot = document.createElement('div');
+                slot.className = 'slot';
+                slot.id = 'slot' + i;
+                slot.textContent = 'x' + m;
+                slots.appendChild(slot);
+            });
+        }
+
+        function sleep(ms) { return new Promise(res => setTimeout(res, ms)); }
+
+        async function animateBall(path, finalPos) {
+            const board = document.getElementById('plinkoBoard');
+            const ball = document.getElementById('plinkoBall');
+            const w = board.clientWidth || 340;
+            const h = board.clientHeight || 320;
+            const rows = 12;
+            const rowGap = h / (rows + 2);
+            const colGap = w / (rows + 2);
+
+            ball.style.display = 'block';
+            ball.style.transition = 'none';
+            // Reset to top center
+            const firstRowPegs = 2;
+            const firstRowWidth = (firstRowPegs - 1) * colGap;
+            const firstStartX = (w - firstRowWidth) / 2;
+            ball.style.left = (firstStartX + 0.5 * colGap) + 'px';
+            ball.style.top = '0px';
+            await sleep(50);
+            ball.style.transition = 'left 0.13s linear, top 0.13s linear';
+
+            let pos = 0; // index of space between pegs in current row
+            for (let r = 0; r < rows; r++) {
+                if (path[r]) pos++;
+                const pegsInRow = r + 2;
+                const rowWidth = (pegsInRow - 1) * colGap;
+                const startX = (w - rowWidth) / 2;
+                // position of ball is between peg `pos` and `pos+1` in the row below
+                const nextRowPegs = r + 3;
+                const nextRowWidth = (nextRowPegs - 1) * colGap;
+                const nextStartX = (w - nextRowWidth) / 2;
+                const ballX = nextStartX + (pos + 0.5) * colGap;
+                const ballY = (r + 1) * rowGap;
+                ball.style.left = ballX + 'px';
+                ball.style.top = ballY + 'px';
+                await sleep(140);
+            }
+
+            // Highlight final slot
+            const slot = document.getElementById('slot' + finalPos);
+            if (slot) slot.classList.add('hit');
+        }
+
+        async function playPlinko() {
+            if (plinkoBusy || !userId) return;
+            const bet = PLINKO_BETS[plinkoBetIdx];
+            const risk = PLINKO_RISKS[plinkoRiskIdx];
+
+            if (balance < bet) { tg.showAlert('Недостаточно монет!'); return; }
+
+            plinkoBusy = true;
+            const btn = document.getElementById('plinkoBtn');
+            btn.disabled = true;
+            btn.textContent = '⏳ Бросаем...';
+            document.getElementById('plinkoStatus').textContent = '...';
+
+            // Clear old slot highlight
+            document.querySelectorAll('.slot.hit').forEach(s => s.classList.remove('hit'));
+
+            try {
+                const r = await fetch(`${API_URL}/api/plinko/play?user_id=${userId}&amount=${bet}&risk=${risk}`, { method: 'POST' });
+                const data = await r.json();
+
+                if (!data.ok) {
+                    tg.showAlert('Ошибка: ' + (data.error || 'неизвестная'));
+                    if (data.balance !== undefined) { balance = data.balance; updateUI(); }
+                    return;
+                }
+
+                balance = data.balance;
+                updateUI();
+
+                await animateBall(data.path, data.position);
+
+                await sleep(200);
+
+                if (data.multiplier >= 1) {
+                    document.getElementById('plinkoStatus').textContent = `🎉 x${data.multiplier} — выигрыш ${data.win.toLocaleString('ru-RU')} монет!`;
+                } else {
+                    document.getElementById('plinkoStatus').textContent = `😢 x${data.multiplier} — потерял ${(bet - data.win).toLocaleString('ru-RU')} монет`;
+                }
+            } catch (e) {
+                console.error(e);
+                tg.showAlert('Ошибка соединения');
+            } finally {
+                plinkoBusy = false;
+                btn.disabled = false;
+                btn.textContent = '🎰 Бросить шар';
+            }
+        }
+
+        // ===== MODAL / SHOP / TOP =====
         function openShop() { document.getElementById('shopModal').classList.add('active'); }
         function closeModal(id) { document.getElementById(id).classList.remove('active'); }
 
@@ -330,56 +557,36 @@
             if (!userId) return;
             closeModal('shopModal');
             try {
-                const r = await fetch(
-                    `${API_URL}/api/create-invoice?user_id=${userId}&package_key=${packageKey}`,
-                    { method: 'POST' }
-                );
+                const r = await fetch(`${API_URL}/api/create-invoice?user_id=${userId}&package_key=${packageKey}`, { method: 'POST' });
                 const data = await r.json();
                 if (!data.ok) { tg.showAlert('Ошибка: ' + (data.error || 'неизвестная')); return; }
                 tg.openInvoice(data.invoice_link, async (status) => {
-                    if (status === 'paid') {
-                        tg.showAlert('✅ Оплата прошла!');
-                        await refreshBalance();
-                    } else if (status === 'cancelled') {
-                        tg.showAlert('Оплата отменена');
-                    }
+                    if (status === 'paid') { tg.showAlert('✅ Оплата прошла!'); await refreshBalance(); }
+                    else if (status === 'cancelled') { tg.showAlert('Оплата отменена'); }
                 });
-            } catch (e) {
-                console.error(e);
-                tg.showAlert('Ошибка соединения');
-            }
+            } catch (e) { tg.showAlert('Ошибка соединения'); }
         }
 
         async function openLeaderboard() {
             document.getElementById('leaderModal').classList.add('active');
             const list = document.getElementById('leadersList');
             list.innerHTML = '<div class="loading-text">Загрузка...</div>';
-
             try {
                 const r = await fetch(`${API_URL}/api/leaderboard`);
                 const data = await r.json();
-
                 if (!data.ok || !data.leaders || data.leaders.length === 0) {
                     list.innerHTML = '<div class="loading-text">Пока никого нет</div>';
                     return;
                 }
-
                 list.innerHTML = '';
                 data.leaders.forEach((p) => {
                     const row = document.createElement('div');
                     row.className = 'leader-row' + (p.rank <= 3 ? ` top-${p.rank}` : '');
                     const medal = p.rank === 1 ? '🥇' : p.rank === 2 ? '🥈' : p.rank === 3 ? '🥉' : `#${p.rank}`;
-                    row.innerHTML = `
-                        <span class="leader-rank">${medal}</span>
-                        <span class="leader-name">${escapeHtml(p.name)}</span>
-                        <span class="leader-balance">${p.balance.toLocaleString('ru-RU')}</span>
-                    `;
+                    row.innerHTML = `<span class="leader-rank">${medal}</span><span class="leader-name">${escapeHtml(p.name)}</span><span class="leader-balance">${p.balance.toLocaleString('ru-RU')}</span>`;
                     list.appendChild(row);
                 });
-            } catch (e) {
-                console.error(e);
-                list.innerHTML = '<div class="loading-text">Ошибка загрузки</div>';
-            }
+            } catch (e) { list.innerHTML = '<div class="loading-text">Ошибка загрузки</div>'; }
         }
 
         function escapeHtml(text) {
@@ -388,36 +595,21 @@
             return div.innerHTML;
         }
 
-        // ===== РЕКЛАМА (Monetag) =====
+        // ===== РЕКЛАМА =====
         async function watchAd() {
             if (!userId) return;
-
             const adBtn = document.getElementById('adBtn');
             adBtn.disabled = true;
             adBtn.textContent = '⏳ Загрузка...';
-
             try {
-                if (typeof show_11801124 !== 'function') {
-                    throw new Error('Monetag SDK не загрузился');
-                }
-
+                if (typeof show_11801124 !== 'function') throw new Error('SDK не загрузился');
                 await show_11801124();
-
-                // Начисляем монеты через бэкенд
                 const r = await fetch(`${API_URL}/api/ad-reward?user_id=${userId}`, { method: 'POST' });
                 const data = await r.json();
-
-                if (data.ok) {
-                    balance = data.balance;
-                    updateUI();
-                    tg.showAlert(`✅ +${data.reward} монет!`);
-                } else if (data.error === 'cooldown') {
-                    tg.showAlert(`⏳ Подожди ${data.wait} секунд`);
-                } else {
-                    tg.showAlert('Ошибка начисления монет');
-                }
+                if (data.ok) { balance = data.balance; updateUI(); tg.showAlert(`✅ +${data.reward} монет!`); }
+                else if (data.error === 'cooldown') { tg.showAlert(`⏳ Подожди ${data.wait} секунд`); }
+                else { tg.showAlert('Ошибка начисления'); }
             } catch (e) {
-                console.error('Ошибка рекламы:', e);
                 tg.showAlert('Реклама временно недоступна. Попробуй позже.');
             } finally {
                 adBtn.disabled = false;
@@ -425,7 +617,7 @@
             }
         }
 
-        // ===== СТАРТ =====
+        // ===== START =====
         async function refreshBalance() {
             const b = await apiGetBalance();
             if (b !== null) { balance = b; updateUI(); }
@@ -433,18 +625,16 @@
 
         async function init() {
             const user = tg.initDataUnsafe?.user;
-            if (!user) {
-                document.getElementById('status').textContent = 'Открой через Telegram';
-                return;
-            }
+            if (!user) { document.getElementById('status').textContent = 'Открой через Telegram'; return; }
             userId = user.id;
             await refreshBalance();
-            document.getElementById('status').textContent = 'Настрой ставку и жми «Играть»';
             document.getElementById('playBtn').disabled = false;
             renderGrid();
+            renderPlinkoBoard();
         }
 
         init();
+        window.addEventListener('resize', renderPlinkoBoard);
     </script>
 </body>
 </html>
