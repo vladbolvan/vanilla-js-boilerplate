@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Boomzy Mines</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="//libtl.com/sdk.js" data-zone="11801124" data-sdk="show_11801124"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
         body {
@@ -134,7 +135,6 @@
         tg.expand();
 
         const API_URL = "https://buoyantly-tasteful-titmouse.cloudpub.ru";
-        const ADSGRAM_BLOCK_ID = "47872";
         const BET_OPTIONS = [100, 500, 1000, 5000, 10000];
         const MINES_OPTIONS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
         const TOTAL_CELLS = 16;
@@ -145,7 +145,6 @@
         let game = null;
         let inGame = false;
         let userId = null;
-        let adController = null;
 
         // ===== API =====
         async function apiGetBalance() {
@@ -389,18 +388,7 @@
             return div.innerHTML;
         }
 
-        // ===== РЕКЛАМА (Adsgram) — SDK грузится ЛЕНИВО =====
-        function loadAdsgramSDK() {
-            return new Promise((resolve, reject) => {
-                if (window.Adsgram) { resolve(); return; }
-                const script = document.createElement('script');
-                script.src = 'https://sad.adsgram.ai/js/sad.min.js';
-                script.onload = resolve;
-                script.onerror = () => reject(new Error('Не удалось загрузить Adsgram SDK'));
-                document.head.appendChild(script);
-            });
-        }
-
+        // ===== РЕКЛАМА (Monetag) =====
         async function watchAd() {
             if (!userId) return;
 
@@ -409,24 +397,28 @@
             adBtn.textContent = '⏳ Загрузка...';
 
             try {
-                await loadAdsgramSDK();
-
-                if (!adController) {
-                    adController = window.Adsgram.init({ blockId: ADSGRAM_BLOCK_ID });
+                if (typeof show_11801124 !== 'function') {
+                    throw new Error('Monetag SDK не загрузился');
                 }
 
-                const result = await adController.show();
-                tg.showAlert('✅ Реклама просмотрена! Монеты зачислены.');
-                await refreshBalance();
+                await show_11801124();
+
+                // Начисляем монеты через бэкенд
+                const r = await fetch(`${API_URL}/api/ad-reward?user_id=${userId}`, { method: 'POST' });
+                const data = await r.json();
+
+                if (data.ok) {
+                    balance = data.balance;
+                    updateUI();
+                    tg.showAlert(`✅ +${data.reward} монет!`);
+                } else if (data.error === 'cooldown') {
+                    tg.showAlert(`⏳ Подожди ${data.wait} секунд`);
+                } else {
+                    tg.showAlert('Ошибка начисления монет');
+                }
             } catch (e) {
                 console.error('Ошибка рекламы:', e);
-                if (e && e.done === false) {
-                    tg.showAlert('Реклама не была просмотрена до конца');
-                } else if (e && e.message && e.message.includes('load')) {
-                    tg.showAlert('Не удалось загрузить рекламу. Проверь VPN.');
-                } else {
-                    tg.showAlert('Реклама временно недоступна. Попробуй позже.');
-                }
+                tg.showAlert('Реклама временно недоступна. Попробуй позже.');
             } finally {
                 adBtn.disabled = false;
                 adBtn.textContent = '📺 +200 монет за рекламу';
