@@ -85,19 +85,21 @@
         }
         .play-btn:disabled { opacity: 0.5; cursor: default; }
         .play-btn.cashout { background: #f59e0b; }
-        .buy-btn {
-            width: 100%;
+        .row-btns { display: flex; gap: 8px; margin-top: 8px; }
+        .row-btns button {
+            flex: 1;
             padding: 14px;
-            font-size: 16px;
+            font-size: 15px;
             font-weight: bold;
             border: none;
             border-radius: 12px;
-            background: #8b5cf6;
-            color: white;
             cursor: pointer;
-            margin-top: 8px;
+            color: white;
         }
-        .buy-btn:active { transform: scale(0.98); }
+        .buy-btn { background: #8b5cf6; }
+        .top-btn { background: #f59e0b; }
+        .ad-btn { background: #10b981; }
+        .ad-btn:disabled { opacity: 0.5; cursor: default; }
         .status {
             text-align: center;
             font-size: 14px;
@@ -105,13 +107,6 @@
             min-height: 20px;
             opacity: 0.9;
         }
-        .loading {
-            text-align: center;
-            padding: 20px;
-            opacity: 0.7;
-        }
-
-        /* Модальное окно магазина */
         .modal-overlay {
             position: fixed;
             inset: 0;
@@ -129,6 +124,8 @@
             padding: 20px;
             width: 100%;
             max-width: 400px;
+            max-height: 80vh;
+            overflow-y: auto;
         }
         .modal h2 {
             font-size: 20px;
@@ -144,12 +141,9 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            transition: transform 0.1s, background 0.2s;
+            transition: transform 0.1s;
         }
-        .package:active {
-            transform: scale(0.98);
-            background: #3a3a5a;
-        }
+        .package:active { transform: scale(0.98); }
         .package-coins { font-weight: bold; font-size: 16px; }
         .package-stars { color: #fbbf24; font-weight: bold; }
         .close-btn {
@@ -164,6 +158,22 @@
             border: 1px solid rgba(255, 255, 255, 0.2);
             cursor: pointer;
         }
+        .leader-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 14px;
+            background: var(--tg-theme-secondary-bg-color, #2a2a4a);
+            border-radius: 12px;
+            margin-bottom: 8px;
+        }
+        .leader-row.top-1 { background: linear-gradient(90deg, #b45309, #f59e0b); }
+        .leader-row.top-2 { background: linear-gradient(90deg, #374151, #6b7280); }
+        .leader-row.top-3 { background: linear-gradient(90deg, #7c2d12, #b45309); }
+        .leader-rank { font-weight: bold; margin-right: 10px; }
+        .leader-name { flex: 1; font-weight: 500; }
+        .leader-balance { font-weight: bold; color: #4ade80; }
+        .loading-text { text-align: center; opacity: 0.6; padding: 20px; }
     </style>
 </head>
 <body>
@@ -193,31 +203,48 @@
     <div class="grid" id="grid"></div>
 
     <button class="play-btn" id="playBtn" onclick="handlePlay()" disabled>🎮 Играть</button>
-    <button class="buy-btn" onclick="openShop()">💎 Купить монеты</button>
 
-    <!-- Модальное окно магазина -->
+    <div class="row-btns">
+        <button class="buy-btn" onclick="openShop()">💎 Магазин</button>
+        <button class="top-btn" onclick="openLeaderboard()">🏆 Топ</button>
+    </div>
+
+    <div class="row-btns">
+        <button class="ad-btn" id="adBtn" onclick="watchAd()">📺 +200 монет за рекламу</button>
+    </div>
+
+    <!-- Магазин -->
     <div class="modal-overlay" id="shopModal">
         <div class="modal">
             <h2>💎 Магазин монет</h2>
-            <div id="packagesList">
-                <div class="package" onclick="buyPackage('small')">
-                    <span class="package-coins">💎 1 000 монет</span>
-                    <span class="package-stars">25 ⭐</span>
-                </div>
-                <div class="package" onclick="buyPackage('medium')">
-                    <span class="package-coins">💎 5 000 монет</span>
-                    <span class="package-stars">100 ⭐</span>
-                </div>
-                <div class="package" onclick="buyPackage('large')">
-                    <span class="package-coins">💎 15 000 монет</span>
-                    <span class="package-stars">250 ⭐</span>
-                </div>
-                <div class="package" onclick="buyPackage('mega')">
-                    <span class="package-coins">💎 50 000 монет</span>
-                    <span class="package-stars">750 ⭐</span>
-                </div>
+            <div class="package" onclick="buyPackage('small')">
+                <span class="package-coins">💎 1 000 монет</span>
+                <span class="package-stars">25 ⭐</span>
             </div>
-            <button class="close-btn" onclick="closeShop()">Закрыть</button>
+            <div class="package" onclick="buyPackage('medium')">
+                <span class="package-coins">💎 5 000 монет</span>
+                <span class="package-stars">100 ⭐</span>
+            </div>
+            <div class="package" onclick="buyPackage('large')">
+                <span class="package-coins">💎 15 000 монет</span>
+                <span class="package-stars">250 ⭐</span>
+            </div>
+            <div class="package" onclick="buyPackage('mega')">
+                <span class="package-coins">💎 50 000 монет</span>
+                <span class="package-stars">750 ⭐</span>
+            </div>
+            <button class="close-btn" onclick="closeModal('shopModal')">Закрыть</button>
+        </div>
+    </div>
+
+    <!-- Топ игроков -->
+    <div class="modal-overlay" id="leaderModal">
+        <div class="modal">
+            <h2>🏆 Топ-10 игроков</h2>
+            <div id="leadersList">
+                <div class="loading-text">Загрузка...</div>
+            </div>
+            <button class="close-btn" onclick="closeModal('leaderModal')">Закрыть</button>
         </div>
     </div>
 
@@ -226,7 +253,6 @@
         tg.ready();
         tg.expand();
 
-        // ===== НАСТРОЙКИ =====
         const API_URL = "https://buoyantly-tasteful-titmouse.cloudpub.ru";
         const BET_OPTIONS = [100, 500, 1000, 5000, 10000];
         const MINES_OPTIONS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
@@ -246,36 +272,21 @@
                 const r = await fetch(`${API_URL}/api/balance/${userId}`);
                 const d = await r.json();
                 return d.balance || 0;
-            } catch (e) {
-                console.error("Ошибка API:", e);
-                return null;
-            }
+            } catch (e) { console.error(e); return null; }
         }
 
         async function apiBet(amount) {
             try {
-                const r = await fetch(`${API_URL}/api/bet?user_id=${userId}&amount=${amount}`, {
-                    method: 'POST'
-                });
-                const d = await r.json();
-                return d;
-            } catch (e) {
-                console.error("Ошибка ставки:", e);
-                return { ok: false };
-            }
+                const r = await fetch(`${API_URL}/api/bet?user_id=${userId}&amount=${amount}`, { method: 'POST' });
+                return await r.json();
+            } catch (e) { console.error(e); return { ok: false }; }
         }
 
         async function apiWin(amount) {
             try {
-                const r = await fetch(`${API_URL}/api/win?user_id=${userId}&amount=${amount}`, {
-                    method: 'POST'
-                });
-                const d = await r.json();
-                return d;
-            } catch (e) {
-                console.error("Ошибка выигрыша:", e);
-                return { ok: false };
-            }
+                const r = await fetch(`${API_URL}/api/win?user_id=${userId}&amount=${amount}`, { method: 'POST' });
+                return await r.json();
+            } catch (e) { console.error(e); return { ok: false }; }
         }
 
         // ===== UI =====
@@ -326,14 +337,11 @@
             const bet = BET_OPTIONS[betIdx];
             const mines = MINES_OPTIONS[minesIdx];
 
-            if (balance < bet) {
-                tg.showAlert('Недостаточно монет!');
-                return;
-            }
+            if (balance < bet) { tg.showAlert('Недостаточно монет!'); return; }
 
             const result = await apiBet(bet);
             if (!result.ok) {
-                tg.showAlert('Не удалось сделать ставку. Возможно, недостаточно монет.');
+                tg.showAlert('Не удалось сделать ставку.');
                 balance = result.balance ?? balance;
                 updateUI();
                 return;
@@ -391,10 +399,7 @@
             const mult = multiplier(opened, game.minesCount);
             const win = Math.floor(game.bet * mult);
 
-            if (opened === TOTAL_CELLS - game.minesCount) {
-                finishWin(win, mult);
-                return;
-            }
+            if (opened === TOTAL_CELLS - game.minesCount) { finishWin(win, mult); return; }
 
             const pb = document.getElementById('playBtn');
             pb.textContent = `💰 Забрать ${win.toLocaleString('ru-RU')}`;
@@ -406,10 +411,8 @@
             if (!game) return;
             const opened = game.opened.size;
             if (opened === 0) { tg.showAlert('Открой хотя бы одну клетку'); return; }
-
             const mult = multiplier(opened, game.minesCount);
             const win = Math.floor(game.bet * mult);
-
             await finishWin(win, mult);
         }
 
@@ -438,55 +441,106 @@
             game = null;
         }
 
+        // ===== МОДАЛКИ =====
+        function openShop() { document.getElementById('shopModal').classList.add('active'); }
+        function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
         // ===== МАГАЗИН =====
-        function openShop() {
-            document.getElementById('shopModal').classList.add('active');
-        }
-
-        function closeShop() {
-            document.getElementById('shopModal').classList.remove('active');
-        }
-
         async function buyPackage(packageKey) {
             if (!userId) return;
-
-            closeShop();
-
+            closeModal('shopModal');
             try {
                 const r = await fetch(
                     `${API_URL}/api/create-invoice?user_id=${userId}&package_key=${packageKey}`,
                     { method: 'POST' }
                 );
                 const data = await r.json();
-
-                if (!data.ok) {
-                    tg.showAlert('Ошибка создания счета: ' + (data.error || 'неизвестная'));
-                    return;
-                }
-
+                if (!data.ok) { tg.showAlert('Ошибка: ' + (data.error || 'неизвестная')); return; }
                 tg.openInvoice(data.invoice_link, async (status) => {
                     if (status === 'paid') {
-                        tg.showAlert('✅ Оплата прошла! Монеты зачислены.');
+                        tg.showAlert('✅ Оплата прошла!');
                         await refreshBalance();
                     } else if (status === 'cancelled') {
                         tg.showAlert('Оплата отменена');
-                    } else {
-                        tg.showAlert('Оплата не завершена: ' + status);
                     }
                 });
             } catch (e) {
                 console.error(e);
-                tg.showAlert('Ошибка соединения с сервером');
+                tg.showAlert('Ошибка соединения');
             }
+        }
+
+        // ===== ТОП ИГРОКОВ =====
+        async function openLeaderboard() {
+            document.getElementById('leaderModal').classList.add('active');
+            const list = document.getElementById('leadersList');
+            list.innerHTML = '<div class="loading-text">Загрузка...</div>';
+
+            try {
+                const r = await fetch(`${API_URL}/api/leaderboard`);
+                const data = await r.json();
+
+                if (!data.ok || !data.leaders || data.leaders.length === 0) {
+                    list.innerHTML = '<div class="loading-text">Пока никого нет</div>';
+                    return;
+                }
+
+                list.innerHTML = '';
+                data.leaders.forEach((p) => {
+                    const row = document.createElement('div');
+                    row.className = 'leader-row' + (p.rank <= 3 ? ` top-${p.rank}` : '');
+
+                    const medal = p.rank === 1 ? '🥇' : p.rank === 2 ? '🥈' : p.rank === 3 ? '🥉' : `#${p.rank}`;
+
+                    row.innerHTML = `
+                        <span class="leader-rank">${medal}</span>
+                        <span class="leader-name">${escapeHtml(p.name)}</span>
+                        <span class="leader-balance">${p.balance.toLocaleString('ru-RU')}</span>
+                    `;
+                    list.appendChild(row);
+                });
+            } catch (e) {
+                console.error(e);
+                list.innerHTML = '<div class="loading-text">Ошибка загрузки</div>';
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        // ===== РЕКЛАМА =====
+        async function watchAd() {
+            if (!userId) return;
+
+            // Пока показываем заглушку — реальная интеграция Adsgram будет позже
+            tg.showConfirm('Сейчас начислю 200 монет (заглушка). Настроить реальную рекламу?', async (ok) => {
+                if (!ok) return;
+                try {
+                    const r = await fetch(`${API_URL}/api/ad-reward?user_id=${userId}`, { method: 'POST' });
+                    const data = await r.json();
+                    if (data.ok) {
+                        balance = data.balance;
+                        updateUI();
+                        tg.showAlert(`✅ +${data.reward} монет!`);
+                    } else if (data.error === 'cooldown') {
+                        tg.showAlert(`⏳ Подожди ${data.wait} секунд`);
+                    } else {
+                        tg.showAlert('Ошибка: ' + (data.error || 'неизвестная'));
+                    }
+                } catch (e) {
+                    console.error(e);
+                    tg.showAlert('Ошибка соединения');
+                }
+            });
         }
 
         // ===== СТАРТ =====
         async function refreshBalance() {
             const b = await apiGetBalance();
-            if (b !== null) {
-                balance = b;
-                updateUI();
-            }
+            if (b !== null) { balance = b; updateUI(); }
         }
 
         async function init() {
@@ -496,12 +550,9 @@
                 return;
             }
             userId = user.id;
-
             await refreshBalance();
-
             document.getElementById('status').textContent = 'Настрой ставку и жми «Играть»';
             document.getElementById('playBtn').disabled = false;
-
             renderGrid();
         }
 
