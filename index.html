@@ -934,7 +934,6 @@
                     s.textContent = `Следующий через ${formatTime(d.wait)}`;
                     b.disabled = true;
                 }
-                // Отрисовка точек серии
                 dots.innerHTML = '';
                 const curStreak = d.streak || 0;
                 const maxS = d.max_streak || 7;
@@ -1015,7 +1014,7 @@
             const html = wins.map(w =>
                 `<span class="ticker-item">${gameEmoji[w.game] || '🎮'} ${escapeHtml(w.name)} выиграл <b>${w.amount.toLocaleString('ru-RU')}</b> 🪙</span>`
             ).join('');
-            track.innerHTML = html + html; // дублируем для бесшовной прокрутки
+            track.innerHTML = html + html;
         }
         async function loadBigWins() {
             try {
@@ -1044,7 +1043,6 @@
             await refreshBalance();
             document.getElementById('playBtn').disabled = false;
             renderGrid(); renderPlinkoBoard();
-            // Запускаем периодические таймеры
             loadBigWins();
             loadOnline();
             tickerInterval = setInterval(loadBigWins, 8000);
