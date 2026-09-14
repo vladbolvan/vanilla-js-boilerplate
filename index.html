@@ -8,15 +8,7 @@
     <script src="//libtl.com/sdk.js" data-zone="11801124" data-sdk="show_11801124"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: var(--tg-theme-bg-color, #1a1a2e);
-            color: var(--tg-theme-text-color, #fff);
-            padding: 16px 12px 90px 12px;
-            min-height: 100vh;
-            max-width: 500px;
-            margin: 0 auto;
-        }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--tg-theme-bg-color, #1a1a2e); color: var(--tg-theme-text-color, #fff); padding: 16px 12px 90px 12px; min-height: 100vh; max-width: 500px; margin: 0 auto; }
         .balance { font-size: 26px; font-weight: bold; color: #4ade80; text-align: center; margin-bottom: 12px; }
         .main-tabs { display: flex; gap: 3px; margin-bottom: 14px; background: var(--tg-theme-secondary-bg-color, #2a2a4a); border-radius: 12px; padding: 3px; overflow-x: auto; }
         .main-tab { flex: 1; min-width: 60px; padding: 8px 4px; border: none; border-radius: 8px; background: transparent; color: var(--tg-theme-text-color, #fff); font-size: 11px; font-weight: 600; cursor: pointer; }
@@ -193,20 +185,16 @@
                     <button onclick="setPlinkoBet('max')">Макс</button>
                 </div>
             </div>
-
             <div class="controls">
                 <div class="control"><label>Риск</label><div class="control-btns"><button onclick="changeRisk(-1)">◀</button><span class="control-value" id="plinkoRisk">Низкий</span><button onclick="changeRisk(1)">▶</button></div></div>
             </div>
-
             <div class="speed-row">
                 <button id="speedNormal" class="active" onclick="setSpeed('normal')">🐢 Обычный</button>
                 <button id="speedFast" onclick="setSpeed('fast')">⚡ Быстрый</button>
             </div>
-
             <div class="status" id="plinkoStatus">Жми «Бросить шар»!</div>
             <div class="plinko-board" id="plinkoBoard"></div>
             <div class="plinko-slots" id="plinkoSlots"></div>
-
             <button class="play-btn" id="plinkoBtn" onclick="playPlinko(1)">🎰 Бросить шар</button>
             <div class="multi-row">
                 <button id="plinkoX5" onclick="playPlinko(5)">x5</button>
@@ -269,12 +257,7 @@
             <div class="tourn-timer">Топ за текущий месяц</div>
             <div class="card" style="background:linear-gradient(135deg,#8b5cf6,#ec4899);margin-bottom:12px;">
                 <div style="font-size:13px;font-weight:bold;margin-bottom:6px;">🎁 Призы TOP-10:</div>
-                <div style="font-size:12px;line-height:1.6;">
-                    🥇 200 000 монет + VIP + Gift<br>
-                    🥈 100 000 монет + VIP + Gift<br>
-                    🥉 50 000 монет + Gift<br>
-                    🏅 4-10 места — 10 000 монет
-                </div>
+                <div style="font-size:12px;line-height:1.6;">🥇 200 000 монет + VIP + Gift<br>🥈 100 000 монет + VIP + Gift<br>🥉 50 000 монет + Gift<br>🏅 4-10 места — 10 000 монет</div>
             </div>
             <div id="monthlyList"><div class="loading-text">Загрузка...</div></div>
         </div>
@@ -316,7 +299,6 @@
         const BET_OPTIONS = [100, 500, 1000, 5000, 10000];
         const MINES_OPTIONS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
         const TOTAL_CELLS = 16;
-
         const PLINKO_RISKS = ["low", "medium", "high"];
         const PLINKO_RISK_NAMES = { low: "Низкий", medium: "Средний", high: "Высокий" };
         const PLINKO_MULTIPLIERS = {
@@ -325,298 +307,200 @@
             high:   [170, 24, 8.1, 2, 0.7, 0.2, 0.2, 0.2, 0.7, 2, 8.1, 24, 170],
         };
 
-        let balance = 0;
-        let betIdx = 0;
-        let minesIdx = 2;
-        let plinkoRiskIdx = 0;
-        let plinkoSpeed = 'normal';
-        let game = null;
-        let inGame = false;
-        let userId = null;
-        let plinkoBusy = false;
-        let chatInterval = null;
+        let balance = 0, betIdx = 0, minesIdx = 2, plinkoRiskIdx = 0, plinkoSpeed = 'normal';
+        let game = null, inGame = false, userId = null, plinkoBusy = false, chatInterval = null;
 
         async function apiGetBalance() { if (!userId) return 0; try { const r = await fetch(`${API_URL}/api/balance/${userId}`); const d = await r.json(); return d.balance || 0; } catch (e) { return null; } }
-        async function apiBet(amount, gameName) { try { const r = await fetch(`${API_URL}/api/bet?user_id=${userId}&amount=${amount}&game=${gameName}`, { method: 'POST' }); return await r.json(); } catch (e) { return { ok: false }; } }
-        async function apiWin(amount, multiplier) { try { const r = await fetch(`${API_URL}/api/win?user_id=${userId}&amount=${amount}&multiplier=${multiplier || 0}`, { method: 'POST' }); return await r.json(); } catch (e) { return { ok: false }; } }
+        async function apiBet(a, g) { try { const r = await fetch(`${API_URL}/api/bet?user_id=${userId}&amount=${a}&game=${g}`, { method: 'POST' }); return await r.json(); } catch (e) { return { ok: false }; } }
+        async function apiWin(a, m) { try { const r = await fetch(`${API_URL}/api/win?user_id=${userId}&amount=${a}&multiplier=${m || 0}`, { method: 'POST' }); return await r.json(); } catch (e) { return { ok: false }; } }
         async function apiLose() { try { const r = await fetch(`${API_URL}/api/lose?user_id=${userId}`, { method: 'POST' }); return await r.json(); } catch (e) { return { ok: false }; } }
-
-        function notifyAchievements(achievements) { if (!achievements || achievements.length === 0) return; achievements.forEach((a, i) => setTimeout(() => tg.showAlert(`🎖️ Ачивка: ${a.emoji} ${a.name}`), i * 1500)); }
-        function notifyLevelUp(levelInfo) { if (!levelInfo || !levelInfo.leveled_up) return; if (levelInfo.levels_gained && levelInfo.levels_gained.length > 0) setTimeout(() => tg.showAlert(`🎉 Уровень ${levelInfo.new_level}!\n💰 +${levelInfo.total_level_reward.toLocaleString('ru-RU')} монет`), 500); }
-
+        function notifyAchievements(a) { if (!a || a.length === 0) return; a.forEach((x, i) => setTimeout(() => tg.showAlert(`🎖️ Ачивка: ${x.emoji} ${x.name}`), i * 1500)); }
+        function notifyLevelUp(l) { if (!l || !l.leveled_up) return; if (l.levels_gained && l.levels_gained.length > 0) setTimeout(() => tg.showAlert(`🎉 Уровень ${l.new_level}!\n💰 +${l.total_level_reward.toLocaleString('ru-RU')} монет`), 500); }
         function getPlinkoBet() { const v = parseInt(document.getElementById('plinkoBetInput').value) || 100; return Math.max(10, v); }
-
         function updateUI() {
             document.getElementById('balance').textContent = balance.toLocaleString('ru-RU');
             document.getElementById('bet').textContent = BET_OPTIONS[betIdx].toLocaleString('ru-RU');
             document.getElementById('mines').textContent = MINES_OPTIONS[minesIdx];
             document.getElementById('plinkoRisk').textContent = PLINKO_RISK_NAMES[PLINKO_RISKS[plinkoRiskIdx]];
         }
-
-        function switchMain(name) {
+        function switchMain(n) {
             const arr = ['game', 'missions', 'shop', 'chat', 'top', 'profile'];
-            document.querySelectorAll('.main-tab').forEach((t, i) => t.classList.toggle('active', arr[i] === name));
-            arr.forEach(n => document.getElementById(n + 'Tab').classList.toggle('active', n === name));
-            if (name === 'game') renderPlinkoBoard();
-            if (name === 'missions') loadMissions();
-            if (name === 'shop') loadShop();
-            if (name === 'chat') startChat(); else stopChat();
-            if (name === 'top') { loadTournament(); loadMonthly(); }
-            if (name === 'profile') loadProfile();
+            document.querySelectorAll('.main-tab').forEach((t, i) => t.classList.toggle('active', arr[i] === n));
+            arr.forEach(x => document.getElementById(x + 'Tab').classList.toggle('active', x === n));
+            if (n === 'game') renderPlinkoBoard();
+            if (n === 'missions') loadMissions();
+            if (n === 'shop') loadShop();
+            if (n === 'chat') startChat(); else stopChat();
+            if (n === 'top') { loadTournament(); loadMonthly(); }
+            if (n === 'profile') loadProfile();
         }
-        function switchSub(name) {
+        function switchSub(n) {
             const arr = ['mines', 'plinko', 'clicker'];
-            document.querySelectorAll('#gameTab .sub-tab').forEach((t, i) => t.classList.toggle('active', arr[i] === name));
-            arr.forEach(n => document.getElementById(n + 'Sub').classList.toggle('active', n === name));
-            if (name === 'plinko') renderPlinkoBoard();
+            document.querySelectorAll('#gameTab .sub-tab').forEach((t, i) => t.classList.toggle('active', arr[i] === n));
+            arr.forEach(x => document.getElementById(x + 'Sub').classList.toggle('active', x === n));
+            if (n === 'plinko') renderPlinkoBoard();
         }
-        function switchTopSub(name) {
-            document.querySelectorAll('#topTab .sub-tab').forEach((t, i) => t.classList.toggle('active', (name === 'weekly' && i === 0) || (name === 'monthly' && i === 1)));
-            document.getElementById('weeklyTop').classList.toggle('active', name === 'weekly');
-            document.getElementById('monthlyTop').classList.toggle('active', name === 'monthly');
+        function switchTopSub(n) {
+            document.querySelectorAll('#topTab .sub-tab').forEach((t, i) => t.classList.toggle('active', (n === 'weekly' && i === 0) || (n === 'monthly' && i === 1)));
+            document.getElementById('weeklyTop').classList.toggle('active', n === 'weekly');
+            document.getElementById('monthlyTop').classList.toggle('active', n === 'monthly');
         }
-
-        function changeBet(dir) { if (inGame) return; betIdx = Math.max(0, Math.min(BET_OPTIONS.length - 1, betIdx + dir)); updateUI(); }
-        function changeMines(dir) { if (inGame) return; minesIdx = Math.max(0, Math.min(MINES_OPTIONS.length - 1, minesIdx + dir)); updateUI(); }
-        function changeRisk(dir) { if (plinkoBusy) return; plinkoRiskIdx = Math.max(0, Math.min(PLINKO_RISKS.length - 1, plinkoRiskIdx + dir)); updateUI(); renderPlinkoSlots(); }
-        function setSpeed(mode) { plinkoSpeed = mode; document.getElementById('speedNormal').classList.toggle('active', mode === 'normal'); document.getElementById('speedFast').classList.toggle('active', mode === 'fast'); }
-        function adjustPlinkoBet(delta) { const input = document.getElementById('plinkoBetInput'); let v = (parseInt(input.value) || 100) + delta; v = Math.max(10, v); input.value = v; }
-        function setPlinkoBet(mode) {
-            const input = document.getElementById('plinkoBetInput');
-            let v = parseInt(input.value) || 100;
-            if (mode === 'half') v = Math.max(10, Math.floor(v / 2));
-            if (mode === 'double') v = Math.min(balance, v * 2);
-            if (mode === 'min') v = 10;
-            if (mode === 'max') v = Math.max(10, balance);
-            input.value = v;
+        function changeBet(d) { if (inGame) return; betIdx = Math.max(0, Math.min(BET_OPTIONS.length - 1, betIdx + d)); updateUI(); }
+        function changeMines(d) { if (inGame) return; minesIdx = Math.max(0, Math.min(MINES_OPTIONS.length - 1, minesIdx + d)); updateUI(); }
+        function changeRisk(d) { if (plinkoBusy) return; plinkoRiskIdx = Math.max(0, Math.min(PLINKO_RISKS.length - 1, plinkoRiskIdx + d)); updateUI(); renderPlinkoSlots(); }
+        function setSpeed(m) { plinkoSpeed = m; document.getElementById('speedNormal').classList.toggle('active', m === 'normal'); document.getElementById('speedFast').classList.toggle('active', m === 'fast'); }
+        function adjustPlinkoBet(d) { const i = document.getElementById('plinkoBetInput'); let v = (parseInt(i.value) || 100) + d; v = Math.max(10, v); i.value = v; }
+        function setPlinkoBet(m) {
+            const i = document.getElementById('plinkoBetInput'); let v = parseInt(i.value) || 100;
+            if (m === 'half') v = Math.max(10, Math.floor(v / 2));
+            if (m === 'double') v = Math.min(balance, v * 2);
+            if (m === 'min') v = 10;
+            if (m === 'max') v = Math.max(10, balance);
+            i.value = v;
         }
 
-        // ===== MINES =====
-        function multiplier(opened, mines) {
-            if (opened === 0) return 1.0;
-            const safe = TOTAL_CELLS - mines;
-            let m = 1.0;
-            for (let i = 0; i < opened; i++) m *= (TOTAL_CELLS - i) / (safe - i);
-            return Math.round(m * 0.96 * 100) / 100;
+        function multiplier(o, m) {
+            if (o === 0) return 1.0;
+            const s = TOTAL_CELLS - m; let r = 1.0;
+            for (let i = 0; i < o; i++) r *= (TOTAL_CELLS - i) / (s - i);
+            return Math.round(r * 0.96 * 100) / 100;
         }
         function renderGrid() {
-            const grid = document.getElementById('grid');
-            grid.innerHTML = '';
-            for (let i = 0; i < TOTAL_CELLS; i++) {
-                const btn = document.createElement('button');
-                btn.className = 'cell';
-                btn.onclick = () => openCell(i, btn);
-                grid.appendChild(btn);
-            }
+            const g = document.getElementById('grid'); g.innerHTML = '';
+            for (let i = 0; i < TOTAL_CELLS; i++) { const b = document.createElement('button'); b.className = 'cell'; b.onclick = () => openCell(i, b); g.appendChild(b); }
         }
         async function handlePlay() { if (!inGame) await startGame(); else await cashout(); }
         async function startGame() {
-            const bet = BET_OPTIONS[betIdx];
-            const mines = MINES_OPTIONS[minesIdx];
-            if (balance < bet) { tg.showAlert('Недостаточно монет!'); return; }
-            const result = await apiBet(bet, 'mines');
-            if (!result.ok) { tg.showAlert('Не удалось сделать ставку.'); balance = result.balance ?? balance; updateUI(); return; }
-            balance = result.balance; updateUI();
-            if (result.level_info) notifyLevelUp(result.level_info);
-            const mineSet = new Set();
-            while (mineSet.size < mines) mineSet.add(Math.floor(Math.random() * TOTAL_CELLS));
-            game = { mines: mineSet, opened: new Set(), bet, minesCount: mines };
-            inGame = true;
+            const b = BET_OPTIONS[betIdx], m = MINES_OPTIONS[minesIdx];
+            if (balance < b) { tg.showAlert('Недостаточно монет!'); return; }
+            const r = await apiBet(b, 'mines');
+            if (!r.ok) { tg.showAlert('Не удалось сделать ставку.'); balance = r.balance ?? balance; updateUI(); return; }
+            balance = r.balance; updateUI();
+            if (r.level_info) notifyLevelUp(r.level_info);
+            const ms = new Set(); while (ms.size < m) ms.add(Math.floor(Math.random() * TOTAL_CELLS));
+            game = { mines: ms, opened: new Set(), bet: b, minesCount: m }; inGame = true;
             renderGrid();
-            const btn = document.getElementById('playBtn');
-            btn.textContent = '💰 Забрать 0';
-            btn.classList.add('cashout');
-            btn.disabled = true;
-            document.getElementById('status').textContent = `Мин: ${mines}. Открывай!`;
+            const p = document.getElementById('playBtn');
+            p.textContent = '💰 Забрать 0'; p.classList.add('cashout'); p.disabled = true;
+            document.getElementById('status').textContent = `Мин: ${m}. Открывай!`;
         }
         function openCell(idx, btn) {
             if (!inGame || !game || game.opened.has(idx)) return;
             if (game.mines.has(idx)) {
                 btn.textContent = '💥'; btn.classList.add('bomb');
-                const mineSet = game.mines, bet = game.bet;
-                document.querySelectorAll('.cell').forEach((cell, i) => {
-                    cell.disabled = true;
-                    if (mineSet.has(i) && cell.textContent !== '💥') { cell.textContent = '💣'; cell.classList.add('bomb'); }
-                });
-                document.getElementById('status').textContent = `💥 Бомба! Потерял ${bet.toLocaleString('ru-RU')} монет.`;
-                const pb = document.getElementById('playBtn');
-                pb.textContent = '🔄 Играть снова'; pb.classList.remove('cashout'); pb.disabled = false;
+                const ms = game.mines, b = game.bet;
+                document.querySelectorAll('.cell').forEach((c, i) => { c.disabled = true; if (ms.has(i) && c.textContent !== '💥') { c.textContent = '💣'; c.classList.add('bomb'); } });
+                document.getElementById('status').textContent = `💥 Бомба! Потерял ${b.toLocaleString('ru-RU')} монет.`;
+                const p = document.getElementById('playBtn'); p.textContent = '🔄 Играть снова'; p.classList.remove('cashout'); p.disabled = false;
                 inGame = false; game = null;
-                apiLose().then(r => { if (r.achievements) notifyAchievements(r.achievements); });
+                apiLose().then(x => { if (x.achievements) notifyAchievements(x.achievements); });
                 return;
             }
-            game.opened.add(idx);
-            btn.textContent = '💎'; btn.classList.add('revealed'); btn.disabled = true;
-            const opened = game.opened.size;
-            const mult = multiplier(opened, game.minesCount);
-            const win = Math.floor(game.bet * mult);
-            if (opened === TOTAL_CELLS - game.minesCount) { finishWin(win, mult); return; }
-            const pb = document.getElementById('playBtn');
-            pb.textContent = `💰 Забрать ${win.toLocaleString('ru-RU')}`;
-            pb.disabled = false;
-            document.getElementById('status').textContent = `Открыто: ${opened} | x${mult}`;
+            game.opened.add(idx); btn.textContent = '💎'; btn.classList.add('revealed'); btn.disabled = true;
+            const o = game.opened.size, mu = multiplier(o, game.minesCount), w = Math.floor(game.bet * mu);
+            if (o === TOTAL_CELLS - game.minesCount) { finishWin(w, mu); return; }
+            const p = document.getElementById('playBtn'); p.textContent = `💰 Забрать ${w.toLocaleString('ru-RU')}`; p.disabled = false;
+            document.getElementById('status').textContent = `Открыто: ${o} | x${mu}`;
         }
         async function cashout() {
-            if (!game) return;
-            const opened = game.opened.size;
-            if (opened === 0) { tg.showAlert('Открой хотя бы одну клетку'); return; }
-            const mult = multiplier(opened, game.minesCount);
-            const win = Math.floor(game.bet * mult);
-            await finishWin(win, mult);
+            if (!game) return; const o = game.opened.size;
+            if (o === 0) { tg.showAlert('Открой хотя бы одну клетку'); return; }
+            const mu = multiplier(o, game.minesCount), w = Math.floor(game.bet * mu);
+            await finishWin(w, mu);
         }
-        async function finishWin(win, mult) {
-            const result = await apiWin(win, mult);
-            if (result.ok) balance = result.balance; else balance += win;
-            updateUI();
-            document.getElementById('status').textContent = `💰 Забрал ${win.toLocaleString('ru-RU')} (x${mult})`;
-            const pb = document.getElementById('playBtn');
-            pb.textContent = '🔄 Играть снова'; pb.classList.remove('cashout');
-            inGame = false;
-            if (game) {
-                const mineSet = game.mines;
-                document.querySelectorAll('.cell').forEach((cell, i) => {
-                    cell.disabled = true;
-                    if (mineSet.has(i) && cell.textContent !== '💎') { cell.textContent = '💣'; cell.classList.add('bomb'); }
-                });
-            }
+        async function finishWin(w, mu) {
+            const r = await apiWin(w, mu);
+            if (r.ok) balance = r.balance; else balance += w;
+            updateUI(); document.getElementById('status').textContent = `💰 Забрал ${w.toLocaleString('ru-RU')} (x${mu})`;
+            const p = document.getElementById('playBtn'); p.textContent = '🔄 Играть снова'; p.classList.remove('cashout'); inGame = false;
+            if (game) { const ms = game.mines; document.querySelectorAll('.cell').forEach((c, i) => { c.disabled = true; if (ms.has(i) && c.textContent !== '💎') { c.textContent = '💣'; c.classList.add('bomb'); } }); }
             game = null;
-            if (result.achievements) notifyAchievements(result.achievements);
+            if (r.achievements) notifyAchievements(r.achievements);
         }
 
-        // ===== CLICKER =====
-        let clickerClicks = 0;
-        let clickerLimit = 5000;
-        let clickerBusy = false;
+        let clickerClicks = 0, clickerLimit = 5000, clickerBusy = false;
         async function doClick() {
             if (clickerBusy) return;
-            if (clickerClicks >= clickerLimit) { tg.showAlert('⏳ Лимит кликера на сегодня!'); return; }
+            if (clickerClicks >= clickerLimit) { tg.showAlert('⏳ Лимит кликера!'); return; }
             clickerBusy = true;
             try {
                 const r = await fetch(`${API_URL}/api/click?user_id=${userId}`, { method: 'POST' });
-                const data = await r.json();
-                if (data.ok) {
-                    balance = data.balance; clickerClicks = data.clicks; updateUI();
-                    document.getElementById('clickerProgress').textContent = `${clickerClicks}/${clickerLimit}`;
-                    document.getElementById('clickerStatus').textContent = `+1 монета (всего: ${clickerClicks})`;
-                } else if (data.error === 'daily_limit') {
-                    clickerClicks = data.clicks;
-                    document.getElementById('clickerProgress').textContent = `${clickerClicks}/${clickerLimit}`;
-                    tg.showAlert(`⏳ Лимит ${clickerLimit} кликов!`);
-                }
-            } catch (e) { console.error(e); }
+                const d = await r.json();
+                if (d.ok) { balance = d.balance; clickerClicks = d.clicks; updateUI(); document.getElementById('clickerProgress').textContent = `${clickerClicks}/${clickerLimit}`; document.getElementById('clickerStatus').textContent = `+1 монета (всего: ${clickerClicks})`; }
+                else if (d.error === 'daily_limit') { clickerClicks = d.clicks; document.getElementById('clickerProgress').textContent = `${clickerClicks}/${clickerLimit}`; tg.showAlert(`⏳ Лимит ${clickerLimit} кликов!`); }
+            } catch (e) {}
             finally { clickerBusy = false; }
         }
 
-        // ===== PLINKO =====
         function renderPlinkoBoard() {
-            const board = document.getElementById('plinkoBoard');
-            if (!board) return;
-            board.innerHTML = '';
-            const w = board.clientWidth || 340;
-            const h = board.clientHeight || 280;
-            const rows = 12;
-            const rowGap = h / (rows + 2);
-            const colGap = w / (rows + 2);
+            const b = document.getElementById('plinkoBoard'); if (!b) return;
+            b.innerHTML = '';
+            const w = b.clientWidth || 340, h = b.clientHeight || 280, rows = 12;
+            const rg = h / (rows + 2), cg = w / (rows + 2);
             for (let r = 0; r <= rows; r++) {
-                const pegsInRow = r + 2;
-                const rowWidth = (pegsInRow - 1) * colGap;
-                const startX = (w - rowWidth) / 2;
-                const y = (r + 1) * rowGap;
-                for (let p = 0; p < pegsInRow; p++) {
-                    const peg = document.createElement('div');
-                    peg.className = 'peg';
-                    peg.style.left = (startX + p * colGap) + 'px';
-                    peg.style.top = y + 'px';
-                    board.appendChild(peg);
-                }
+                const pir = r + 2, rw = (pir - 1) * cg, sx = (w - rw) / 2, y = (r + 1) * rg;
+                for (let p = 0; p < pir; p++) { const pg = document.createElement('div'); pg.className = 'peg'; pg.style.left = (sx + p * cg) + 'px'; pg.style.top = y + 'px'; b.appendChild(pg); }
             }
             renderPlinkoSlots();
         }
         function renderPlinkoSlots() {
-            const risk = PLINKO_RISKS[plinkoRiskIdx];
-            const mults = PLINKO_MULTIPLIERS[risk];
-            const slots = document.getElementById('plinkoSlots');
-            slots.innerHTML = '';
-            mults.forEach((m, i) => {
-                const slot = document.createElement('div');
-                slot.className = 'slot';
-                slot.id = 'slot' + i;
-                slot.textContent = 'x' + m;
-                slots.appendChild(slot);
-            });
+            const r = PLINKO_RISKS[plinkoRiskIdx], m = PLINKO_MULTIPLIERS[r];
+            const s = document.getElementById('plinkoSlots'); s.innerHTML = '';
+            m.forEach((v, i) => { const sl = document.createElement('div'); sl.className = 'slot'; sl.id = 'slot' + i; sl.textContent = 'x' + v; s.appendChild(sl); });
         }
+        function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
-        function sleep(ms) { return new Promise(res => setTimeout(res, ms)); }
-
-        // Считает координаты каждой ступеньки пути для шара
         function computePathPositions(path) {
-            const board = document.getElementById('plinkoBoard');
-            const w = board.clientWidth;
-            const h = board.clientHeight;
-            const rows = 12;
-            const rowGap = h / (rows + 2);
-            const colGap = w / (rows + 2);
-            const positions = [];
-            // Начальная позиция — сверху по центру
-            const firstRowPegs = 2;
-            const firstRowWidth = (firstRowPegs - 1) * colGap;
-            const firstStartX = (w - firstRowWidth) / 2;
-            positions.push({ x: firstStartX + 0.5 * colGap, y: 0 });
-            let pos = 0;
+            const b = document.getElementById('plinkoBoard');
+            const w = b.clientWidth, h = b.clientHeight, rows = 12;
+            const rg = h / (rows + 2), cg = w / (rows + 2);
+            const pos = [];
+            const frp = 2, frw = (frp - 1) * cg, fsx = (w - frw) / 2;
+            pos.push({ x: fsx + 0.5 * cg, y: 0 });
+            let p = 0;
             for (let r = 0; r < rows; r++) {
-                if (path[r]) pos++;
-                const nextRowPegs = r + 3;
-                const nextRowWidth = (nextRowPegs - 1) * colGap;
-                const nextStartX = (w - nextRowWidth) / 2;
-                positions.push({
-                    x: nextStartX + (pos + 0.5) * colGap,
-                    y: (r + 1) * rowGap
-                });
+                if (path[r]) p++;
+                const nrp = r + 3, nrw = (nrp - 1) * cg, nsx = (w - nrw) / 2;
+                pos.push({ x: nsx + (p + 0.5) * cg, y: (r + 1) * rg });
             }
-            return positions;
+            return pos;
         }
 
-        // Анимация одного шара через requestAnimationFrame (надёжно и плавно)
-        function animateOneBall(path, finalPos, color, stepDuration) {
+        function animateOneBall(path, finalPos, color, stepDuration, startDelay) {
             return new Promise((resolve) => {
-                const board = document.getElementById('plinkoBoard');
-                if (!board) { resolve(); return; }
-                const w = board.clientWidth;
-                const h = board.clientHeight;
+                const b = document.getElementById('plinkoBoard');
+                if (!b) { resolve(); return; }
+                const w = b.clientWidth, h = b.clientHeight;
                 if (w === 0 || h === 0) {
-                    const slot = document.getElementById('slot' + finalPos);
-                    if (slot) slot.classList.add('hit');
+                    const s = document.getElementById('slot' + finalPos); if (s) s.classList.add('hit');
                     resolve(); return;
                 }
-
-                const positions = computePathPositions(path);
-
+                const pos = computePathPositions(path);
                 const ball = document.createElement('div');
                 ball.className = 'ball';
                 ball.style.background = color;
                 ball.style.boxShadow = `0 0 10px ${color}`;
-                ball.style.left = positions[0].x + 'px';
-                ball.style.top = positions[0].y + 'px';
-                board.appendChild(ball);
-
-                let idx = 0;
-                let lastMove = performance.now();
-
+                ball.style.left = pos[0].x + 'px';
+                ball.style.top = pos[0].y + 'px';
+                b.appendChild(ball);
+                let i = 0, lastMove = 0, started = false;
+                const startTime = performance.now();
                 function tick(now) {
+                    if (!started) {
+                        if (now - startTime < startDelay) { requestAnimationFrame(tick); return; }
+                        started = true; lastMove = now;
+                    }
                     if (now - lastMove >= stepDuration) {
-                        idx++;
+                        i++;
                         lastMove = now;
-                        if (idx >= positions.length) {
-                            const slot = document.getElementById('slot' + finalPos);
-                            if (slot) slot.classList.add('hit');
-                            // Плавно убираем
-                            ball.style.transition = 'opacity 0.3s';
-                            ball.style.opacity = '0';
-                            setTimeout(() => { try { ball.remove(); } catch(e){} resolve(); }, 320);
+                        if (i >= pos.length) {
+                            const s = document.getElementById('slot' + finalPos); if (s) s.classList.add('hit');
+                            ball.style.transition = 'opacity 0.3s'; ball.style.opacity = '0';
+                            setTimeout(() => { try { ball.remove(); } catch (e) {} resolve(); }, 320);
                             return;
                         }
-                        ball.style.left = positions[idx].x + 'px';
-                        ball.style.top = positions[idx].y + 'px';
+                        ball.style.left = pos[i].x + 'px';
+                        ball.style.top = pos[i].y + 'px';
                     }
                     requestAnimationFrame(tick);
                 }
@@ -624,124 +508,96 @@
             });
         }
 
-        // Волновая анимация для x5 и x10: шары стартуют с задержкой
+        // Волна реальных шаров (для x5, x10)
         async function animateBallWave(results, stepDuration, startInterval) {
             const colors = ['#fbbf24', '#60a5fa', '#f87171', '#a78bfa', '#34d399', '#fb923c', '#22d3ee', '#e879f9', '#facc15', '#4ade80'];
             const promises = [];
             for (let i = 0; i < results.length; i++) {
-                const res = results[i];
-                const color = colors[i % colors.length];
-                const delay = i * startInterval;
+                const res = results[i], c = colors[i % colors.length], d = i * startInterval;
                 promises.push((async () => {
-                    if (delay > 0) await sleep(delay);
-                    try {
-                        await animateOneBall(res.path, res.position, color, stepDuration);
-                    } catch (e) {
-                        console.error('Ball error', e);
-                        const slot = document.getElementById('slot' + res.position);
-                        if (slot) slot.classList.add('hit');
-                    }
+                    try { await animateOneBall(res.path, res.position, c, stepDuration, d); }
+                    catch (e) { const s = document.getElementById('slot' + res.position); if (s) s.classList.add('hit'); }
                 })());
             }
             await Promise.all(promises);
         }
 
-        // Быстрая подсветка для x50 и x100
-        async function animateSlotFlash(results) {
-            const waveDelay = 25;
-            for (let i = 0; i < results.length; i++) {
-                const slot = document.getElementById('slot' + results[i].position);
-                if (slot) {
-                    slot.classList.add('hit');
-                    slot.classList.add('pulse');
-                    setTimeout(() => { if (slot) slot.classList.remove('pulse'); }, 150);
-                }
-                await sleep(waveDelay);
+        // Много волн по N шаров (для x50, x100) — перекрывающиеся волны
+        async function animateBallWaves(results, waveSize, stepDuration, startInterval, waveGap) {
+            const colors = ['#fbbf24', '#60a5fa', '#f87171', '#a78bfa', '#34d399', '#fb923c', '#22d3ee', '#e879f9', '#facc15', '#4ade80'];
+            const total = results.length;
+            const promises = [];
+            for (let i = 0; i < total; i++) {
+                const res = results[i];
+                const c = colors[i % colors.length];
+                const waveIdx = Math.floor(i / waveSize);
+                const posInWave = i % waveSize;
+                // Все шары стартуют в разное время, но каждая волна имеет "сдвиг"
+                const delay = waveIdx * waveGap + posInWave * startInterval;
+                promises.push((async () => {
+                    try { await animateOneBall(res.path, res.position, c, stepDuration, delay); }
+                    catch (e) { const s = document.getElementById('slot' + res.position); if (s) s.classList.add('hit'); }
+                })());
             }
+            await Promise.all(promises);
         }
 
         async function playPlinko(count = 1) {
             if (plinkoBusy || !userId) return;
-            const bet = getPlinkoBet();
-            const risk = PLINKO_RISKS[plinkoRiskIdx];
-            const totalBet = bet * count;
+            const bet = getPlinkoBet(), risk = PLINKO_RISKS[plinkoRiskIdx], totalBet = bet * count;
             if (balance < totalBet) { tg.showAlert(`Недостаточно монет (нужно ${totalBet.toLocaleString('ru-RU')})`); return; }
-
             plinkoBusy = true;
             const buttons = ['plinkoBtn', 'plinkoX5', 'plinkoX10', 'plinkoX50', 'plinkoX100'];
             buttons.forEach(id => { const b = document.getElementById(id); if (b) b.disabled = true; });
             document.getElementById('plinkoStatus').textContent = count > 1 ? `Бросаем ${count} шаров...` : '...';
             document.querySelectorAll('.slot.hit').forEach(s => s.classList.remove('hit'));
-
             try {
-                const endpoint = count === 1 ? 'play' : 'multi';
-                let url = `${API_URL}/api/plinko/${endpoint}?user_id=${userId}&amount=${bet}&risk=${risk}`;
+                const ep = count === 1 ? 'play' : 'multi';
+                let url = `${API_URL}/api/plinko/${ep}?user_id=${userId}&amount=${bet}&risk=${risk}`;
                 if (count > 1) url += `&count=${count}`;
-
-                const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 40000);
-
+                const ctl = new AbortController(); const tid = setTimeout(() => ctl.abort(), 60000);
                 let r;
-                try { r = await fetch(url, { method: 'POST', signal: controller.signal }); }
-                finally { clearTimeout(timeoutId); }
-
+                try { r = await fetch(url, { method: 'POST', signal: ctl.signal }); }
+                finally { clearTimeout(tid); }
                 if (!r.ok) { tg.showAlert(`Ошибка сервера ${r.status}`); return; }
                 const data = await r.json();
-                if (!data.ok) {
-                    tg.showAlert('Ошибка: ' + (data.error || data.detail || 'неизвестная'));
-                    if (data.balance !== undefined) { balance = data.balance; updateUI(); }
-                    return;
-                }
+                if (!data.ok) { tg.showAlert('Ошибка: ' + (data.error || data.detail || 'неизвестная')); if (data.balance !== undefined) { balance = data.balance; updateUI(); } return; }
                 balance = data.balance; updateUI();
                 if (data.level_info) notifyLevelUp(data.level_info);
 
                 if (plinkoSpeed === 'fast') {
-                    // ⚡ Быстрый — просто подсветка
                     await sleep(150);
-                    if (count === 1) {
-                        const slot = document.getElementById('slot' + data.position);
-                        if (slot) slot.classList.add('hit');
-                    } else {
-                        data.results.forEach(res => {
-                            const slot = document.getElementById('slot' + res.position);
-                            if (slot) slot.classList.add('hit');
-                        });
-                    }
+                    if (count === 1) { const s = document.getElementById('slot' + data.position); if (s) s.classList.add('hit'); }
+                    else { data.results.forEach(res => { const s = document.getElementById('slot' + res.position); if (s) s.classList.add('hit'); }); }
                 } else {
-                    // 🐢 Обычный
                     if (count === 1) {
-                        try { await animateOneBall(data.path, data.position, '#fbbf24', 140); }
-                        catch (e) { console.error(e); const slot = document.getElementById('slot' + data.position); if (slot) slot.classList.add('hit'); }
+                        try { await animateOneBall(data.path, data.position, '#fbbf24', 140, 30); }
+                        catch (e) { const s = document.getElementById('slot' + data.position); if (s) s.classList.add('hit'); }
                     } else if (count <= 10) {
-                        // x5, x10 — реальные шары волной
-                        const stepDur = count <= 5 ? 120 : 100;
-                        const startInt = count <= 5 ? 220 : 170;
-                        try { await animateBallWave(data.results, stepDur, startInt); }
-                        catch (e) {
-                            console.error('Wave error', e);
-                            data.results.forEach(res => { const s = document.getElementById('slot' + res.position); if (s) s.classList.add('hit'); });
-                        }
+                        const sd = count <= 5 ? 120 : 100;
+                        const si = count <= 5 ? 220 : 170;
+                        try { await animateBallWave(data.results, sd, si); }
+                        catch (e) { data.results.forEach(res => { const s = document.getElementById('slot' + res.position); if (s) s.classList.add('hit'); }); }
+                    } else if (count <= 50) {
+                        // x50: 5 волн по 10 шаров
+                        try { await animateBallWaves(data.results, 10, 70, 120, 500); }
+                        catch (e) { data.results.forEach(res => { const s = document.getElementById('slot' + res.position); if (s) s.classList.add('hit'); }); }
                     } else {
-                        // x50, x100 — быстрая подсветка
-                        try { await animateSlotFlash(data.results); }
-                        catch (e) { console.error(e); }
+                        // x100: 10 волн по 10 шаров
+                        try { await animateBallWaves(data.results, 10, 60, 100, 350); }
+                        catch (e) { data.results.forEach(res => { const s = document.getElementById('slot' + res.position); if (s) s.classList.add('hit'); }); }
                     }
                 }
-
                 if (count === 1) {
                     document.getElementById('plinkoStatus').textContent = data.multiplier >= 1
                         ? `🎉 x${data.multiplier} — выигрыш ${data.win.toLocaleString('ru-RU')}!`
                         : `😢 x${data.multiplier} — потерял ${(bet - data.win).toLocaleString('ru-RU')}`;
                 } else {
-                    const winSum = data.total_win;
-                    const net = winSum - totalBet;
-                    const sign = net >= 0 ? '+' : '';
-                    document.getElementById('plinkoStatus').textContent =
-                        `🎰 ${count} шаров: ${totalBet.toLocaleString('ru-RU')} → ${winSum.toLocaleString('ru-RU')} (${sign}${net.toLocaleString('ru-RU')})`;
+                    const ws = data.total_win, net = ws - totalBet, sign = net >= 0 ? '+' : '';
+                    document.getElementById('plinkoStatus').textContent = `🎰 ${count} шаров: ${totalBet.toLocaleString('ru-RU')} → ${ws.toLocaleString('ru-RU')} (${sign}${net.toLocaleString('ru-RU')})`;
                 }
                 if (data.achievements) notifyAchievements(data.achievements);
             } catch (e) {
-                console.error('Plinko catch:', e);
                 if (e.name === 'AbortError') tg.showAlert('⏱ Сервер долго не отвечает');
                 else tg.showAlert('Ошибка: ' + (e.message || 'неизвестная'));
             } finally {
@@ -750,284 +606,153 @@
             }
         }
 
-        // ===== MISSIONS =====
         async function loadMissions() {
-            const list = document.getElementById('missionsList');
-            list.innerHTML = '<div class="loading-text">Загрузка...</div>';
+            const l = document.getElementById('missionsList'); l.innerHTML = '<div class="loading-text">Загрузка...</div>';
             try {
-                const r = await fetch(`${API_URL}/api/missions/${userId}`);
-                const data = await r.json();
-                if (!data.ok) { list.innerHTML = '<div class="loading-text">Ошибка</div>'; return; }
-                list.innerHTML = '';
-                data.missions.forEach(m => {
-                    const el = document.createElement('div');
-                    el.className = 'mission' + (m.claimed ? ' claimed' : (m.completed ? ' completed' : ''));
-                    const btnText = m.claimed ? '✓ Получено' : (m.completed ? 'Забрать' : `${m.progress}/${m.target}`);
-                    el.innerHTML = `<div class="mission-emoji">${m.emoji}</div><div class="mission-info"><div class="mission-name">${m.name}</div><div class="mission-progress">${m.progress}/${m.target} · <span class="mission-reward">+${m.reward} 🪙</span></div></div><button class="mission-btn${m.claimed ? ' claimed' : ''}" ${(!m.completed || m.claimed) ? 'disabled' : ''}>${btnText}</button>`;
-                    const btn = el.querySelector('button');
-                    if (m.completed && !m.claimed) btn.onclick = () => claimMission(m.key);
-                    list.appendChild(el);
+                const r = await fetch(`${API_URL}/api/missions/${userId}`), d = await r.json();
+                if (!d.ok) { l.innerHTML = '<div class="loading-text">Ошибка</div>'; return; }
+                l.innerHTML = '';
+                d.missions.forEach(m => {
+                    const e = document.createElement('div'); e.className = 'mission' + (m.claimed ? ' claimed' : (m.completed ? ' completed' : ''));
+                    const bt = m.claimed ? '✓ Получено' : (m.completed ? 'Забрать' : `${m.progress}/${m.target}`);
+                    e.innerHTML = `<div class="mission-emoji">${m.emoji}</div><div class="mission-info"><div class="mission-name">${m.name}</div><div class="mission-progress">${m.progress}/${m.target} · <span class="mission-reward">+${m.reward} 🪙</span></div></div><button class="mission-btn${m.claimed ? ' claimed' : ''}" ${(!m.completed || m.claimed) ? 'disabled' : ''}>${bt}</button>`;
+                    const b = e.querySelector('button'); if (m.completed && !m.claimed) b.onclick = () => claimMission(m.key);
+                    l.appendChild(e);
                 });
-                const allBonus = document.getElementById('allBonus');
-                if (data.all_completed && !data.all_bonus_claimed) {
-                    allBonus.style.display = 'block';
-                    document.getElementById('allBonusBtn').disabled = false;
-                    document.getElementById('allBonusBtn').textContent = 'Забрать';
-                } else if (data.all_bonus_claimed) {
-                    allBonus.style.display = 'block';
-                    document.getElementById('allBonusBtn').disabled = true;
-                    document.getElementById('allBonusBtn').textContent = '✓ Получено';
-                } else { allBonus.style.display = 'none'; }
-            } catch (e) { list.innerHTML = '<div class="loading-text">Ошибка загрузки</div>'; }
+                const ab = document.getElementById('allBonus');
+                if (d.all_completed && !d.all_bonus_claimed) { ab.style.display = 'block'; document.getElementById('allBonusBtn').disabled = false; document.getElementById('allBonusBtn').textContent = 'Забрать'; }
+                else if (d.all_bonus_claimed) { ab.style.display = 'block'; document.getElementById('allBonusBtn').disabled = true; document.getElementById('allBonusBtn').textContent = '✓ Получено'; }
+                else ab.style.display = 'none';
+            } catch (e) { l.innerHTML = '<div class="loading-text">Ошибка</div>'; }
         }
-        async function claimMission(key) {
-            try {
-                const r = await fetch(`${API_URL}/api/missions/claim?user_id=${userId}&mission_key=${key}`, { method: 'POST' });
-                const data = await r.json();
-                if (data.ok) { balance = data.balance; updateUI(); tg.showAlert(`+${data.reward} монет!`); loadMissions(); }
-                else { tg.showAlert('Ошибка: ' + (data.error || 'неизвестная')); }
-            } catch (e) { tg.showAlert('Ошибка соединения'); }
-        }
-        async function claimAllBonus() {
-            try {
-                const r = await fetch(`${API_URL}/api/missions/claim?user_id=${userId}&mission_key=all_bonus`, { method: 'POST' });
-                const data = await r.json();
-                if (data.ok) { balance = data.balance; updateUI(); tg.showAlert(`🎉 +${data.reward} монет!`); loadMissions(); }
-                else { tg.showAlert('Ошибка: ' + (data.error || 'неизвестная')); }
-            } catch (e) { tg.showAlert('Ошибка соединения'); }
-        }
+        async function claimMission(k) { try { const r = await fetch(`${API_URL}/api/missions/claim?user_id=${userId}&mission_key=${k}`, { method: 'POST' }), d = await r.json(); if (d.ok) { balance = d.balance; updateUI(); tg.showAlert(`+${d.reward} монет!`); loadMissions(); } else tg.showAlert('Ошибка'); } catch (e) {} }
+        async function claimAllBonus() { try { const r = await fetch(`${API_URL}/api/missions/claim?user_id=${userId}&mission_key=all_bonus`, { method: 'POST' }), d = await r.json(); if (d.ok) { balance = d.balance; updateUI(); tg.showAlert(`🎉 +${d.reward}!`); loadMissions(); } } catch (e) {} }
 
-        // ===== SHOP =====
         async function loadShop() {
-            const list = document.getElementById('shopList');
-            list.innerHTML = '<div class="loading-text">Загрузка...</div>';
+            const l = document.getElementById('shopList'); l.innerHTML = '<div class="loading-text">Загрузка...</div>';
             try {
-                const r = await fetch(`${API_URL}/api/shop/titles?user_id=${userId}`);
-                const data = await r.json();
-                if (!data.ok) { list.innerHTML = '<div class="loading-text">Ошибка</div>'; return; }
-                balance = data.balance; updateUI();
-                list.innerHTML = '';
-                data.titles.forEach(t => {
-                    const el = document.createElement('div');
-                    el.className = 'shop-item' + (t.equipped ? ' equipped' : (t.owned ? ' owned' : ''));
-                    let btnHtml = '';
-                    if (t.equipped) btnHtml = `<button class="shop-item-btn equipped" onclick="equipTitle('')">Снять</button>`;
-                    else if (t.owned) btnHtml = `<button class="shop-item-btn equip" onclick="equipTitle('${t.id}')">Надеть</button>`;
-                    else btnHtml = `<button class="shop-item-btn buy" onclick="buyTitle('${t.id}')">${t.price.toLocaleString('ru-RU')} 🪙</button>`;
-                    el.innerHTML = `<div><div class="shop-title-name" style="color:${t.color}">${t.name}</div><div class="shop-title-price">${t.owned ? 'Куплено' : 'Цена: ' + t.price.toLocaleString('ru-RU') + ' монет'}</div></div>${btnHtml}`;
-                    list.appendChild(el);
+                const r = await fetch(`${API_URL}/api/shop/titles?user_id=${userId}`), d = await r.json();
+                if (!d.ok) { l.innerHTML = '<div class="loading-text">Ошибка</div>'; return; }
+                balance = d.balance; updateUI(); l.innerHTML = '';
+                d.titles.forEach(t => {
+                    const e = document.createElement('div'); e.className = 'shop-item' + (t.equipped ? ' equipped' : (t.owned ? ' owned' : ''));
+                    let bh = '';
+                    if (t.equipped) bh = `<button class="shop-item-btn equipped" onclick="equipTitle('')">Снять</button>`;
+                    else if (t.owned) bh = `<button class="shop-item-btn equip" onclick="equipTitle('${t.id}')">Надеть</button>`;
+                    else bh = `<button class="shop-item-btn buy" onclick="buyTitle('${t.id}')">${t.price.toLocaleString('ru-RU')} 🪙</button>`;
+                    e.innerHTML = `<div><div class="shop-title-name" style="color:${t.color}">${t.name}</div><div class="shop-title-price">${t.owned ? 'Куплено' : 'Цена: ' + t.price.toLocaleString('ru-RU')}</div></div>${bh}`;
+                    l.appendChild(e);
                 });
-            } catch (e) { list.innerHTML = '<div class="loading-text">Ошибка загрузки</div>'; }
+            } catch (e) { l.innerHTML = '<div class="loading-text">Ошибка</div>'; }
         }
-        async function buyTitle(titleId) {
-            if (!confirm('Купить этот титул?')) return;
-            try {
-                const r = await fetch(`${API_URL}/api/shop/buy-title?user_id=${userId}&title_id=${titleId}`, { method: 'POST' });
-                const data = await r.json();
-                if (data.ok) { balance = data.balance; updateUI(); tg.showAlert('✅ Куплено!'); loadShop(); }
-                else if (data.error === 'insufficient_funds') { tg.showAlert(`Недостаточно монет. Нужно ${data.price.toLocaleString('ru-RU')}`); }
-                else { tg.showAlert('Ошибка: ' + data.error); }
-            } catch (e) { tg.showAlert('Ошибка соединения'); }
-        }
-        async function equipTitle(titleId) {
-            try {
-                const r = await fetch(`${API_URL}/api/shop/equip-title?user_id=${userId}&title_id=${titleId}`, { method: 'POST' });
-                const data = await r.json();
-                if (data.ok) { tg.showAlert(titleId ? '✅ Титул надет!' : '✅ Титул снят'); loadShop(); }
-                else { tg.showAlert('Ошибка: ' + data.error); }
-            } catch (e) { tg.showAlert('Ошибка соединения'); }
-        }
+        async function buyTitle(id) { if (!confirm('Купить?')) return; try { const r = await fetch(`${API_URL}/api/shop/buy-title?user_id=${userId}&title_id=${id}`, { method: 'POST' }), d = await r.json(); if (d.ok) { balance = d.balance; updateUI(); tg.showAlert('✅'); loadShop(); } else tg.showAlert('Ошибка: ' + d.error); } catch (e) {} }
+        async function equipTitle(id) { try { const r = await fetch(`${API_URL}/api/shop/equip-title?user_id=${userId}&title_id=${id}`, { method: 'POST' }), d = await r.json(); if (d.ok) { tg.showAlert(id ? '✅ Надет!' : '✅ Снят'); loadShop(); } } catch (e) {} }
 
-        // ===== CHAT =====
-        function escapeHtml(text) { const div = document.createElement('div'); div.textContent = text; return div.innerHTML; }
-        function renderChatMessages(messages) {
-            const box = document.getElementById('chatMessages');
-            if (messages.length === 0) { box.innerHTML = '<div class="loading-text">Сообщений пока нет. Будь первым!</div>'; return; }
-            box.innerHTML = '';
-            messages.forEach(m => {
-                const el = document.createElement('div');
-                el.className = 'chat-message' + (m.user_id === userId ? ' own' : '');
-                let nameHtml = `<span style="color:${m.title_color || '#60a5fa'}">${escapeHtml(m.name)}</span>`;
-                if (m.title) nameHtml += ` <span style="color:${m.title_color};font-size:11px;">[${m.title}]</span>`;
-                const time = new Date(m.created_at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
-                el.innerHTML = `<div class="chat-name">${nameHtml}</div><div class="chat-text">${escapeHtml(m.text)}</div><div class="chat-time">${time}</div>`;
-                box.appendChild(el);
+        function escapeHtml(t) { const d = document.createElement('div'); d.textContent = t; return d.innerHTML; }
+        function renderChat(m) {
+            const b = document.getElementById('chatMessages');
+            if (m.length === 0) { b.innerHTML = '<div class="loading-text">Нет сообщений</div>'; return; }
+            b.innerHTML = '';
+            m.forEach(x => {
+                const e = document.createElement('div'); e.className = 'chat-message' + (x.user_id === userId ? ' own' : '');
+                let nh = `<span style="color:${x.title_color || '#60a5fa'}">${escapeHtml(x.name)}</span>`;
+                if (x.title) nh += ` <span style="color:${x.title_color};font-size:11px;">[${x.title}]</span>`;
+                const t = new Date(x.created_at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+                e.innerHTML = `<div class="chat-name">${nh}</div><div class="chat-text">${escapeHtml(x.text)}</div><div class="chat-time">${t}</div>`;
+                b.appendChild(e);
             });
-            box.scrollTop = box.scrollHeight;
+            b.scrollTop = b.scrollHeight;
         }
-        async function loadChat() {
-            try { const r = await fetch(`${API_URL}/api/chat/messages`); const data = await r.json(); if (data.ok) renderChatMessages(data.messages); } catch (e) {}
-        }
-        async function sendChat() {
-            const input = document.getElementById('chatInput');
-            const text = input.value.trim();
-            if (!text) return;
-            input.value = '';
-            try {
-                const r = await fetch(`${API_URL}/api/chat/send?user_id=${userId}&text=${encodeURIComponent(text)}`, { method: 'POST' });
-                const data = await r.json();
-                if (!data.ok) tg.showAlert('Ошибка отправки'); else loadChat();
-            } catch (e) { tg.showAlert('Ошибка соединения'); }
-        }
-        document.addEventListener('keydown', (e) => { if (e.key === 'Enter' && document.activeElement.id === 'chatInput') sendChat(); });
+        async function loadChat() { try { const r = await fetch(`${API_URL}/api/chat/messages`), d = await r.json(); if (d.ok) renderChat(d.messages); } catch (e) {} }
+        async function sendChat() { const i = document.getElementById('chatInput'); const t = i.value.trim(); if (!t) return; i.value = ''; try { const r = await fetch(`${API_URL}/api/chat/send?user_id=${userId}&text=${encodeURIComponent(t)}`, { method: 'POST' }), d = await r.json(); if (!d.ok) tg.showAlert('Ошибка'); else loadChat(); } catch (e) {} }
+        document.addEventListener('keydown', e => { if (e.key === 'Enter' && document.activeElement.id === 'chatInput') sendChat(); });
         function startChat() { loadChat(); if (chatInterval) clearInterval(chatInterval); chatInterval = setInterval(loadChat, 4000); }
         function stopChat() { if (chatInterval) { clearInterval(chatInterval); chatInterval = null; } }
 
-        // ===== TOP =====
-        function formatTime(seconds) {
-            const d = Math.floor(seconds / 86400);
-            const h = Math.floor((seconds % 86400) / 3600);
-            const m = Math.floor((seconds % 3600) / 60);
-            if (d > 0) return `${d}д ${h}ч ${m}м`;
-            if (h > 0) return `${h}ч ${m}м`;
-            return `${m}м`;
-        }
+        function formatTime(s) { const d = Math.floor(s / 86400), h = Math.floor((s % 86400) / 3600), m = Math.floor((s % 3600) / 60); if (d > 0) return `${d}д ${h}ч ${m}м`; if (h > 0) return `${h}ч ${m}м`; return `${m}м`; }
         async function loadTournament() {
-            const list = document.getElementById('tournList');
-            const timer = document.getElementById('tournTimer');
-            list.innerHTML = '<div class="loading-text">Загрузка...</div>';
+            const l = document.getElementById('tournList'), t = document.getElementById('tournTimer'); l.innerHTML = '<div class="loading-text">Загрузка...</div>';
             try {
-                const r = await fetch(`${API_URL}/api/tournament`);
-                const data = await r.json();
-                if (!data.ok || !data.leaders || data.leaders.length === 0) {
-                    list.innerHTML = '<div class="loading-text">Пока никто не играет. Будь первым! 🏆</div>';
-                    if (data.seconds_left) timer.textContent = `⏰ До конца: ${formatTime(data.seconds_left)}`;
-                    return;
-                }
-                timer.textContent = `⏰ До конца: ${formatTime(data.seconds_left)}`;
-                list.innerHTML = '';
-                data.leaders.forEach((p) => {
-                    const row = document.createElement('div');
-                    row.className = 'leader-row' + (p.rank <= 3 ? ` top-${p.rank}` : '');
-                    const medal = p.rank === 1 ? '🥇' : p.rank === 2 ? '🥈' : p.rank === 3 ? '🥉' : `#${p.rank}`;
-                    row.innerHTML = `<span class="leader-rank">${medal}</span><span class="leader-name">${escapeHtml(p.name)}<span class="leader-prize">+${p.prize.toLocaleString('ru-RU')}</span></span><span class="leader-balance">${p.score.toLocaleString('ru-RU')}</span>`;
-                    list.appendChild(row);
+                const r = await fetch(`${API_URL}/api/tournament`), d = await r.json();
+                if (!d.ok || !d.leaders || d.leaders.length === 0) { l.innerHTML = '<div class="loading-text">Будь первым! 🏆</div>'; if (d.seconds_left) t.textContent = `⏰ ${formatTime(d.seconds_left)}`; return; }
+                t.textContent = `⏰ До конца: ${formatTime(d.seconds_left)}`; l.innerHTML = '';
+                d.leaders.forEach(p => {
+                    const e = document.createElement('div'); e.className = 'leader-row' + (p.rank <= 3 ? ` top-${p.rank}` : '');
+                    const md = p.rank === 1 ? '🥇' : p.rank === 2 ? '🥈' : p.rank === 3 ? '🥉' : `#${p.rank}`;
+                    e.innerHTML = `<span class="leader-rank">${md}</span><span class="leader-name">${escapeHtml(p.name)}<span class="leader-prize">+${p.prize.toLocaleString('ru-RU')}</span></span><span class="leader-balance">${p.score.toLocaleString('ru-RU')}</span>`;
+                    l.appendChild(e);
                 });
-            } catch (e) { list.innerHTML = '<div class="loading-text">Ошибка загрузки</div>'; }
+            } catch (e) {}
         }
         async function loadMonthly() {
-            const list = document.getElementById('monthlyList');
-            list.innerHTML = '<div class="loading-text">Загрузка...</div>';
+            const l = document.getElementById('monthlyList'); l.innerHTML = '<div class="loading-text">Загрузка...</div>';
             try {
-                const r = await fetch(`${API_URL}/api/monthly-top`);
-                const data = await r.json();
-                if (!data.ok || !data.leaders || data.leaders.length === 0) {
-                    list.innerHTML = '<div class="loading-text">Пока никого нет. Начни играть — попади в TOP-10! 👑</div>';
-                    return;
-                }
-                list.innerHTML = '';
-                data.leaders.forEach((p) => {
-                    const row = document.createElement('div');
-                    row.className = 'leader-row' + (p.rank <= 3 ? ` top-${p.rank}` : '');
-                    const medal = p.badge || `#${p.rank}`;
-                    row.innerHTML = `<span class="leader-rank">${medal}</span><span class="leader-name">${escapeHtml(p.name)}<span class="leader-prize">+${p.prize_coins.toLocaleString('ru-RU')}</span></span><span class="leader-balance">${p.score.toLocaleString('ru-RU')}</span>`;
-                    list.appendChild(row);
+                const r = await fetch(`${API_URL}/api/monthly-top`), d = await r.json();
+                if (!d.ok || !d.leaders || d.leaders.length === 0) { l.innerHTML = '<div class="loading-text">Пока никого. Попади в TOP-10! 👑</div>'; return; }
+                l.innerHTML = '';
+                d.leaders.forEach(p => {
+                    const e = document.createElement('div'); e.className = 'leader-row' + (p.rank <= 3 ? ` top-${p.rank}` : '');
+                    const md = p.badge || `#${p.rank}`;
+                    e.innerHTML = `<span class="leader-rank">${md}</span><span class="leader-name">${escapeHtml(p.name)}<span class="leader-prize">+${p.prize_coins.toLocaleString('ru-RU')}</span></span><span class="leader-balance">${p.score.toLocaleString('ru-RU')}</span>`;
+                    l.appendChild(e);
                 });
-            } catch (e) { list.innerHTML = '<div class="loading-text">Ошибка загрузки</div>'; }
+            } catch (e) {}
         }
 
-        // ===== PROFILE =====
         async function loadProfile() {
-            const content = document.getElementById('profileContent');
-            content.innerHTML = '<div class="loading-text">Загрузка...</div>';
+            const c = document.getElementById('profileContent'); c.innerHTML = '<div class="loading-text">Загрузка...</div>';
             try {
-                const r = await fetch(`${API_URL}/api/profile/${userId}`);
-                const data = await r.json();
-                if (!data.ok) { content.innerHTML = '<div class="loading-text">Ошибка</div>'; return; }
-                const xpPct = Math.round((data.xp_in_level / data.xp_for_next) * 100);
-                const winrate = data.games_played > 0 ? Math.round(data.games_won / data.games_played * 100) : 0;
-                const titleHtml = data.equipped_title ? `<div class="profile-title" style="color:${data.equipped_title_color}">${data.equipped_title}</div>` : '';
-                content.innerHTML = `<div class="profile-header"><div class="profile-avatar">🎮</div><div class="profile-name">${escapeHtml(data.name)}</div>${titleHtml}<div class="profile-level">Уровень ${data.level}</div><div class="xp-bar"><div class="xp-bar-fill" style="width:${xpPct}%"></div></div><div class="xp-text">${data.xp_in_level} / ${data.xp_for_next} XP (${xpPct}%)</div></div><button class="daily-claim-btn" onclick="openDaily()" style="margin-top:0;margin-bottom:16px;">🎁 Ежедневный бонус</button><div class="stats-grid"><div class="stat-box"><div class="stat-value">${data.games_played}</div><div class="stat-label">Игр</div></div><div class="stat-box"><div class="stat-value">${winrate}%</div><div class="stat-label">Винрейт</div></div><div class="stat-box"><div class="stat-value">x${data.best_multiplier}</div><div class="stat-label">Лучший множитель</div></div><div class="stat-box"><div class="stat-value">${data.referrals}</div><div class="stat-label">Друзей</div></div><div class="stat-box"><div class="stat-value">${data.total_stars}</div><div class="stat-label">Stars</div></div><div class="stat-box"><div class="stat-value">${data.ads_watched}</div><div class="stat-label">Реклам</div></div></div><div class="section-title">🎖️ Ачивки</div><div class="achievements-grid">${data.achievements.map(a => `<div class="ach${a.unlocked ? ' unlocked' : ''}" title="${a.name}">${a.emoji}</div>`).join('')}</div>`;
-            } catch (e) { content.innerHTML = '<div class="loading-text">Ошибка загрузки</div>'; }
+                const r = await fetch(`${API_URL}/api/profile/${userId}`), d = await r.json();
+                if (!d.ok) { c.innerHTML = '<div class="loading-text">Ошибка</div>'; return; }
+                const xp = Math.round((d.xp_in_level / d.xp_for_next) * 100);
+                const wr = d.games_played > 0 ? Math.round(d.games_won / d.games_played * 100) : 0;
+                const th = d.equipped_title ? `<div class="profile-title" style="color:${d.equipped_title_color}">${d.equipped_title}</div>` : '';
+                c.innerHTML = `<div class="profile-header"><div class="profile-avatar">🎮</div><div class="profile-name">${escapeHtml(d.name)}</div>${th}<div class="profile-level">Уровень ${d.level}</div><div class="xp-bar"><div class="xp-bar-fill" style="width:${xp}%"></div></div><div class="xp-text">${d.xp_in_level} / ${d.xp_for_next} XP (${xp}%)</div></div><button class="daily-claim-btn" onclick="openDaily()" style="margin-top:0;margin-bottom:16px;">🎁 Ежедневный бонус</button><div class="stats-grid"><div class="stat-box"><div class="stat-value">${d.games_played}</div><div class="stat-label">Игр</div></div><div class="stat-box"><div class="stat-value">${wr}%</div><div class="stat-label">Винрейт</div></div><div class="stat-box"><div class="stat-value">x${d.best_multiplier}</div><div class="stat-label">Лучший x</div></div><div class="stat-box"><div class="stat-value">${d.referrals}</div><div class="stat-label">Друзей</div></div><div class="stat-box"><div class="stat-value">${d.total_stars}</div><div class="stat-label">Stars</div></div><div class="stat-box"><div class="stat-value">${d.ads_watched}</div><div class="stat-label">Реклам</div></div></div><div class="section-title">🎖️ Ачивки</div><div class="achievements-grid">${d.achievements.map(a => `<div class="ach${a.unlocked ? ' unlocked' : ''}" title="${a.name}">${a.emoji}</div>`).join('')}</div>`;
+            } catch (e) {}
         }
 
-        // ===== DAILY =====
         async function openDaily() {
             document.getElementById('dailyModal').classList.add('active');
-            const status = document.getElementById('dailyStatus');
-            const btn = document.getElementById('dailyClaimBtn');
-            status.textContent = 'Проверка...';
-            btn.disabled = true;
-            btn.textContent = 'Забрать';
-            try {
-                const r = await fetch(`${API_URL}/api/daily-status?user_id=${userId}`);
-                const data = await r.json();
-                if (data.available) { status.textContent = 'Бонус доступен! 🎉'; btn.disabled = false; }
-                else { status.textContent = `Следующий через ${formatTime(data.wait)}`; btn.disabled = true; }
-            } catch (e) { status.textContent = 'Ошибка'; }
+            const s = document.getElementById('dailyStatus'), b = document.getElementById('dailyClaimBtn');
+            s.textContent = 'Проверка...'; b.disabled = true; b.textContent = 'Забрать';
+            try { const r = await fetch(`${API_URL}/api/daily-status?user_id=${userId}`), d = await r.json(); if (d.available) { s.textContent = 'Бонус доступен! 🎉'; b.disabled = false; } else { s.textContent = `Следующий через ${formatTime(d.wait)}`; b.disabled = true; } } catch (e) {}
         }
         async function claimDaily() {
-            const btn = document.getElementById('dailyClaimBtn');
-            btn.disabled = true;
+            const b = document.getElementById('dailyClaimBtn'); b.disabled = true;
             try {
-                const r = await fetch(`${API_URL}/api/daily-bonus?user_id=${userId}`, { method: 'POST' });
-                const data = await r.json();
-                if (data.ok) {
-                    balance = data.balance; updateUI();
-                    tg.showAlert(`🎁 +${data.reward} монет!`);
-                    if (data.level_info) notifyLevelUp(data.level_info);
-                    if (data.achievements) notifyAchievements(data.achievements);
-                    closeModal('dailyModal');
-                    if (document.getElementById('profileTab').classList.contains('active')) loadProfile();
-                } else if (data.error === 'cooldown') { tg.showAlert(`⏳ Подожди ${formatTime(data.wait)}`); }
-                else { tg.showAlert('Ошибка: ' + (data.error || 'неизвестная')); }
-            } catch (e) { tg.showAlert('Ошибка соединения'); }
-            finally { btn.disabled = false; }
+                const r = await fetch(`${API_URL}/api/daily-bonus?user_id=${userId}`, { method: 'POST' }), d = await r.json();
+                if (d.ok) { balance = d.balance; updateUI(); tg.showAlert(`🎁 +${d.reward}!`); if (d.level_info) notifyLevelUp(d.level_info); if (d.achievements) notifyAchievements(d.achievements); closeModal('dailyModal'); if (document.getElementById('profileTab').classList.contains('active')) loadProfile(); }
+                else if (d.error === 'cooldown') tg.showAlert(`⏳ ${formatTime(d.wait)}`);
+            } catch (e) {}
+            finally { b.disabled = false; }
         }
 
-        // ===== SHOP STARS =====
         function openShop() { document.getElementById('shopModal').classList.add('active'); }
         function closeModal(id) { document.getElementById(id).classList.remove('active'); }
-        async function buyPackage(packageKey) {
-            if (!userId) return;
-            closeModal('shopModal');
-            try {
-                const r = await fetch(`${API_URL}/api/create-invoice?user_id=${userId}&package_key=${packageKey}`, { method: 'POST' });
-                const data = await r.json();
-                if (!data.ok) { tg.showAlert('Ошибка: ' + (data.error || 'неизвестная')); return; }
-                tg.openInvoice(data.invoice_link, async (status) => {
-                    if (status === 'paid') { tg.showAlert('✅ Оплата прошла!'); await refreshBalance(); }
-                    else if (status === 'cancelled') { tg.showAlert('Оплата отменена'); }
-                });
-            } catch (e) { tg.showAlert('Ошибка соединения'); }
-        }
+        async function buyPackage(k) { if (!userId) return; closeModal('shopModal'); try { const r = await fetch(`${API_URL}/api/create-invoice?user_id=${userId}&package_key=${k}`, { method: 'POST' }), d = await r.json(); if (!d.ok) { tg.showAlert('Ошибка'); return; } tg.openInvoice(d.invoice_link, async st => { if (st === 'paid') { tg.showAlert('✅ Оплата!'); await refreshBalance(); } else if (st === 'cancelled') tg.showAlert('Отменено'); }); } catch (e) {} }
 
-        // ===== AD =====
         async function watchAd() {
             if (!userId) return;
-            const adBtn = document.getElementById('adBtn');
-            adBtn.disabled = true;
-            adBtn.textContent = '⏳ Загрузка...';
+            const b = document.getElementById('adBtn'); b.disabled = true; b.textContent = '⏳...';
             try {
-                if (typeof show_11801124 !== 'function') throw new Error('SDK не загрузился');
+                if (typeof show_11801124 !== 'function') throw new Error('SDK');
                 await show_11801124();
-                const r = await fetch(`${API_URL}/api/ad-reward?user_id=${userId}`, { method: 'POST' });
-                const data = await r.json();
-                if (data.ok) {
-                    balance = data.balance; updateUI();
-                    tg.showAlert(`✅ +${data.reward} монет! (${data.ads_today}/${data.ads_limit})`);
-                    if (data.level_info) notifyLevelUp(data.level_info);
-                    if (data.achievements) notifyAchievements(data.achievements);
-                } else if (data.error === 'cooldown') { tg.showAlert(`⏳ Подожди ${data.wait} секунд`); }
-                else if (data.error === 'daily_limit') { tg.showAlert(`📺 Лимит рекламы: ${data.limit}`); }
-                else { tg.showAlert('Ошибка начисления'); }
-            } catch (e) { tg.showAlert('Реклама временно недоступна'); }
-            finally { adBtn.disabled = false; adBtn.textContent = '📺 +2000'; }
+                const r = await fetch(`${API_URL}/api/ad-reward?user_id=${userId}`, { method: 'POST' }), d = await r.json();
+                if (d.ok) { balance = d.balance; updateUI(); tg.showAlert(`✅ +${d.reward}! (${d.ads_today}/${d.ads_limit})`); if (d.level_info) notifyLevelUp(d.level_info); if (d.achievements) notifyAchievements(d.achievements); }
+                else if (d.error === 'cooldown') tg.showAlert(`⏳ ${d.wait} сек`);
+                else if (d.error === 'daily_limit') tg.showAlert(`📺 Лимит: ${d.limit}`);
+            } catch (e) { tg.showAlert('Реклама недоступна'); }
+            finally { b.disabled = false; b.textContent = '📺 +2000'; }
         }
 
-        // ===== START =====
-        async function refreshBalance() {
-            const b = await apiGetBalance();
-            if (b !== null) { balance = b; updateUI(); }
-        }
+        async function refreshBalance() { const b = await apiGetBalance(); if (b !== null) { balance = b; updateUI(); } }
         async function init() {
-            const user = tg.initDataUnsafe?.user;
-            if (!user) { document.getElementById('status').textContent = 'Открой через Telegram'; return; }
-            userId = user.id;
+            const u = tg.initDataUnsafe?.user;
+            if (!u) { document.getElementById('status').textContent = 'Открой через Telegram'; return; }
+            userId = u.id;
             await refreshBalance();
             document.getElementById('playBtn').disabled = false;
-            renderGrid();
-            renderPlinkoBoard();
+            renderGrid(); renderPlinkoBoard();
         }
         init();
         window.addEventListener('resize', renderPlinkoBoard);
