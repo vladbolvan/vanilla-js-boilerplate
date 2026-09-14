@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Boomzy Mines</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
         body {
@@ -16,157 +17,39 @@
             max-width: 500px;
             margin: 0 auto;
         }
-        .balance {
-            font-size: 28px;
-            font-weight: bold;
-            color: #4ade80;
-            text-align: center;
-            margin-bottom: 16px;
-        }
+        .balance { font-size: 28px; font-weight: bold; color: #4ade80; text-align: center; margin-bottom: 16px; }
         .controls { display: flex; gap: 8px; margin-bottom: 12px; }
-        .control {
-            flex: 1;
-            background: var(--tg-theme-secondary-bg-color, #2a2a4a);
-            border-radius: 12px;
-            padding: 10px;
-        }
-        .control label {
-            display: block;
-            font-size: 12px;
-            opacity: 0.7;
-            margin-bottom: 6px;
-            text-align: center;
-        }
-        .control-btns {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-        .control-btns button {
-            background: none;
-            border: none;
-            color: var(--tg-theme-text-color, #fff);
-            font-size: 20px;
-            cursor: pointer;
-            padding: 4px 12px;
-        }
+        .control { flex: 1; background: var(--tg-theme-secondary-bg-color, #2a2a4a); border-radius: 12px; padding: 10px; }
+        .control label { display: block; font-size: 12px; opacity: 0.7; margin-bottom: 6px; text-align: center; }
+        .control-btns { display: flex; justify-content: space-between; align-items: center; }
+        .control-btns button { background: none; border: none; color: var(--tg-theme-text-color, #fff); font-size: 20px; cursor: pointer; padding: 4px 12px; }
         .control-value { font-weight: bold; font-size: 16px; }
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 8px;
-            margin: 16px 0;
-        }
-        .cell {
-            aspect-ratio: 1;
-            background: var(--tg-theme-secondary-bg-color, #2a2a4a);
-            border: none;
-            border-radius: 12px;
-            font-size: 28px;
-            cursor: pointer;
-            transition: transform 0.1s, background 0.2s;
-            color: white;
-        }
+        .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin: 16px 0; }
+        .cell { aspect-ratio: 1; background: var(--tg-theme-secondary-bg-color, #2a2a4a); border: none; border-radius: 12px; font-size: 28px; cursor: pointer; transition: transform 0.1s, background 0.2s; color: white; }
         .cell:active:not(:disabled) { transform: scale(0.95); }
         .cell.revealed { background: #4ade80; cursor: default; }
         .cell.bomb { background: #ef4444; }
         .cell:disabled { cursor: default; }
-        .play-btn {
-            width: 100%;
-            padding: 16px;
-            font-size: 18px;
-            font-weight: bold;
-            border: none;
-            border-radius: 12px;
-            background: var(--tg-theme-button-color, #2481cc);
-            color: var(--tg-theme-button-text-color, #fff);
-            cursor: pointer;
-            margin-top: 8px;
-        }
+        .play-btn { width: 100%; padding: 16px; font-size: 18px; font-weight: bold; border: none; border-radius: 12px; background: var(--tg-theme-button-color, #2481cc); color: var(--tg-theme-button-text-color, #fff); cursor: pointer; margin-top: 8px; }
         .play-btn:disabled { opacity: 0.5; cursor: default; }
         .play-btn.cashout { background: #f59e0b; }
         .row-btns { display: flex; gap: 8px; margin-top: 8px; }
-        .row-btns button {
-            flex: 1;
-            padding: 14px;
-            font-size: 15px;
-            font-weight: bold;
-            border: none;
-            border-radius: 12px;
-            cursor: pointer;
-            color: white;
-        }
+        .row-btns button { flex: 1; padding: 14px; font-size: 15px; font-weight: bold; border: none; border-radius: 12px; cursor: pointer; color: white; }
         .buy-btn { background: #8b5cf6; }
         .top-btn { background: #f59e0b; }
         .ad-btn { background: #10b981; }
         .ad-btn:disabled { opacity: 0.5; cursor: default; }
-        .status {
-            text-align: center;
-            font-size: 14px;
-            margin: 8px 0;
-            min-height: 20px;
-            opacity: 0.9;
-        }
-        .modal-overlay {
-            position: fixed;
-            inset: 0;
-            background: rgba(0, 0, 0, 0.7);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            padding: 16px;
-        }
+        .status { text-align: center; font-size: 14px; margin: 8px 0; min-height: 20px; opacity: 0.9; }
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.7); display: none; align-items: center; justify-content: center; z-index: 1000; padding: 16px; }
         .modal-overlay.active { display: flex; }
-        .modal {
-            background: var(--tg-theme-bg-color, #1a1a2e);
-            border-radius: 16px;
-            padding: 20px;
-            width: 100%;
-            max-width: 400px;
-            max-height: 80vh;
-            overflow-y: auto;
-        }
-        .modal h2 {
-            font-size: 20px;
-            margin-bottom: 16px;
-            text-align: center;
-        }
-        .package {
-            background: var(--tg-theme-secondary-bg-color, #2a2a4a);
-            border-radius: 12px;
-            padding: 14px;
-            margin-bottom: 10px;
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            transition: transform 0.1s;
-        }
+        .modal { background: var(--tg-theme-bg-color, #1a1a2e); border-radius: 16px; padding: 20px; width: 100%; max-width: 400px; max-height: 80vh; overflow-y: auto; }
+        .modal h2 { font-size: 20px; margin-bottom: 16px; text-align: center; }
+        .package { background: var(--tg-theme-secondary-bg-color, #2a2a4a); border-radius: 12px; padding: 14px; margin-bottom: 10px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
         .package:active { transform: scale(0.98); }
         .package-coins { font-weight: bold; font-size: 16px; }
         .package-stars { color: #fbbf24; font-weight: bold; }
-        .close-btn {
-            width: 100%;
-            padding: 12px;
-            margin-top: 10px;
-            font-size: 16px;
-            border: none;
-            border-radius: 12px;
-            background: transparent;
-            color: var(--tg-theme-text-color, #fff);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            cursor: pointer;
-        }
-        .leader-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 12px 14px;
-            background: var(--tg-theme-secondary-bg-color, #2a2a4a);
-            border-radius: 12px;
-            margin-bottom: 8px;
-        }
+        .close-btn { width: 100%; padding: 12px; margin-top: 10px; font-size: 16px; border: none; border-radius: 12px; background: transparent; color: var(--tg-theme-text-color, #fff); border: 1px solid rgba(255, 255, 255, 0.2); cursor: pointer; }
+        .leader-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 14px; background: var(--tg-theme-secondary-bg-color, #2a2a4a); border-radius: 12px; margin-bottom: 8px; }
         .leader-row.top-1 { background: linear-gradient(90deg, #b45309, #f59e0b); }
         .leader-row.top-2 { background: linear-gradient(90deg, #374151, #6b7280); }
         .leader-row.top-3 { background: linear-gradient(90deg, #7c2d12, #b45309); }
@@ -213,7 +96,6 @@
         <button class="ad-btn" id="adBtn" onclick="watchAd()">📺 +200 монет за рекламу</button>
     </div>
 
-    <!-- Магазин -->
     <div class="modal-overlay" id="shopModal">
         <div class="modal">
             <h2>💎 Магазин монет</h2>
@@ -237,7 +119,6 @@
         </div>
     </div>
 
-    <!-- Топ игроков -->
     <div class="modal-overlay" id="leaderModal">
         <div class="modal">
             <h2>🏆 Топ-10 игроков</h2>
@@ -254,6 +135,7 @@
         tg.expand();
 
         const API_URL = "https://buoyantly-tasteful-titmouse.cloudpub.ru";
+        const ADSGRAM_BLOCK_ID = "47872";
         const BET_OPTIONS = [100, 500, 1000, 5000, 10000];
         const MINES_OPTIONS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
         const TOTAL_CELLS = 16;
@@ -264,6 +146,7 @@
         let game = null;
         let inGame = false;
         let userId = null;
+        let adController = null;
 
         // ===== API =====
         async function apiGetBalance() {
@@ -445,7 +328,6 @@
         function openShop() { document.getElementById('shopModal').classList.add('active'); }
         function closeModal(id) { document.getElementById(id).classList.remove('active'); }
 
-        // ===== МАГАЗИН =====
         async function buyPackage(packageKey) {
             if (!userId) return;
             closeModal('shopModal');
@@ -470,7 +352,6 @@
             }
         }
 
-        // ===== ТОП ИГРОКОВ =====
         async function openLeaderboard() {
             document.getElementById('leaderModal').classList.add('active');
             const list = document.getElementById('leadersList');
@@ -489,9 +370,7 @@
                 data.leaders.forEach((p) => {
                     const row = document.createElement('div');
                     row.className = 'leader-row' + (p.rank <= 3 ? ` top-${p.rank}` : '');
-
                     const medal = p.rank === 1 ? '🥇' : p.rank === 2 ? '🥈' : p.rank === 3 ? '🥉' : `#${p.rank}`;
-
                     row.innerHTML = `
                         <span class="leader-rank">${medal}</span>
                         <span class="leader-name">${escapeHtml(p.name)}</span>
@@ -511,30 +390,36 @@
             return div.innerHTML;
         }
 
-        // ===== РЕКЛАМА =====
+        // ===== РЕКЛАМА (Adsgram) =====
         async function watchAd() {
             if (!userId) return;
 
-            // Пока показываем заглушку — реальная интеграция Adsgram будет позже
-            tg.showConfirm('Сейчас начислю 200 монет (заглушка). Настроить реальную рекламу?', async (ok) => {
-                if (!ok) return;
-                try {
-                    const r = await fetch(`${API_URL}/api/ad-reward?user_id=${userId}`, { method: 'POST' });
-                    const data = await r.json();
-                    if (data.ok) {
-                        balance = data.balance;
-                        updateUI();
-                        tg.showAlert(`✅ +${data.reward} монет!`);
-                    } else if (data.error === 'cooldown') {
-                        tg.showAlert(`⏳ Подожди ${data.wait} секунд`);
-                    } else {
-                        tg.showAlert('Ошибка: ' + (data.error || 'неизвестная'));
-                    }
-                } catch (e) {
-                    console.error(e);
-                    tg.showAlert('Ошибка соединения');
+            const adBtn = document.getElementById('adBtn');
+            adBtn.disabled = true;
+            adBtn.textContent = '⏳ Загрузка рекламы...';
+
+            try {
+                if (!adController) {
+                    adController = window.Adsgram.init({ blockId: ADSGRAM_BLOCK_ID });
                 }
-            });
+
+                const result = await adController.show();
+
+                // Реклама просмотрена — сервер Adsgram сам пошлёт GET на Reward URL,
+                // который начислит монеты. Нам остаётся обновить баланс.
+                tg.showAlert('✅ Реклама просмотрена! Монеты зачислены.');
+                await refreshBalance();
+            } catch (e) {
+                console.error('Ошибка рекламы:', e);
+                if (e && e.done === false) {
+                    tg.showAlert('Реклама не была просмотрена до конца');
+                } else {
+                    tg.showAlert('Реклама временно недоступна');
+                }
+            } finally {
+                adBtn.disabled = false;
+                adBtn.textContent = '📺 +200 монет за рекламу';
+            }
         }
 
         // ===== СТАРТ =====
