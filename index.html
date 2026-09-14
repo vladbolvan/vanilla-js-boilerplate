@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Boomzy Mines</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
-    <script src="https://sad.adsgram.ai/js/sad.min.js"></script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
         body {
@@ -390,31 +389,43 @@
             return div.innerHTML;
         }
 
-        // ===== РЕКЛАМА (Adsgram) =====
+        // ===== РЕКЛАМА (Adsgram) — SDK грузится ЛЕНИВО =====
+        function loadAdsgramSDK() {
+            return new Promise((resolve, reject) => {
+                if (window.Adsgram) { resolve(); return; }
+                const script = document.createElement('script');
+                script.src = 'https://sad.adsgram.ai/js/sad.min.js';
+                script.onload = resolve;
+                script.onerror = () => reject(new Error('Не удалось загрузить Adsgram SDK'));
+                document.head.appendChild(script);
+            });
+        }
+
         async function watchAd() {
             if (!userId) return;
 
             const adBtn = document.getElementById('adBtn');
             adBtn.disabled = true;
-            adBtn.textContent = '⏳ Загрузка рекламы...';
+            adBtn.textContent = '⏳ Загрузка...';
 
             try {
+                await loadAdsgramSDK();
+
                 if (!adController) {
                     adController = window.Adsgram.init({ blockId: ADSGRAM_BLOCK_ID });
                 }
 
                 const result = await adController.show();
-
-                // Реклама просмотрена — сервер Adsgram сам пошлёт GET на Reward URL,
-                // который начислит монеты. Нам остаётся обновить баланс.
                 tg.showAlert('✅ Реклама просмотрена! Монеты зачислены.');
                 await refreshBalance();
             } catch (e) {
                 console.error('Ошибка рекламы:', e);
                 if (e && e.done === false) {
                     tg.showAlert('Реклама не была просмотрена до конца');
+                } else if (e && e.message && e.message.includes('load')) {
+                    tg.showAlert('Не удалось загрузить рекламу. Проверь VPN.');
                 } else {
-                    tg.showAlert('Реклама временно недоступна');
+                    tg.showAlert('Реклама временно недоступна. Попробуй позже.');
                 }
             } finally {
                 adBtn.disabled = false;
