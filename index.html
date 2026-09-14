@@ -72,7 +72,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .clicker-btn:disabled{opacity:.5;cursor:default}
 .clicker-info{color:#fff;font-size:15px;margin-top:10px;font-weight:600}
 
-/* CRASH */
 .crash-display{background:linear-gradient(160deg,#0f172a,#1e1b4b);border-radius:16px;padding:24px;text-align:center;margin:12px 0;position:relative;overflow:hidden;min-height:260px;display:flex;flex-direction:column;justify-content:center}
 .crash-mult{font-size:64px;font-weight:900;color:#4ade80;text-shadow:0 0 30px rgba(74,222,128,.6);transition:color .3s;font-variant-numeric:tabular-nums}
 .crash-mult.crashed{color:#ef4444;text-shadow:0 0 30px rgba(239,68,68,.6)}
@@ -86,14 +85,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .crash-hist span.mid{background:rgba(251,191,36,.2);color:#fbbf24}
 .crash-hist span.lo{background:rgba(74,222,128,.2);color:#4ade80}
 
-/* WHEEL */
 .wheel-wrap{position:relative;width:100%;aspect-ratio:1;max-width:340px;margin:20px auto}
-.wheel{width:100%;height:100%;border-radius:50%;position:relative;transition:transform 4s cubic-bezier(.17,.67,.16,1);box-shadow:0 0 40px rgba(139,92,246,.5),inset 0 0 40px rgba(0,0,0,.3);border:6px solid #fbbf24}
-.wheel-seg{position:absolute;inset:0;display:flex;align-items:center;justify-content:flex-start;padding-left:20px;font-size:13px;font-weight:bold;transform-origin:center}
+.wheel{width:100%;height:100%;border-radius:50%;position:relative;transition:transform 4s cubic-bezier(.17,.67,.16,1);box-shadow:0 0 40px rgba(139,92,246,.5),inset 0 0 40px rgba(0,0,0,.3);border:6px solid #fbbf24;overflow:hidden}
+.wheel-label{position:absolute;left:50%;top:50%;font-size:11px;font-weight:bold;color:#fff;text-shadow:0 2px 4px rgba(0,0,0,.9);white-space:nowrap;pointer-events:none}
 .wheel-pointer{position:absolute;top:-14px;left:50%;transform:translateX(-50%);font-size:38px;z-index:10;filter:drop-shadow(0 4px 6px rgba(0,0,0,.5))}
 .wheel-result{text-align:center;font-size:22px;font-weight:bold;margin:12px 0;min-height:30px}
 
-/* BATTLE PASS */
 .bp-header{background:linear-gradient(135deg,#8b5cf6,#ec4899);border-radius:16px;padding:16px;margin-bottom:12px;text-align:center}
 .bp-level{font-size:32px;font-weight:900;margin:6px 0}
 .bp-xp-bar{height:12px;background:rgba(0,0,0,.3);border-radius:6px;overflow:hidden;margin-top:8px}
@@ -109,7 +106,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .bp-btn:disabled{background:rgba(255,255,255,.1);color:#888;cursor:default}
 .bp-btn.claimed{background:transparent;color:#4ade80;border:1px solid #4ade80}
 
-/* PREMIUM */
 .premium-card{background:linear-gradient(135deg,#fbbf24,#ec4899);border-radius:16px;padding:18px;margin-bottom:12px;color:#fff;text-align:center;position:relative;overflow:hidden}
 .premium-card.active{background:linear-gradient(135deg,#4ade80,#22d3ee)}
 .premium-badge{display:inline-block;padding:4px 12px;background:rgba(0,0,0,.25);border-radius:20px;font-size:11px;font-weight:bold;margin-bottom:8px}
@@ -118,7 +114,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;b
 .premium-btn{width:100%;padding:14px;margin-top:10px;border:none;border-radius:12px;background:#fff;color:#000;font-size:16px;font-weight:bold;cursor:pointer}
 .premium-btn:disabled{opacity:.7}
 
-/* Прочее */
 .chat-box{background:var(--tg-theme-secondary-bg-color,#2a2a4a);border-radius:12px;padding:10px;height:480px;display:flex;flex-direction:column;margin-bottom:10px}
 .chat-messages{flex:1;overflow-y:auto;margin-bottom:10px;padding-right:4px}
 .chat-message{margin-bottom:10px;padding:8px 10px;background:rgba(255,255,255,.05);border-radius:10px;word-wrap:break-word}
@@ -775,7 +770,6 @@ async function crashExplode(){
   crashActive=false;
   if(crashRaf)cancelAnimationFrame(crashRaf);
   haptic('error');
-  // Дожидаемся резолва на сервере (по сути это "не успел")
   try{
     await apiFetch(`${API_URL}/api/crash/cashout?user_id=${userId}&crash_id=${crashId}`,{method:'POST'});
   }catch(e){}
@@ -801,31 +795,30 @@ async function initWheel(){
   try{
     const r=await apiFetch(`${API_URL}/api/wheel/status?user_id=${userId}`);
     const d=await r.json();
-    if(d.ok){
-      const sec=d.sectors,n=sec.length,angle=360/n;
-      wheel.innerHTML='';
-      sec.forEach((s,i)=>{
-        const seg=document.createElement('div');
-        seg.className='wheel-seg';
-        seg.style.background=`conic-gradient(from ${i*angle}deg, ${WHEEL_COLORS[i%WHEEL_COLORS.length]} 0deg ${angle}deg, transparent ${angle}deg)`;
-        seg.style.transform=`rotate(${i*angle}deg)`;
-        seg.style.paddingLeft='26px';
-        seg.style.alignItems='center';
-        seg.innerHTML=`<span style="transform:rotate(${-i*angle}deg) translateY(-130px);display:inline-block;font-size:14px;color:#fff;text-shadow:0 2px 4px rgba(0,0,0,.8)">${s.label}</span>`;
-        wheel.appendChild(seg);
-      });
-      const fb=document.getElementById('wheelFreeBtn');
-      const pb=document.getElementById('wheelPaidBtn');
-      if(d.free_available){fb.disabled=false;fb.textContent='🎁 Бесплатный спин';document.getElementById('wheelStatus').textContent='Бесплатный спин доступен!'}
-      else{
-        fb.disabled=true;
-        const mins=Math.floor(d.wait/60),secs=d.wait%60;
-        fb.textContent=`⏳ Бесплатный через ${mins}:${String(secs).padStart(2,'0')}`;
-        document.getElementById('wheelStatus').textContent='';
-      }
-      pb.disabled=false;
-      pb.textContent=`💎 Спин за ${d.paid_cost} 🪙`;
+    if(!d.ok)return;
+    const sec=d.sectors,n=sec.length,angle=360/n;
+    const stops=sec.map((s,i)=>`${WHEEL_COLORS[i%WHEEL_COLORS.length]} ${i*angle}deg ${(i+1)*angle}deg`).join(', ');
+    wheel.style.background=`conic-gradient(${stops})`;
+    wheel.innerHTML='';
+    const radius=wheel.clientWidth/2||160;
+    sec.forEach((s,i)=>{
+      const midA=i*angle+angle/2;
+      const lbl=document.createElement('div');
+      lbl.className='wheel-label';
+      lbl.style.transform=`translate(-50%,-50%) rotate(${midA}deg) translate(0,-${radius*0.62}px) rotate(${-midA}deg)`;
+      lbl.textContent=s.label;
+      wheel.appendChild(lbl);
+    });
+    const fb=document.getElementById('wheelFreeBtn'),pb=document.getElementById('wheelPaidBtn');
+    if(d.free_available){fb.disabled=false;fb.textContent='🎁 Бесплатный спин';document.getElementById('wheelStatus').textContent='Бесплатный спин доступен!'}
+    else{
+      fb.disabled=true;
+      const mins=Math.floor(d.wait/60),secs=d.wait%60;
+      fb.textContent=`⏳ Бесплатный через ${mins}:${String(secs).padStart(2,'0')}`;
+      document.getElementById('wheelStatus').textContent='';
     }
+    pb.disabled=false;
+    pb.textContent=`💎 Спин за ${d.paid_cost} 🪙`;
   }catch(e){}
 }
 async function spinWheel(free){
@@ -843,11 +836,16 @@ async function spinWheel(free){
       else tg.showAlert('Ошибка');
       wheelBusy=false;initWheel();return;
     }
-    const n=10,angle=360/n;
-    const segAngle=angle*d.sector_index;
-    const targetRot=360*5+(360-segAngle)-angle/2;
-    wheelRot+=targetRot;
-    document.getElementById('wheel').style.transform=`rotate(${wheelRot}deg)`;
+    const wheel=document.getElementById('wheel');
+    const angle=360/10;
+    const midAngle=d.sector_index*angle+angle/2;
+    const targetMod=(360-midAngle)%360;
+    const currentMod=((wheelRot%360)+360)%360;
+    let delta=targetMod-currentMod;
+    while(delta<0)delta+=360;
+    delta+=5*360;
+    wheelRot+=delta;
+    wheel.style.transform=`rotate(${wheelRot}deg)`;
     setTimeout(()=>{
       balance=d.balance;updateUI();animateBalance();
       const res=document.getElementById('wheelResult');
@@ -1188,9 +1186,9 @@ async function init(){
   userId=u.id;
   await refreshBalance();
   document.getElementById('playBtn').disabled=false;
+  document.getElementById('crashBtn').disabled=false;
   renderGrid();renderPlinkoBoard();
   loadBigWins();loadOnline();
-  // Проверка premium
   try{
     const r=await apiFetch(`${API_URL}/api/premium/status?user_id=${userId}`);
     const d=await r.json();
