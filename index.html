@@ -76,7 +76,40 @@
         </div>
       </section>
     </div>
+    <!-- ЭКРАН 3: ВВОД ПОДХОДА -->
+    <div id="screen-input" class="hidden-screen">
+      <header class="flex items-center gap-3 mb-4">
+        <button id="back-to-exercises" class="text-slate-300 text-2xl leading-none">←</button>
+        <h1 id="exercise-title" class="text-xl font-bold">Упражнение</h1>
+      </header>
 
+      <div class="bg-surface rounded-xl p-4 mb-4">
+        <div class="grid grid-cols-2 gap-3 mb-3">
+          <div>
+            <label class="text-xs text-slate-400">Вес (кг)</label>
+            <input id="input-weight" type="number" step="0.5" min="0" inputmode="decimal"
+                   class="w-full bg-surface2 rounded-xl px-4 py-3 mt-1 text-white text-lg font-semibold
+                          focus:outline-none focus:ring-2 focus:ring-primary">
+          </div>
+          <div>
+            <label class="text-xs text-slate-400">Повторы</label>
+            <input id="input-reps" type="number" min="1" inputmode="numeric"
+                   class="w-full bg-surface2 rounded-xl px-4 py-3 mt-1 text-white text-lg font-semibold
+                          focus:outline-none focus:ring-2 focus:ring-primary">
+          </div>
+        </div>
+        <button id="add-set"
+                class="w-full bg-accent hover:bg-green-600 active:scale-[0.98] transition
+                       rounded-xl py-3 font-semibold text-white">
+          + Добавить подход
+        </button>
+      </div>
+
+      <h2 class="text-xs uppercase tracking-wide text-slate-500 mb-2">Подходы</h2>
+      <div id="sets-list" class="space-y-2">
+        <p class="text-slate-500 text-sm py-4 text-center">Пока пусто</p>
+      </div>
+    </div>
     <!-- ЭКРАН 2: ВЫБОР УПРАЖНЕНИЯ -->
     <div id="screen-exercises" class="hidden-screen">
       <header class="flex items-center gap-3 mb-4">
