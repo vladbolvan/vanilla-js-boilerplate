@@ -407,9 +407,26 @@ async function addSetInline(exerciseId) {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const realSet = await res.json();
 
-    const idx = we.sets.findIndex(s => s.id === tempId);
-    if (idx !== -1) we.sets[idx] = realSet;
-    renderSetsForExercise(exerciseId, we.sets);
+        const idx = we.sets.findIndex(s => s.id === tempId);
+        if (idx !== -1) we.sets[idx] = realSet;
+        renderSetsForExercise(exerciseId, we.sets);
+
+        // 🏆 Проверяем — не побит ли рекорд
+        if (realSet.record) {
+          const r = realSet.record;
+          tg?.HapticFeedback?.notificationOccurred('success');
+          setTimeout(() => {
+            if (r.is_first) {
+              tg?.showAlert(
+                `🏆 Первый рекорд!\n\n${r.exercise_name}\n${r.weight} кг × ${r.reps}\nРасчётный 1RM: ${r.estimated_1rm} кг`
+              );
+            } else {
+              tg?.showAlert(
+                `🎉 Новый рекорд!\n\n${r.exercise_name}\n${r.weight} кг × ${r.reps}\n+${r.improvement} кг к 1RM`
+              );
+            }
+          }, 250);
+        }
   } catch (e) {
     console.error(e);
     we.sets = we.sets.filter(s => s.id !== tempId);
