@@ -284,16 +284,7 @@ function renderWorkoutExercises() {
                 data-ex-id="${ex.id}">удалить</button>
       </div>
 
-      ${ex.sets.length > 0 ? `
-        <div class="space-y-1 mb-3">
-          ${ex.sets.map((s, i) => `
-            <div class="flex items-center justify-between text-sm">
-              <span class="text-slate-500">#${i + 1}</span>
-              <span><b>${s.weight}</b> кг × <b>${s.reps}</b></span>
-            </div>
-          `).join('')}
-        </div>
-      ` : ''}
+      <div class="sets-container space-y-1 mb-3" data-ex-id="${ex.id}"></div>
 
       <div class="flex gap-2 items-stretch">
         <input type="number" step="0.5" min="0" inputmode="decimal"
@@ -313,10 +304,17 @@ function renderWorkoutExercises() {
     </div>
   `).join('');
 
+  // Заполняем подходы отдельно — без пересборки карточек
+  workoutExercises.forEach(ex => {
+    renderSetsForExercise(ex.id, ex.sets);
+  });
+
+  // Обработчики: удаление
   workoutExercisesEl.querySelectorAll('.remove-ex').forEach(btn => {
     btn.addEventListener('click', () => removeExerciseFromWorkout(parseInt(btn.dataset.exId)));
   });
 
+  // Обработчики: добавление подхода
   workoutExercisesEl.querySelectorAll('.add-set-btn').forEach(btn => {
     btn.addEventListener('click', () => addSetInline(parseInt(btn.dataset.exId)));
   });
@@ -328,12 +326,25 @@ function renderWorkoutExercises() {
   });
 }
 
-async function addSetInline(exerciseId) {
-  if (!currentWorkoutId) {
-    await startWorkout();
-    if (!currentWorkoutId) return;
+// Рисует ТОЛЬКО список подходов внутри одной карточки — без трогания инпутов
+function renderSetsForExercise(exerciseId, sets) {
+  const container = workoutExercisesEl.querySelector(`.sets-container[data-ex-id="${exerciseId}"]`);
+  if (!container) return;
+
+  if (!sets || sets.length === 0) {
+    container.innerHTML = '';
+    return;
   }
 
+  container.innerHTML = sets.map((s, i) => `
+    <div class="set-row flex items-center justify-between text-sm" data-set-id="${s.id}">
+      <span class="text-slate-500">#${i + 1}</span>
+      <span><b>${s.weight}</b> кг × <b>${s.reps}</b></span>
+    </div>
+  `).join('');
+}
+
+async function addSetInline(exerciseId) {
   const card = workoutExercisesEl.querySelector(`[data-ex-id="${exerciseId}"]`);
   if (!card) return;
 
@@ -344,6 +355,38 @@ async function addSetInline(exerciseId) {
 
   if (isNaN(weight) || weight < 0) { tg?.showAlert('Введи вес'); return; }
   if (isNaN(reps) || reps < 1) { tg?.showAlert('Введи повторы'); return; }
+
+  const we = workoutExercises.find(e => e.id === exerciseId);
+  if (!we) return;
+
+  // ===== ОПТИМИСТИЧНЫЙ UI =====
+  const tempId = 'temp_' + Date.now();
+  const optimisticSet = {
+    id: tempId,
+    exercise_id: exerciseId,
+    set_number: we.sets.length + 1,
+    weight: weight,
+    reps: reps,
+  };
+  we.sets.push(optimisticSet);
+
+  renderSetsForExercise(exerciseId, we.sets);
+
+  weightInput.value = '';
+  repsInput.value = '';
+  weightInput.focus();
+  tg?.HapticFeedback?.notificationOccurred('success');
+
+  // ===== ФОНОВАЯ ОТПРАВКА =====
+  if (!currentWorkoutId) {
+    await startWorkout();
+    if (!currentWorkoutId) {
+      we.sets = we.sets.filter(s => s.id !== tempId);
+      renderSetsForExercise(exerciseId, we.sets);
+      tg?.showAlert('Не удалось начать тренировку');
+      return;
+    }
+  }
 
   try {
     const params = new URLSearchParams({
@@ -356,20 +399,15 @@ async function addSetInline(exerciseId) {
       { method: 'POST', headers: authHeaders() }
     );
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const set = await res.json();
+    const realSet = await res.json();
 
-    const we = workoutExercises.find(e => e.id === exerciseId);
-    if (we) we.sets.push(set);
-
-    renderWorkoutExercises();
-    tg?.HapticFeedback?.notificationOccurred('success');
-
-    setTimeout(() => {
-      const newCard = workoutExercisesEl.querySelector(`[data-ex-id="${exerciseId}"]`);
-      newCard?.querySelector('.set-weight')?.focus();
-    }, 50);
+    const idx = we.sets.findIndex(s => s.id === tempId);
+    if (idx !== -1) we.sets[idx] = realSet;
+    renderSetsForExercise(exerciseId, we.sets);
   } catch (e) {
     console.error(e);
+    we.sets = we.sets.filter(s => s.id !== tempId);
+    renderSetsForExercise(exerciseId, we.sets);
     tg?.showAlert('Не удалось сохранить подход');
   }
 }
