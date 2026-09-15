@@ -3,8 +3,8 @@ const tg = window.Telegram?.WebApp;
 if (tg) {
   tg.ready();
   tg.expand();
-  tg.setHeaderColor('#0f172a');
-  tg.setBackgroundColor('#0f172a');
+  tg.setHeaderColor('#0a0a0f');
+  tg.setBackgroundColor('#0a0a0f');
 
   if (typeof tg.disableVerticalSwipes === 'function') tg.disableVerticalSwipes();
   if (typeof tg.requestFullscreen === 'function') tg.requestFullscreen();
@@ -24,6 +24,7 @@ const screenWorkout = document.getElementById('screen-workout');
 const screenHistory = document.getElementById('screen-history');
 const screenWorkoutDetail = document.getElementById('screen-workout-detail');
 const screenProfile = document.getElementById('screen-profile');
+const screenRecords = document.getElementById('screen-records');
 
 const userNameEl = document.getElementById('user-name');
 const recentListEl = document.getElementById('recent-list');
@@ -45,6 +46,7 @@ const statWorkoutsEl = document.getElementById('stat-workouts');
 const statSetsEl = document.getElementById('stat-sets');
 const statVolumeEl = document.getElementById('stat-volume');
 const streakHintEl = document.getElementById('streak-hint');
+const recordsListEl = document.getElementById('records-list');
 
 // ============ STATE ============
 let allExercises = [];
@@ -63,13 +65,14 @@ function showScreen(name) {
   screenHistory.classList.toggle('hidden-screen', name !== 'history');
   screenWorkoutDetail.classList.toggle('hidden-screen', name !== 'workout-detail');
   screenProfile.classList.toggle('hidden-screen', name !== 'profile');
+  screenRecords.classList.toggle('hidden-screen', name !== 'records');
 
-  // Подсветка активной вкладки через класс .active
   document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
   document.getElementById('nav-' + name)?.classList.add('active');
 
   document.getElementById('wrap')?.scrollTo(0, 0);
 }
+
 // ============ ИМЯ В ШАПКЕ ============
 async function loadMe() {
   if (!tg?.initData) {
@@ -108,7 +111,7 @@ function renderRecent(workouts) {
   if (!recentListEl) return;
   if (!workouts || workouts.length === 0) {
     recentListEl.innerHTML =
-      '<p class="text-slate-500 text-sm py-4 text-center">Пока нет тренировок</p>';
+      '<p class="text-muted text-sm py-4 text-center">Пока нет тренировок</p>';
     return;
   }
   recentListEl.innerHTML = workouts.slice(0, 3).map(w => {
@@ -119,12 +122,12 @@ function renderRecent(workouts) {
       ? `${w.total_sets} подх. · ${exNames || 'без упражнений'}`
       : 'Без подходов';
     return `
-      <div class="bg-surface rounded-xl p-4 flex items-center justify-between gap-2">
+      <div class="bg-surface rounded-2xl p-4 border border-white/5 card-shadow flex items-center justify-between gap-2">
         <div class="min-w-0 flex-1">
           <p class="font-medium truncate">${exNames || 'Тренировка'}</p>
-          <p class="text-sm text-slate-400 truncate">${preview}</p>
+          <p class="text-sm text-muted truncate mt-0.5">${preview}</p>
         </div>
-        <span class="text-slate-500 text-sm shrink-0">${dateStr}</span>
+        <span class="text-muted text-sm shrink-0">${dateStr}</span>
       </div>
     `;
   }).join('');
@@ -158,7 +161,7 @@ async function loadExercises() {
 function renderExercisesPicker(list) {
   if (list.length === 0) {
     exercisesPickerEl.innerHTML =
-      '<p class="text-slate-500 text-center py-4 text-sm">Ничего не найдено</p>';
+      '<p class="text-muted text-center py-4 text-sm">Ничего не найдено</p>';
     return;
   }
   const inWorkoutIds = new Set(workoutExercises.map(e => e.id));
@@ -166,7 +169,7 @@ function renderExercisesPicker(list) {
 
   if (available.length === 0) {
     exercisesPickerEl.innerHTML =
-      '<p class="text-slate-500 text-center py-4 text-sm">Все упражнения добавлены</p>';
+      '<p class="text-muted text-center py-4 text-sm">Все упражнения добавлены</p>';
     return;
   }
 
@@ -177,14 +180,15 @@ function renderExercisesPicker(list) {
   }
   let html = '';
   for (const [group, items] of Object.entries(groups)) {
-    html += `<p class="text-xs uppercase tracking-wide text-slate-500 mt-3 mb-1">${group}</p>`;
+    html += `<p class="text-xs uppercase tracking-wider text-muted mt-3 mb-2">${group}</p>`;
     for (const ex of items) {
       html += `
         <button class="exercise-pick w-full bg-surface hover:bg-surface2 active:scale-[0.98]
-                       transition rounded-xl px-4 py-3 text-left flex items-center justify-between gap-2"
+                       transition rounded-2xl px-4 py-3.5 text-left flex items-center justify-between gap-2
+                       border border-white/5"
                 data-id="${ex.id}" data-name="${ex.name}">
           <span class="font-medium text-sm break-words min-w-0 text-left">${ex.name}</span>
-          <span class="text-primary text-lg leading-none shrink-0">+</span>
+          <span class="text-primary text-xl leading-none shrink-0 font-light">+</span>
         </button>
       `;
     }
@@ -289,28 +293,28 @@ function renderWorkoutExercises() {
   }
 
   workoutExercisesEl.innerHTML = workoutExercises.map(ex => `
-    <div class="bg-surface rounded-xl p-4 overflow-hidden" data-ex-id="${ex.id}">
+    <div class="bg-surface rounded-2xl p-4 overflow-hidden border border-white/5 card-shadow" data-ex-id="${ex.id}">
       <div class="flex items-start justify-between gap-2 mb-3">
         <p class="font-semibold break-words min-w-0 flex-1">${ex.name}</p>
-        <button class="remove-ex text-slate-500 text-xs hover:text-red-400 shrink-0"
+        <button class="remove-ex text-muted text-xs hover:text-red-400 shrink-0"
                 data-ex-id="${ex.id}">удалить</button>
       </div>
 
-      <div class="sets-container space-y-1 mb-3" data-ex-id="${ex.id}"></div>
+      <div class="sets-container space-y-1.5 mb-3" data-ex-id="${ex.id}"></div>
 
       <div class="flex gap-2 items-stretch">
         <input type="number" step="0.5" min="0" inputmode="decimal"
                placeholder="Вес"
-               class="set-weight flex-1 min-w-0 bg-surface2 rounded-lg px-3 py-2 text-white text-center
-                      focus:outline-none focus:ring-2 focus:ring-primary"
+               class="set-weight flex-1 min-w-0 bg-surface2 rounded-xl px-3 py-2.5 text-white text-center
+                      focus:outline-none focus:ring-2 focus:ring-primary/40 transition"
                data-ex-id="${ex.id}">
         <input type="number" min="1" inputmode="numeric"
                placeholder="Повт"
-               class="set-reps flex-1 min-w-0 bg-surface2 rounded-lg px-3 py-2 text-white text-center
-                      focus:outline-none focus:ring-2 focus:ring-primary"
+               class="set-reps flex-1 min-w-0 bg-surface2 rounded-xl px-3 py-2.5 text-white text-center
+                      focus:outline-none focus:ring-2 focus:ring-primary/40 transition"
                data-ex-id="${ex.id}">
-        <button class="add-set-btn bg-accent hover:bg-green-600 active:scale-95 transition
-                       rounded-lg w-12 shrink-0 font-bold"
+        <button class="add-set-btn bg-accent hover:bg-green-500 active:scale-95 transition
+                       rounded-xl w-12 shrink-0 font-bold text-black/80"
                 data-ex-id="${ex.id}">+</button>
       </div>
     </div>
@@ -345,8 +349,8 @@ function renderSetsForExercise(exerciseId, sets) {
   }
 
   container.innerHTML = sets.map((s, i) => `
-    <div class="set-row flex items-center justify-between text-sm" data-set-id="${s.id}">
-      <span class="text-slate-500">#${i + 1}</span>
+    <div class="set-row flex items-center justify-between text-sm py-1" data-set-id="${s.id}">
+      <span class="text-muted text-xs">#${i + 1}</span>
       <span><b>${s.weight}</b> кг × <b>${s.reps}</b></span>
     </div>
   `).join('');
@@ -407,26 +411,26 @@ async function addSetInline(exerciseId) {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const realSet = await res.json();
 
-        const idx = we.sets.findIndex(s => s.id === tempId);
-        if (idx !== -1) we.sets[idx] = realSet;
-        renderSetsForExercise(exerciseId, we.sets);
+    const idx = we.sets.findIndex(s => s.id === tempId);
+    if (idx !== -1) we.sets[idx] = realSet;
+    renderSetsForExercise(exerciseId, we.sets);
 
-        // 🏆 Проверяем — не побит ли рекорд
-        if (realSet.record) {
-          const r = realSet.record;
-          tg?.HapticFeedback?.notificationOccurred('success');
-          setTimeout(() => {
-            if (r.is_first) {
-              tg?.showAlert(
-                `🏆 Первый рекорд!\n\n${r.exercise_name}\n${r.weight} кг × ${r.reps}\nРасчётный 1RM: ${r.estimated_1rm} кг`
-              );
-            } else {
-              tg?.showAlert(
-                `🎉 Новый рекорд!\n\n${r.exercise_name}\n${r.weight} кг × ${r.reps}\n+${r.improvement} кг к 1RM`
-              );
-            }
-          }, 250);
+    // 🏆 Проверяем — не побит ли рекорд
+    if (realSet.record) {
+      const r = realSet.record;
+      tg?.HapticFeedback?.notificationOccurred('success');
+      setTimeout(() => {
+        if (r.is_first) {
+          tg?.showAlert(
+            `🏆 Первый рекорд!\n\n${r.exercise_name}\n${r.weight} кг × ${r.reps}\nРасчётный 1RM: ${r.estimated_1rm} кг`
+          );
+        } else {
+          tg?.showAlert(
+            `🎉 Новый рекорд!\n\n${r.exercise_name}\n${r.weight} кг × ${r.reps}\n+${r.improvement} кг к 1RM`
+          );
         }
+      }, 250);
+    }
   } catch (e) {
     console.error(e);
     we.sets = we.sets.filter(s => s.id !== tempId);
@@ -464,7 +468,7 @@ async function finishWorkout() {
 // ============ ИСТОРИЯ ============
 async function loadHistory() {
   if (!tg?.initData) return;
-  historyListEl.innerHTML = '<p class="text-slate-500 text-center py-8">Загрузка...</p>';
+  historyListEl.innerHTML = '<p class="text-muted text-center py-8">Загрузка...</p>';
   try {
     const res = await fetch(`${API_URL}/api/workouts`, { headers: authHeaders() });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -479,7 +483,7 @@ async function loadHistory() {
 
 function renderHistory(workouts) {
   if (!workouts || workouts.length === 0) {
-    historyListEl.innerHTML = '<p class="text-slate-500 text-center py-8">Пока нет тренировок</p>';
+    historyListEl.innerHTML = '<p class="text-muted text-center py-8">Пока нет тренировок</p>';
     return;
   }
   historyListEl.innerHTML = workouts.map(w => {
@@ -489,18 +493,18 @@ function renderHistory(workouts) {
     const exNames = (w.exercises || []).map(e => e.exercise_name).join(', ');
     return `
       <button class="workout-item w-full bg-surface hover:bg-surface2 active:scale-[0.98]
-                     transition rounded-xl p-4 text-left overflow-hidden"
+                     transition rounded-2xl p-4 text-left overflow-hidden border border-white/5 card-shadow"
               data-id="${w.id}">
         <div class="flex items-start justify-between gap-2 mb-2">
           <div class="min-w-0">
             <p class="font-semibold">${dateStr}</p>
-            <p class="text-xs text-slate-500">${timeStr}</p>
+            <p class="text-xs text-muted mt-0.5">${timeStr}</p>
           </div>
-          <span class="text-xs text-slate-400 bg-surface2 rounded-full px-2 py-1 shrink-0">
+          <span class="text-xs text-muted bg-surface2 rounded-full px-2.5 py-1 shrink-0">
             ${w.total_sets || 0} подх.
           </span>
         </div>
-        <p class="text-sm text-slate-400 truncate">${exNames || 'Без упражнений'}</p>
+        <p class="text-sm text-muted truncate">${exNames || 'Без упражнений'}</p>
       </button>
     `;
   }).join('');
@@ -522,15 +526,15 @@ function openWorkoutDetail(workoutId) {
 
   if (!workout.exercises || workout.exercises.length === 0) {
     detailContentEl.innerHTML =
-      '<p class="text-slate-500 text-center py-8">В тренировке не было подходов</p>';
+      '<p class="text-muted text-center py-8">В тренировке не было подходов</p>';
   } else {
     detailContentEl.innerHTML = workout.exercises.map(ex => `
-      <div class="bg-surface rounded-xl p-4 overflow-hidden">
+      <div class="bg-surface rounded-2xl p-4 overflow-hidden border border-white/5 card-shadow">
         <p class="font-semibold mb-3 break-words">${ex.exercise_name}</p>
-        <div class="space-y-1">
+        <div class="space-y-1.5">
           ${ex.sets.map((s, i) => `
             <div class="flex items-center justify-between text-sm">
-              <span class="text-slate-400">#${i + 1}</span>
+              <span class="text-muted text-xs">#${i + 1}</span>
               <span><b>${s.weight}</b> кг × <b>${s.reps}</b></span>
             </div>
           `).join('')}
@@ -591,6 +595,59 @@ async function loadProfile() {
   }
 }
 
+// ============ РЕКОРДЫ ============
+async function loadRecords() {
+  if (!tg?.initData) return;
+  recordsListEl.innerHTML = '<p class="text-muted text-center py-8">Загрузка...</p>';
+  try {
+    const res = await fetch(`${API_URL}/api/records`, { headers: authHeaders() });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    renderRecords(data.records);
+  } catch (e) {
+    console.error(e);
+    recordsListEl.innerHTML = '<p class="text-red-400 text-center py-8">Ошибка: ' + e.message + '</p>';
+  }
+}
+
+function renderRecords(records) {
+  if (!records || records.length === 0) {
+    recordsListEl.innerHTML =
+      '<p class="text-muted text-center py-8">Пока нет рекордов.<br>Добавь подход — и он появится здесь.</p>';
+    return;
+  }
+
+  const groups = {};
+  for (const r of records) {
+    if (!groups[r.muscle_group]) groups[r.muscle_group] = [];
+    groups[r.muscle_group].push(r);
+  }
+
+  let html = '';
+  for (const [group, items] of Object.entries(groups)) {
+    html += `<p class="text-xs uppercase tracking-wider text-muted mt-4 mb-2">${group}</p>`;
+    for (const r of items) {
+      const date = new Date(r.achieved_at);
+      const dateStr = date.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: '2-digit' });
+      html += `
+        <div class="bg-surface rounded-2xl p-4 border border-white/5 card-shadow mb-2">
+          <div class="flex items-start justify-between gap-2 mb-2">
+            <p class="font-semibold break-words min-w-0 flex-1">${r.exercise_name}</p>
+            <span class="text-xs text-muted shrink-0">${dateStr}</span>
+          </div>
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-sm"><b>${r.weight}</b> кг × <b>${r.reps}</b></span>
+            <span class="text-xs bg-primary/15 text-primary2 rounded-full px-2.5 py-1 font-medium">
+              1RM ≈ ${r.estimated_1rm} кг
+            </span>
+          </div>
+        </div>
+      `;
+    }
+  }
+  recordsListEl.innerHTML = html;
+}
+
 // ============ СОБЫТИЯ ============
 startWorkoutBtn?.addEventListener('click', async () => {
   tg?.HapticFeedback?.impactOccurred('medium');
@@ -642,6 +699,17 @@ document.getElementById('nav-profile')?.addEventListener('click', () => {
 
 document.getElementById('back-to-history')?.addEventListener('click', () => {
   showScreen('history');
+});
+
+document.getElementById('open-records')?.addEventListener('click', () => {
+  tg?.HapticFeedback?.impactOccurred('light');
+  showScreen('records');
+  loadRecords();
+});
+
+document.getElementById('back-to-profile')?.addEventListener('click', () => {
+  showScreen('profile');
+  loadProfile();
 });
 
 // ============ СТАРТ ============
