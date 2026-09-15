@@ -9,7 +9,6 @@ if (tg) {
   if (typeof tg.disableVerticalSwipes === 'function') tg.disableVerticalSwipes();
   if (typeof tg.requestFullscreen === 'function') tg.requestFullscreen();
 
-  // Динамический верхний отступ: fullscreen = 16px, иначе = 56px (системный хедер TG)
   const offset = tg.isFullscreen ? '16px' : '56px';
   document.documentElement.style.setProperty('--safe-top-offset', offset);
 
@@ -42,7 +41,7 @@ const startWorkoutBtn = document.getElementById('start-workout');
 // ============ STATE ============
 let allExercises = [];
 let currentWorkoutId = null;
-let workoutExercises = []; // [{id, name, sets: [{id, weight, reps, set_number}]}]
+let workoutExercises = [];
 let allWorkouts = [];
 
 function authHeaders() {
@@ -119,17 +118,30 @@ function renderRecent(workouts) {
   }).join('');
 }
 
-// ============ УПРАЖНЕНИЯ (для выбора) ============
+// ============ УПРАЖНЕНИЯ (с кэшем) ============
 async function loadExercises() {
+  // 1. Сначала — из кэша (мгновенно)
+  const cached = localStorage.getItem('exercises_cache');
+  if (cached) {
+    try {
+      allExercises = JSON.parse(cached);
+      renderExercisesPicker(allExercises);
+    } catch {}
+  }
+
+  // 2. Потом — свежие с сервера
   try {
     const res = await fetch(`${API_URL}/api/exercises`);
     const data = await res.json();
     allExercises = data.exercises;
+    localStorage.setItem('exercises_cache', JSON.stringify(allExercises));
     renderExercisesPicker(allExercises);
   } catch (e) {
-    console.error(e);
-    exercisesPickerEl.innerHTML =
-      '<p class="text-red-400 text-center py-4 text-sm">Не удалось загрузить</p>';
+    if (!cached) {
+      console.error(e);
+      exercisesPickerEl.innerHTML =
+        '<p class="text-red-400 text-center py-4 text-sm">Не удалось загрузить</p>';
+    }
   }
 }
 
@@ -139,7 +151,6 @@ function renderExercisesPicker(list) {
       '<p class="text-slate-500 text-center py-4 text-sm">Ничего не найдено</p>';
     return;
   }
-  // Показываем только те, которых ещё нет в тренировке
   const inWorkoutIds = new Set(workoutExercises.map(e => e.id));
   const available = list.filter(ex => !inWorkoutIds.has(ex.id));
 
@@ -175,7 +186,7 @@ function renderExercisesPicker(list) {
   });
 }
 
-// ============ АКТИВНАЯ ТРЕНИРОВКА ============
+// ============ ТРЕНИРОВКА ============
 async function startWorkout() {
   try {
     const res = await fetch(`${API_URL}/api/workouts`, {
@@ -185,7 +196,6 @@ async function startWorkout() {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     currentWorkoutId = data.workout_id;
-    console.log('Workout started:', currentWorkoutId);
   } catch (e) {
     console.error(e);
     tg?.showAlert('Не удалось начать тренировку');
@@ -200,8 +210,6 @@ async function loadActiveWorkout() {
     const data = await res.json();
     if (data.active) {
       currentWorkoutId = data.active.id;
-
-      // Восстанавливаем список упражнений из подходов
       const map = {};
       for (const s of data.active.sets) {
         if (!map[s.exercise_id]) {
@@ -211,12 +219,9 @@ async function loadActiveWorkout() {
       }
       workoutExercises = Object.values(map);
 
-      // Подтягиваем имена упражнений
-      if (workoutExercises.length > 0 && allExercises.length > 0) {
-        for (const we of workoutExercises) {
-          const found = allExercises.find(ex => ex.id === we.id);
-          if (found) we.name = found.name;
-        }
+      for (const we of workoutExercises) {
+        const found = allExercises.find(ex => ex.id === we.id);
+        if (found) we.name = found.name;
       }
       updateStartButton();
       renderWorkoutExercises();
@@ -254,7 +259,6 @@ function addExerciseToWorkout(id, name) {
 }
 
 function removeExerciseFromWorkout(id) {
-  // Просто убираем с фронта (подходы останутся в БД, но это MVP)
   workoutExercises = workoutExercises.filter(e => e.id !== id);
   renderWorkoutExercises();
   renderExercisesPicker(allExercises);
@@ -311,17 +315,14 @@ function renderWorkoutExercises() {
     </div>
   `).join('');
 
-  // Удаление упражнения
   workoutExercisesEl.querySelectorAll('.remove-ex').forEach(btn => {
     btn.addEventListener('click', () => removeExerciseFromWorkout(parseInt(btn.dataset.exId)));
   });
 
-  // Добавление подхода
   workoutExercisesEl.querySelectorAll('.add-set-btn').forEach(btn => {
     btn.addEventListener('click', () => addSetInline(parseInt(btn.dataset.exId)));
   });
 
-  // Enter на поле повторов
   workoutExercisesEl.querySelectorAll('.set-reps').forEach(inp => {
     inp.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') addSetInline(parseInt(inp.dataset.exId));
@@ -365,7 +366,6 @@ async function addSetInline(exerciseId) {
     renderWorkoutExercises();
     tg?.HapticFeedback?.notificationOccurred('success');
 
-    // Возвращаем фокус на вес
     setTimeout(() => {
       const newCard = workoutExercisesEl.querySelector(`[data-ex-id="${exerciseId}"]`);
       newCard?.querySelector('.set-weight')?.focus();
@@ -485,7 +485,12 @@ function openWorkoutDetail(workoutId) {
 // ============ СОБЫТИЯ ============
 startWorkoutBtn?.addEventListener('click', async () => {
   tg?.HapticFeedback?.impactOccurred('medium');
-  if (!currentWorkoutId) await startWorkout();
+
+  if (!currentWorkoutId) {
+    startWorkoutBtn.style.opacity = '0.6';
+    await startWorkout();
+    startWorkoutBtn.style.opacity = '1';
+  }
   updateStartButton();
   updateWorkoutUI();
   renderWorkoutExercises();
@@ -527,10 +532,12 @@ document.getElementById('nav-profile')?.addEventListener('click', () => {
   tg?.showAlert('Профиль скоро появится');
 });
 
-// ============ СТАРТ ============
+// ============ СТАРТ (параллельно) ============
 (async () => {
-  await loadMe();
-  await loadExercises();       // загружаем справочник сразу — он нужен для имён
-  await loadActiveWorkout();   // потом восстанавливаем активную
-  await loadRecentWorkouts();
+  await Promise.all([
+    loadMe(),
+    loadExercises(),
+    loadRecentWorkouts(),
+  ]);
+  await loadActiveWorkout();
 })();
