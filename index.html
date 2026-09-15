@@ -141,6 +141,48 @@
         <div id="detail-content" class="space-y-3"></div>
       </div>
 
+      <!-- ЭКРАН 5: ПРОФИЛЬ -->
+      <div id="screen-profile" class="hidden-screen">
+        <header class="mb-6">
+          <p class="text-slate-400 text-sm">Профиль</p>
+          <h1 id="profile-name" class="text-2xl font-bold">Гость</h1>
+          <p id="profile-username" class="text-sm text-slate-500"></p>
+        </header>
+
+        <!-- Стрик -->
+        <div class="bg-gradient-to-br from-orange-500/20 to-red-500/20 border border-orange-500/30
+                    rounded-2xl p-5 mb-4">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-xs uppercase tracking-wide text-orange-300">Дней подряд</p>
+              <p id="stat-streak" class="text-4xl font-bold mt-1">0</p>
+            </div>
+            <span class="text-5xl">🔥</span>
+          </div>
+          <p id="streak-hint" class="text-xs text-orange-200/70 mt-2"></p>
+        </div>
+
+        <!-- Счётчики -->
+        <div class="grid grid-cols-2 gap-3 mb-4">
+          <div class="bg-surface rounded-2xl p-4">
+            <p class="text-xs uppercase tracking-wide text-slate-500">Тренировок</p>
+            <p id="stat-workouts" class="text-2xl font-bold mt-1">0</p>
+          </div>
+          <div class="bg-surface rounded-2xl p-4">
+            <p class="text-xs uppercase tracking-wide text-slate-500">Подходов</p>
+            <p id="stat-sets" class="text-2xl font-bold mt-1">0</p>
+          </div>
+        </div>
+
+        <div class="bg-surface rounded-2xl p-4 mb-4">
+          <p class="text-xs uppercase tracking-wide text-slate-500">Общий тоннаж</p>
+          <p id="stat-volume" class="text-2xl font-bold mt-1">0 т</p>
+          <p class="text-xs text-slate-500 mt-1">Сумма вес × повторы за всё время</p>
+        </div>
+
+        <p class="text-xs text-slate-500 text-center mt-8">Gymly · v0.1</p>
+      </div>
+
     </div>
 
     <!-- Нижняя навигация -->
@@ -150,7 +192,7 @@
                 grid grid-cols-3 safe-bottom">
       <button id="nav-home" class="py-4 text-center">
         <span class="block text-xl">🏠</span>
-        <span class="text-xs text-primary">Главная</span>
+        <span class="text-xs text-slate-400">Главная</span>
       </button>
       <button id="nav-history" class="py-4 text-center">
         <span class="block text-xl">📊</span>
