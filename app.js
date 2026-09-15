@@ -64,20 +64,12 @@ function showScreen(name) {
   screenWorkoutDetail.classList.toggle('hidden-screen', name !== 'workout-detail');
   screenProfile.classList.toggle('hidden-screen', name !== 'profile');
 
-  // Подсветка активной вкладки
-  document.querySelectorAll('.nav-label').forEach(el => {
-    el.classList.remove('text-primary');
-    el.classList.add('text-slate-400');
-  });
-  const activeLabel = document.querySelector(`#nav-${name} .nav-label`);
-  if (activeLabel) {
-    activeLabel.classList.add('text-primary');
-    activeLabel.classList.remove('text-slate-400');
-  }
+  // Подсветка активной вкладки через класс .active
+  document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+  document.getElementById('nav-' + name)?.classList.add('active');
 
   document.getElementById('wrap')?.scrollTo(0, 0);
 }
-
 // ============ ИМЯ В ШАПКЕ ============
 async function loadMe() {
   if (!tg?.initData) {
