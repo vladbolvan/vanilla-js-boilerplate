@@ -1,14 +1,29 @@
+// ============ TELEGRAM WEBAPP INIT ============
 const tg = window.Telegram?.WebApp;
 if (tg) {
   tg.ready();
   tg.expand();
   tg.setHeaderColor('#0f172a');
   tg.setBackgroundColor('#0f172a');
+
+  // Метод 1: официальные методы Telegram (Bot API 7.7+)
+  if (typeof tg.disableVerticalSwipes === 'function') {
+    tg.disableVerticalSwipes();
+  }
+  if (typeof tg.requestFullscreen === 'function') {
+    tg.requestFullscreen();
+  }
+
+  // Метод 2: CSS-хак — только на мобильных
+  const isMobile = ['android', 'ios', 'android_x'].includes(tg.platform);
+  if (isMobile) {
+    document.body.classList.add('mobile-body');
+  }
 }
 
 const API_URL = 'https://dowdily-jocular-stint.cloudpub.ru';
 
-// DOM
+// ============ DOM ============
 const screenHome = document.getElementById('screen-home');
 const screenExercises = document.getElementById('screen-exercises');
 const screenInput = document.getElementById('screen-input');
@@ -18,25 +33,23 @@ const exercisesListEl = document.getElementById('exercises-list');
 const searchInput = document.getElementById('exercise-search');
 const exerciseTitle = document.getElementById('exercise-title');
 const setsListEl = document.getElementById('sets-list');
+const startWorkoutBtn = document.getElementById('start-workout');
+const recentListEl = document.getElementById('recent-list');
 
-// State
+// ============ STATE ============
 let allExercises = [];
 let currentWorkoutId = null;
 let currentExercise = null;
 let currentSets = [];
+let activeWorkout = null;
 
-// ============ AUTH HEADER ============
 function authHeaders() {
   return { 'X-Init-Data': tg?.initData || '' };
 }
 
-// ============ МЕНЮ ============
+// ============ ПРОФИЛЬ ============
 async function loadMe() {
-  const initData = tg?.initData;
-  if (!initData) {
-    if (userNameEl) userNameEl.textContent = 'Открой через Telegram';
-    return;
-  }
+  if (!tg?.initData) return;
   try {
     const res = await fetch(`${API_URL}/api/me`, { headers: authHeaders() });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -44,7 +57,6 @@ async function loadMe() {
     if (userNameEl) userNameEl.textContent = me.first_name || me.username || 'Гость';
   } catch (e) {
     console.error(e);
-    if (userNameEl) userNameEl.textContent = 'Ошибка загрузки';
   }
 }
 
@@ -55,6 +67,7 @@ function showScreen(name) {
   screenInput.classList.toggle('hidden-screen', name !== 'input');
   bottomNav.style.display = name === 'home' ? '' : 'none';
   window.scrollTo(0, 0);
+  document.getElementById('wrap')?.scrollTo(0, 0);
 }
 
 // ============ УПРАЖНЕНИЯ ============
@@ -113,6 +126,8 @@ async function startWorkout() {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     currentWorkoutId = data.workout_id;
+    activeWorkout = { id: currentWorkoutId, sets: [] };
+    updateStartButton();
     console.log('Workout started:', currentWorkoutId);
   } catch (e) {
     console.error(e);
@@ -120,12 +135,49 @@ async function startWorkout() {
   }
 }
 
+async function loadActiveWorkout() {
+  if (!tg?.initData) return;
+  try {
+    const res = await fetch(`${API_URL}/api/workouts/active`, {
+      headers: authHeaders(),
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+    if (data.active) {
+      currentWorkoutId = data.active.id;
+      activeWorkout = data.active;
+      currentSets = data.active.sets;
+      updateStartButton();
+      console.log('Active workout restored:', currentWorkoutId);
+    }
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+function updateStartButton() {
+  if (!startWorkoutBtn) return;
+  const titleEl = startWorkoutBtn.querySelector('.start-title');
+  const subtitleEl = startWorkoutBtn.querySelector('.start-subtitle');
+  const iconEl = startWorkoutBtn.querySelector('.start-icon');
+
+  if (currentWorkoutId) {
+    if (subtitleEl) subtitleEl.textContent = 'Продолжить';
+    if (titleEl) titleEl.textContent = 'Тренировка идёт';
+    if (iconEl) iconEl.textContent = '⏵';
+  } else {
+    if (subtitleEl) subtitleEl.textContent = 'Новая сессия';
+    if (titleEl) titleEl.textContent = 'Начать тренировку';
+    if (iconEl) iconEl.textContent = '🏋️';
+  }
+}
+
 function onExercisePick(id, name) {
   tg?.HapticFeedback?.impactOccurred('light');
   currentExercise = { id: parseInt(id), name };
-  currentSets = [];
+  const exerciseSets = currentSets.filter(s => s.exercise_id === currentExercise.id);
   exerciseTitle.textContent = name;
-  renderSets();
+  renderSets(exerciseSets);
   showScreen('input');
   document.getElementById('input-weight').value = '';
   document.getElementById('input-reps').value = '';
@@ -139,17 +191,11 @@ async function addSet() {
   }
   if (!currentExercise) return;
 
-  const weightVal = document.getElementById('input-weight').value;
-  const repsVal = document.getElementById('input-reps').value;
-  const weight = parseFloat(weightVal);
-  const reps = parseInt(repsVal);
+  const weight = parseFloat(document.getElementById('input-weight').value);
+  const reps = parseInt(document.getElementById('input-reps').value);
 
-  if (isNaN(weight) || weight < 0) {
-    tg?.showAlert('Введи вес'); return;
-  }
-  if (isNaN(reps) || reps < 1) {
-    tg?.showAlert('Введи повторы'); return;
-  }
+  if (isNaN(weight) || weight < 0) { tg?.showAlert('Введи вес'); return; }
+  if (isNaN(reps) || reps < 1) { tg?.showAlert('Введи повторы'); return; }
 
   try {
     const params = new URLSearchParams({
@@ -164,7 +210,8 @@ async function addSet() {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const set = await res.json();
     currentSets.push(set);
-    renderSets();
+    const exerciseSets = currentSets.filter(s => s.exercise_id === currentExercise.id);
+    renderSets(exerciseSets);
     tg?.HapticFeedback?.notificationOccurred('success');
     document.getElementById('input-weight').value = '';
     document.getElementById('input-reps').value = '';
@@ -175,13 +222,13 @@ async function addSet() {
   }
 }
 
-function renderSets() {
-  if (currentSets.length === 0) {
+function renderSets(sets) {
+  if (!sets || sets.length === 0) {
     setsListEl.innerHTML =
       '<p class="text-slate-500 text-sm py-4 text-center">Пока пусто</p>';
     return;
   }
-  setsListEl.innerHTML = currentSets.map((s, i) => `
+  setsListEl.innerHTML = sets.map((s, i) => `
     <div class="bg-surface rounded-xl p-3 flex items-center justify-between">
       <span class="text-slate-400 text-sm">#${i + 1}</span>
       <span class="font-semibold">${s.weight} кг × ${s.reps}</span>
@@ -189,8 +236,80 @@ function renderSets() {
   `).join('');
 }
 
+async function finishWorkout() {
+  if (!currentWorkoutId) return;
+
+  const ok = await new Promise(resolve => {
+    if (tg?.showConfirm) {
+      tg.showConfirm('Завершить тренировку?', (yes) => resolve(yes));
+    } else {
+      resolve(confirm('Завершить тренировку?'));
+    }
+  });
+  if (!ok) return;
+
+  try {
+    const res = await fetch(
+      `${API_URL}/api/workouts/${currentWorkoutId}/finish`,
+      { method: 'PATCH', headers: authHeaders() }
+    );
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    tg?.HapticFeedback?.notificationOccurred('success');
+    currentWorkoutId = null;
+    activeWorkout = null;
+    currentSets = [];
+    currentExercise = null;
+    updateStartButton();
+    await loadRecentWorkouts();
+    showScreen('home');
+  } catch (e) {
+    console.error(e);
+    tg?.showAlert('Не удалось завершить');
+  }
+}
+
+// ============ ИСТОРИЯ ============
+async function loadRecentWorkouts() {
+  if (!tg?.initData) return;
+  try {
+    const res = await fetch(`${API_URL}/api/workouts`, { headers: authHeaders() });
+    if (!res.ok) return;
+    const data = await res.json();
+    renderRecent(data.workouts);
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+function renderRecent(workouts) {
+  if (!recentListEl) return;
+  if (!workouts || workouts.length === 0) {
+    recentListEl.innerHTML =
+      '<p class="text-slate-500 text-sm py-4 text-center">Пока нет тренировок</p>';
+    return;
+  }
+
+  recentListEl.innerHTML = workouts.slice(0, 3).map(w => {
+    const date = w.finished_at ? new Date(w.finished_at) : new Date(w.started_at);
+    const dateStr = date.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' });
+    const exIds = new Set(w.sets.map(s => s.exercise_id));
+    const preview = w.sets.length > 0
+      ? `${w.sets.length} подходов · ${exIds.size} упражн.`
+      : 'Без подходов';
+    return `
+      <div class="bg-surface rounded-xl p-4 flex items-center justify-between">
+        <div>
+          <p class="font-medium">Тренировка</p>
+          <p class="text-sm text-slate-400">${preview}</p>
+        </div>
+        <span class="text-slate-500 text-sm">${dateStr}</span>
+      </div>
+    `;
+  }).join('');
+}
+
 // ============ СОБЫТИЯ ============
-document.getElementById('start-workout')?.addEventListener('click', async () => {
+startWorkoutBtn?.addEventListener('click', async () => {
   tg?.HapticFeedback?.impactOccurred('medium');
   if (!currentWorkoutId) await startWorkout();
   showScreen('exercises');
@@ -206,6 +325,7 @@ document.getElementById('back-to-exercises')?.addEventListener('click', () => {
 });
 
 document.getElementById('add-set')?.addEventListener('click', addSet);
+document.getElementById('finish-workout')?.addEventListener('click', finishWorkout);
 
 searchInput?.addEventListener('input', (e) => {
   const q = e.target.value.trim().toLowerCase();
@@ -215,9 +335,13 @@ searchInput?.addEventListener('input', (e) => {
   renderExercises(filtered);
 });
 
-// Enter на поле reps = добавить подход
 document.getElementById('input-reps')?.addEventListener('keydown', (e) => {
   if (e.key === 'Enter') addSet();
 });
 
-loadMe();
+// ============ СТАРТ ============
+(async () => {
+  await loadMe();
+  await loadActiveWorkout();
+  await loadRecentWorkouts();
+})();
