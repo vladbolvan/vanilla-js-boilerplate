@@ -2,14 +2,99 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Gymly</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#6366f1',
+            accent: '#22c55e',
+            surface: '#1e293b',
+            bg: '#0f172a',
+          },
+        },
+      },
+    };
+  </script>
+  <style>
+    body {
+      -webkit-tap-highlight-color: transparent;
+      overscroll-behavior: none;
+    }
+    .safe-bottom { padding-bottom: calc(env(safe-area-inset-bottom, 0) + 80px); }
+    .safe-top    { padding-top:    calc(env(safe-area-inset-top, 0) + 16px); }
+  </style>
 </head>
-<body class="bg-slate-900 text-white p-4">
-  <h1 class="text-3xl font-bold text-blue-400">Gymly</h1>
-  <p class="mt-2 text-slate-400">Дневник тренировок</p>
+<body class="bg-bg text-white font-sans min-h-screen">
+
+  <div class="max-w-md mx-auto px-4 safe-top safe-bottom">
+
+    <!-- Заголовок -->
+    <header class="mb-6">
+      <p class="text-slate-400 text-sm">Привет,</p>
+      <h1 id="user-name" class="text-2xl font-bold">Гость</h1>
+    </header>
+
+    <!-- Кнопка «Начать тренировку» -->
+    <button id="start-workout"
+            class="w-full bg-primary hover:bg-indigo-500 active:scale-[0.98] transition
+                   rounded-2xl p-5 mb-6 text-left flex items-center justify-between">
+      <div>
+        <p class="text-xs uppercase tracking-wide text-indigo-200">Новая сессия</p>
+        <p class="text-xl font-semibold">Начать тренировку</p>
+      </div>
+      <span class="text-3xl">🏋️</span>
+    </button>
+
+    <!-- Последние тренировки -->
+    <section>
+      <div class="flex items-center justify-between mb-3">
+        <h2 class="text-lg font-semibold">Последние тренировки</h2>
+        <button class="text-sm text-primary">Все</button>
+      </div>
+
+      <div id="recent-list" class="space-y-3">
+        <!-- Карточки вставит JS, пока заглушка -->
+        <div class="bg-surface rounded-xl p-4 flex items-center justify-between">
+          <div>
+            <p class="font-medium">Жим лёжа</p>
+            <p class="text-sm text-slate-400">60×8 · 70×6 · 75×5</p>
+          </div>
+          <span class="text-slate-500 text-sm">15.09</span>
+        </div>
+        <div class="bg-surface rounded-xl p-4 flex items-center justify-between">
+          <div>
+            <p class="font-medium">Присед</p>
+            <p class="text-sm text-slate-400">80×8 · 90×6 · 100×5</p>
+          </div>
+          <span class="text-slate-500 text-sm">13.09</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Нижняя навигация -->
+    <nav class="fixed bottom-0 left-0 right-0 bg-surface/95 backdrop-blur
+                border-t border-slate-700 max-w-md mx-auto
+                grid grid-cols-3 safe-bottom">
+      <button class="py-4 text-center">
+        <span class="block text-xl">🏠</span>
+        <span class="text-xs text-primary">Главная</span>
+      </button>
+      <button class="py-4 text-center">
+        <span class="block text-xl">📊</span>
+        <span class="text-xs text-slate-400">История</span>
+      </button>
+      <button class="py-4 text-center">
+        <span class="block text-xl">👤</span>
+        <span class="text-xs text-slate-400">Профиль</span>
+      </button>
+    </nav>
+
+  </div>
 
   <script src="app.js"></script>
 </body>
