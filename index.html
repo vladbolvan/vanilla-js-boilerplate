@@ -14,6 +14,7 @@
             primary: '#6366f1',
             accent: '#22c55e',
             surface: '#1e293b',
+            surface2: '#334155',
             bg: '#0f172a',
           },
         },
@@ -27,74 +28,91 @@
     }
     .safe-bottom { padding-bottom: calc(env(safe-area-inset-bottom, 0) + 80px); }
     .safe-top    { padding-top:    calc(env(safe-area-inset-top, 0) + 16px); }
+    .hidden-screen { display: none; }
   </style>
 </head>
 <body class="bg-bg text-white font-sans min-h-screen">
 
   <div class="max-w-md mx-auto px-4 safe-top safe-bottom">
 
-    <!-- Заголовок -->
-    <header class="mb-6">
-      <p class="text-slate-400 text-sm">Привет,</p>
-      <h1 id="user-name" class="text-2xl font-bold">Гость</h1>
-    </header>
+    <!-- ============ ЭКРАН 1: ГЛАВНАЯ ============ -->
+    <div id="screen-home">
+      <header class="mb-6">
+        <p class="text-slate-400 text-sm">Привет,</p>
+        <h1 id="user-name" class="text-2xl font-bold">Гость</h1>
+      </header>
 
-    <!-- Кнопка «Начать тренировку» -->
-    <button id="start-workout"
-            class="w-full bg-primary hover:bg-indigo-500 active:scale-[0.98] transition
-                   rounded-2xl p-5 mb-6 text-left flex items-center justify-between">
-      <div>
-        <p class="text-xs uppercase tracking-wide text-indigo-200">Новая сессия</p>
-        <p class="text-xl font-semibold">Начать тренировку</p>
-      </div>
-      <span class="text-3xl">🏋️</span>
-    </button>
-
-    <!-- Последние тренировки -->
-    <section>
-      <div class="flex items-center justify-between mb-3">
-        <h2 class="text-lg font-semibold">Последние тренировки</h2>
-        <button class="text-sm text-primary">Все</button>
-      </div>
-
-      <div id="recent-list" class="space-y-3">
-        <!-- Карточки вставит JS, пока заглушка -->
-        <div class="bg-surface rounded-xl p-4 flex items-center justify-between">
-          <div>
-            <p class="font-medium">Жим лёжа</p>
-            <p class="text-sm text-slate-400">60×8 · 70×6 · 75×5</p>
-          </div>
-          <span class="text-slate-500 text-sm">15.09</span>
+      <button id="start-workout"
+              class="w-full bg-primary hover:bg-indigo-500 active:scale-[0.98] transition
+                     rounded-2xl p-5 mb-6 text-left flex items-center justify-between">
+        <div>
+          <p class="text-xs uppercase tracking-wide text-indigo-200">Новая сессия</p>
+          <p class="text-xl font-semibold">Начать тренировку</p>
         </div>
-        <div class="bg-surface rounded-xl p-4 flex items-center justify-between">
-          <div>
-            <p class="font-medium">Присед</p>
-            <p class="text-sm text-slate-400">80×8 · 90×6 · 100×5</p>
-          </div>
-          <span class="text-slate-500 text-sm">13.09</span>
-        </div>
-      </div>
-    </section>
+        <span class="text-3xl">🏋️</span>
+      </button>
 
-    <!-- Нижняя навигация -->
-    <nav class="fixed bottom-0 left-0 right-0 bg-surface/95 backdrop-blur
-                border-t border-slate-700 max-w-md mx-auto
-                grid grid-cols-3 safe-bottom">
-      <button class="py-4 text-center">
-        <span class="block text-xl">🏠</span>
-        <span class="text-xs text-primary">Главная</span>
-      </button>
-      <button class="py-4 text-center">
-        <span class="block text-xl">📊</span>
-        <span class="text-xs text-slate-400">История</span>
-      </button>
-      <button class="py-4 text-center">
-        <span class="block text-xl">👤</span>
-        <span class="text-xs text-slate-400">Профиль</span>
-      </button>
-    </nav>
+      <section>
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-lg font-semibold">Последние тренировки</h2>
+          <button class="text-sm text-primary">Все</button>
+        </div>
+
+        <div id="recent-list" class="space-y-3">
+          <div class="bg-surface rounded-xl p-4 flex items-center justify-between">
+            <div>
+              <p class="font-medium">Жим лёжа</p>
+              <p class="text-sm text-slate-400">60×8 · 70×6 · 75×5</p>
+            </div>
+            <span class="text-slate-500 text-sm">15.09</span>
+          </div>
+          <div class="bg-surface rounded-xl p-4 flex items-center justify-between">
+            <div>
+              <p class="font-medium">Присед</p>
+              <p class="text-sm text-slate-400">80×8 · 90×6 · 100×5</p>
+            </div>
+            <span class="text-slate-500 text-sm">13.09</span>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- ============ ЭКРАН 2: ВЫБОР УПРАЖНЕНИЯ ============ -->
+    <div id="screen-exercises" class="hidden-screen">
+      <header class="flex items-center gap-3 mb-4">
+        <button id="back-to-home" class="text-slate-300 text-2xl leading-none">←</button>
+        <h1 class="text-xl font-bold">Выбор упражнения</h1>
+      </header>
+
+      <input id="exercise-search" type="text" placeholder="Поиск..."
+             class="w-full bg-surface border border-slate-700 rounded-xl px-4 py-3 mb-4
+                    text-white placeholder-slate-500 focus:outline-none focus:border-primary">
+
+      <div id="exercises-list" class="space-y-2">
+        <p class="text-slate-500 text-center py-8">Загрузка...</p>
+      </div>
+    </div>
 
   </div>
+
+  <!-- Нижняя навигация (только на главной) -->
+  <nav id="bottom-nav"
+       class="fixed bottom-0 left-0 right-0 bg-surface/95 backdrop-blur
+              border-t border-slate-700 max-w-md mx-auto
+              grid grid-cols-3 safe-bottom">
+    <button class="py-4 text-center">
+      <span class="block text-xl">🏠</span>
+      <span class="text-xs text-primary">Главная</span>
+    </button>
+    <button class="py-4 text-center">
+      <span class="block text-xl">📊</span>
+      <span class="text-xs text-slate-400">История</span>
+    </button>
+    <button class="py-4 text-center">
+      <span class="block text-xl">👤</span>
+      <span class="text-xs text-slate-400">Профиль</span>
+    </button>
+  </nav>
 
   <script src="app.js"></script>
 </body>
