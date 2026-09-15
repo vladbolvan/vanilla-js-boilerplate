@@ -1,21 +1,38 @@
-// Инициализация Telegram WebApp
 const tg = window.Telegram?.WebApp;
 if (tg) {
   tg.ready();
-  tg.expand();               // разворачиваем на весь экран
+  tg.expand();
   tg.setHeaderColor('#0f172a');
   tg.setBackgroundColor('#0f172a');
 }
 
-// Приветствие — берём имя из Telegram
+const API_URL = 'https://dowdily-jocular-stint.cloudpub.ru';
+
 const userNameEl = document.getElementById('user-name');
-const tgUser = tg?.initDataUnsafe?.user;
-if (tgUser && userNameEl) {
-  userNameEl.textContent = tgUser.first_name || tgUser.username || 'Гость';
+
+async function loadMe() {
+  const initData = tg?.initData;
+  if (!initData) {
+    if (userNameEl) userNameEl.textContent = 'Открой через Telegram';
+    return;
+  }
+
+  try {
+    const res = await fetch(`${API_URL}/api/me`, {
+      headers: { 'X-Init-Data': initData },
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const me = await res.json();
+    if (userNameEl) userNameEl.textContent = me.first_name || me.username || 'Гость';
+  } catch (e) {
+    console.error(e);
+    if (userNameEl) userNameEl.textContent = 'Ошибка загрузки';
+  }
 }
 
-// Кнопка «Начать тренировку»
+loadMe();
+
 document.getElementById('start-workout')?.addEventListener('click', () => {
-  if (tg?.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+  tg?.HapticFeedback?.impactOccurred('medium');
   tg?.showAlert('Экран тренировки скоро появится');
 });
