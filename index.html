@@ -30,7 +30,6 @@
       padding: 0;
     }
 
-    /* Динамический верхний отступ: если fullscreen — 16, иначе 56 */
     .safe-top {
       padding-top: calc(env(safe-area-inset-top, 0) + var(--safe-top-offset, 56px));
     }
@@ -43,7 +42,6 @@
       margin: 0;
     }
 
-    /* ===== Полноэкранный режим (мобильные) ===== */
     body.mobile-body {
       overflow: hidden;
       height: 100vh;
@@ -68,7 +66,7 @@
   <div id="wrap">
     <div class="max-w-md mx-auto px-4 safe-top safe-bottom">
 
-      <!-- ============ ЭКРАН 1: ГЛАВНАЯ ============ -->
+      <!-- ЭКРАН 1: ГЛАВНАЯ -->
       <div id="screen-home">
         <header class="mb-6">
           <p class="text-slate-400 text-sm">Привет,</p>
@@ -95,33 +93,28 @@
         </section>
       </div>
 
-      <!-- ============ ЭКРАН 2: ТРЕНИРОВКА (всё на одной странице) ============ -->
+      <!-- ЭКРАН 2: ТРЕНИРОВКА -->
       <div id="screen-workout" class="hidden-screen">
         <header class="flex items-center gap-3 mb-4">
           <button id="workout-back" class="text-slate-300 text-2xl leading-none">←</button>
           <h1 class="text-xl font-bold">Тренировка</h1>
         </header>
 
-        <!-- Поиск упражнений -->
         <input id="exercise-search" type="text" placeholder="🔍 Поиск упражнения..."
                class="w-full bg-surface border border-slate-700 rounded-xl px-4 py-3 mb-3
                       text-white placeholder-slate-500 focus:outline-none focus:border-primary">
 
-        <!-- Список упражнений (для добавления) -->
         <div id="exercises-picker" class="space-y-2 mb-6">
           <p class="text-slate-500 text-center py-4 text-sm">Загрузка...</p>
         </div>
 
-        <!-- Разделитель -->
         <div id="workout-divider" class="hidden border-t border-slate-700 my-6"></div>
 
-        <!-- Активные упражнения в тренировке -->
         <h2 id="workout-header" class="hidden text-xs uppercase tracking-wide text-slate-500 mb-3">
           В тренировке
         </h2>
         <div id="workout-exercises" class="space-y-4"></div>
 
-        <!-- Завершить тренировку -->
         <button id="finish-workout"
                 class="hidden w-full mt-6 bg-red-600/20 hover:bg-red-600/30 active:scale-[0.98]
                        transition rounded-xl py-3 font-semibold text-red-300 border border-red-600/40">
@@ -129,7 +122,7 @@
         </button>
       </div>
 
-      <!-- ============ ЭКРАН 3: ИСТОРИЯ ============ -->
+      <!-- ЭКРАН 3: ИСТОРИЯ -->
       <div id="screen-history" class="hidden-screen">
         <header class="mb-4">
           <h1 class="text-xl font-bold">История тренировок</h1>
@@ -139,7 +132,7 @@
         </div>
       </div>
 
-      <!-- ============ ЭКРАН 4: ДЕТАЛИ ТРЕНИРОВКИ ============ -->
+      <!-- ЭКРАН 4: ДЕТАЛИ ТРЕНИРОВКИ -->
       <div id="screen-workout-detail" class="hidden-screen">
         <header class="flex items-center gap-3 mb-4">
           <button id="back-to-history" class="text-slate-300 text-2xl leading-none">←</button>
