@@ -66,7 +66,6 @@
       height: calc(100% + 1px);
     }
 
-    /* Красивое подсвечивание активной вкладки */
     .nav-btn { transition: color .15s ease; color: #6e6e85; }
     .nav-btn.active { color: #7c6cff; }
     .nav-btn.active .nav-icon-bg {
@@ -80,10 +79,8 @@
       transition: background .2s ease;
     }
 
-    /* Мягкая тень для карточек */
     .card-shadow { box-shadow: 0 1px 0 rgba(255,255,255,0.03) inset, 0 8px 24px rgba(0,0,0,0.25); }
 
-    /* Плавные появления */
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(4px); }
       to { opacity: 1; transform: translateY(0); }
@@ -182,6 +179,19 @@
         <div id="detail-content" class="space-y-3"></div>
       </div>
 
+      <!-- ЭКРАН 6: РЕКОРДЫ -->
+      <div id="screen-records" class="hidden-screen">
+        <header class="flex items-center gap-3 mb-6">
+          <button id="back-to-profile" class="text-muted p-2 -ml-2 active:opacity-60">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+          </button>
+          <h1 class="text-2xl font-bold tracking-tight">🏆 Рекорды</h1>
+        </header>
+        <div id="records-list" class="space-y-3">
+          <p class="text-muted text-center py-8">Загрузка...</p>
+        </div>
+      </div>
+
       <!-- ЭКРАН 5: ПРОФИЛЬ -->
       <div id="screen-profile" class="hidden-screen">
         <header class="mb-8">
@@ -219,6 +229,19 @@
           <p id="stat-volume" class="text-3xl font-bold mt-2 tracking-tight">0 т</p>
           <p class="text-xs text-muted mt-2">Сумма вес × повторы за всё время</p>
         </div>
+
+        <button id="open-records"
+                class="w-full mt-4 bg-surface rounded-2xl p-5 border border-white/5 card-shadow
+                       flex items-center justify-between active:scale-[0.98] transition">
+          <div class="flex items-center gap-3">
+            <span class="text-2xl">🏆</span>
+            <div class="text-left">
+              <p class="font-semibold">Личные рекорды</p>
+              <p class="text-xs text-muted mt-0.5">Лучшие подходы по упражнениям</p>
+            </div>
+          </div>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8b8b9e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
 
         <p class="text-xs text-muted/60 text-center mt-10">Gymly · v0.1</p>
       </div>
@@ -260,7 +283,6 @@
   </nav>
 
   <script>
-    // Версионирование app.js — сбрасывает кэш при каждом обновлении
     document.write('<script src="app.js?v=' + Date.now() + '"><\/script>');
   </script>
 </body>
