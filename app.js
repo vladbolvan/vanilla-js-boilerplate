@@ -23,7 +23,7 @@ const screenHome = document.getElementById('screen-home');
 const screenWorkout = document.getElementById('screen-workout');
 const screenHistory = document.getElementById('screen-history');
 const screenWorkoutDetail = document.getElementById('screen-workout-detail');
-const bottomNav = document.getElementById('bottom-nav');
+const screenProfile = document.getElementById('screen-profile');
 
 const userNameEl = document.getElementById('user-name');
 const recentListEl = document.getElementById('recent-list');
@@ -38,6 +38,14 @@ const detailContentEl = document.getElementById('detail-content');
 const detailTitleEl = document.getElementById('detail-title');
 const startWorkoutBtn = document.getElementById('start-workout');
 
+const profileNameEl = document.getElementById('profile-name');
+const profileUsernameEl = document.getElementById('profile-username');
+const statStreakEl = document.getElementById('stat-streak');
+const statWorkoutsEl = document.getElementById('stat-workouts');
+const statSetsEl = document.getElementById('stat-sets');
+const statVolumeEl = document.getElementById('stat-volume');
+const streakHintEl = document.getElementById('streak-hint');
+
 // ============ STATE ============
 let allExercises = [];
 let currentWorkoutId = null;
@@ -48,7 +56,29 @@ function authHeaders() {
   return { 'X-Init-Data': tg?.initData || '' };
 }
 
-// ============ ПРОФИЛЬ ============
+// ============ ЭКРАНЫ ============
+function showScreen(name) {
+  screenHome.classList.toggle('hidden-screen', name !== 'home');
+  screenWorkout.classList.toggle('hidden-screen', name !== 'workout');
+  screenHistory.classList.toggle('hidden-screen', name !== 'history');
+  screenWorkoutDetail.classList.toggle('hidden-screen', name !== 'workout-detail');
+  screenProfile.classList.toggle('hidden-screen', name !== 'profile');
+
+  // Подсветка активной вкладки
+  document.querySelectorAll('.nav-label').forEach(el => {
+    el.classList.remove('text-primary');
+    el.classList.add('text-slate-400');
+  });
+  const activeLabel = document.querySelector(`#nav-${name} .nav-label`);
+  if (activeLabel) {
+    activeLabel.classList.add('text-primary');
+    activeLabel.classList.remove('text-slate-400');
+  }
+
+  document.getElementById('wrap')?.scrollTo(0, 0);
+}
+
+// ============ ИМЯ В ШАПКЕ ============
 async function loadMe() {
   if (!tg?.initData) {
     if (userNameEl) userNameEl.textContent = 'Гость';
@@ -63,16 +93,6 @@ async function loadMe() {
     console.error(e);
     if (userNameEl) userNameEl.textContent = 'Ошибка загрузки';
   }
-}
-
-// ============ ЭКРАНЫ ============
-function showScreen(name) {
-  screenHome.classList.toggle('hidden-screen', name !== 'home');
-  screenWorkout.classList.toggle('hidden-screen', name !== 'workout');
-  screenHistory.classList.toggle('hidden-screen', name !== 'history');
-  screenWorkoutDetail.classList.toggle('hidden-screen', name !== 'workout-detail');
-  bottomNav.style.display = name === 'home' ? '' : 'none';
-  document.getElementById('wrap')?.scrollTo(0, 0);
 }
 
 // ============ ГЛАВНАЯ ============
@@ -118,7 +138,7 @@ function renderRecent(workouts) {
   }).join('');
 }
 
-// ============ УПРАЖНЕНИЯ (с кэшем) ============
+// ============ УПРАЖНЕНИЯ ============
 async function loadExercises() {
   const cached = localStorage.getItem('exercises_cache');
   if (cached) {
@@ -304,17 +324,14 @@ function renderWorkoutExercises() {
     </div>
   `).join('');
 
-  // Заполняем подходы отдельно — без пересборки карточек
   workoutExercises.forEach(ex => {
     renderSetsForExercise(ex.id, ex.sets);
   });
 
-  // Обработчики: удаление
   workoutExercisesEl.querySelectorAll('.remove-ex').forEach(btn => {
     btn.addEventListener('click', () => removeExerciseFromWorkout(parseInt(btn.dataset.exId)));
   });
 
-  // Обработчики: добавление подхода
   workoutExercisesEl.querySelectorAll('.add-set-btn').forEach(btn => {
     btn.addEventListener('click', () => addSetInline(parseInt(btn.dataset.exId)));
   });
@@ -326,7 +343,6 @@ function renderWorkoutExercises() {
   });
 }
 
-// Рисует ТОЛЬКО список подходов внутри одной карточки — без трогания инпутов
 function renderSetsForExercise(exerciseId, sets) {
   const container = workoutExercisesEl.querySelector(`.sets-container[data-ex-id="${exerciseId}"]`);
   if (!container) return;
@@ -359,7 +375,6 @@ async function addSetInline(exerciseId) {
   const we = workoutExercises.find(e => e.id === exerciseId);
   if (!we) return;
 
-  // ===== ОПТИМИСТИЧНЫЙ UI =====
   const tempId = 'temp_' + Date.now();
   const optimisticSet = {
     id: tempId,
@@ -377,7 +392,6 @@ async function addSetInline(exerciseId) {
   weightInput.focus();
   tg?.HapticFeedback?.notificationOccurred('success');
 
-  // ===== ФОНОВАЯ ОТПРАВКА =====
   if (!currentWorkoutId) {
     await startWorkout();
     if (!currentWorkoutId) {
@@ -518,6 +532,56 @@ function openWorkoutDetail(workoutId) {
   showScreen('workout-detail');
 }
 
+// ============ ПРОФИЛЬ ============
+async function loadProfile() {
+  if (!tg?.initData) return;
+
+  const tgUser = tg.initDataUnsafe?.user;
+  if (tgUser) {
+    profileNameEl.textContent = [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ') || 'Гость';
+    profileUsernameEl.textContent = tgUser.username ? `@${tgUser.username}` : '';
+  }
+
+  statStreakEl.textContent = '—';
+  statWorkoutsEl.textContent = '—';
+  statSetsEl.textContent = '—';
+  statVolumeEl.textContent = '—';
+  streakHintEl.textContent = '';
+
+  try {
+    const res = await fetch(`${API_URL}/api/profile/stats`, { headers: authHeaders() });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const stats = await res.json();
+
+    statStreakEl.textContent = stats.streak;
+    statWorkoutsEl.textContent = stats.workouts_count;
+    statSetsEl.textContent = stats.sets_count;
+
+    const kg = stats.total_volume_kg;
+    if (kg < 1000) {
+      statVolumeEl.textContent = `${Math.round(kg)} кг`;
+    } else {
+      statVolumeEl.textContent = `${(kg / 1000).toFixed(1)} т`;
+    }
+
+    if (stats.streak === 0 && stats.workouts_count > 0) {
+      streakHintEl.textContent = 'Тренируйся, чтобы начать стрик!';
+    } else if (stats.streak === 0) {
+      streakHintEl.textContent = 'Сделай первую тренировку';
+    } else if (stats.streak === 1) {
+      streakHintEl.textContent = 'Начало положено. Продолжай завтра!';
+    } else {
+      streakHintEl.textContent = 'Не разрывай серию! Тренируйся и завтра';
+    }
+  } catch (e) {
+    console.error(e);
+    statStreakEl.textContent = '?';
+    statWorkoutsEl.textContent = '?';
+    statSetsEl.textContent = '?';
+    statVolumeEl.textContent = '?';
+  }
+}
+
 // ============ СОБЫТИЯ ============
 startWorkoutBtn?.addEventListener('click', async () => {
   tg?.HapticFeedback?.impactOccurred('medium');
@@ -550,6 +614,7 @@ searchInput?.addEventListener('input', (e) => {
 });
 
 document.getElementById('nav-home')?.addEventListener('click', () => {
+  tg?.HapticFeedback?.impactOccurred('light');
   showScreen('home');
   updateStartButton();
 });
@@ -560,15 +625,17 @@ document.getElementById('nav-history')?.addEventListener('click', () => {
   loadHistory();
 });
 
+document.getElementById('nav-profile')?.addEventListener('click', () => {
+  tg?.HapticFeedback?.impactOccurred('light');
+  showScreen('profile');
+  loadProfile();
+});
+
 document.getElementById('back-to-history')?.addEventListener('click', () => {
   showScreen('history');
 });
 
-document.getElementById('nav-profile')?.addEventListener('click', () => {
-  tg?.showAlert('Профиль скоро появится');
-});
-
-// ============ СТАРТ (параллельно) ============
+// ============ СТАРТ ============
 (async () => {
   await Promise.all([
     loadMe(),
