@@ -1,210 +1,648 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Gymly</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          colors: {
-            primary: '#6366f1',
-            accent: '#22c55e',
-            surface: '#1e293b',
-            surface2: '#334155',
-            bg: '#0f172a',
-          },
-        },
-      },
-    };
-  </script>
-  <style>
-    html, body {
-      -webkit-tap-highlight-color: transparent;
-      overscroll-behavior: none;
-      height: 100%;
-      margin: 0;
-      padding: 0;
+// ============ TELEGRAM WEBAPP INIT ============
+const tg = window.Telegram?.WebApp;
+if (tg) {
+  tg.ready();
+  tg.expand();
+  tg.setHeaderColor('#0f172a');
+  tg.setBackgroundColor('#0f172a');
+
+  if (typeof tg.disableVerticalSwipes === 'function') tg.disableVerticalSwipes();
+  if (typeof tg.requestFullscreen === 'function') tg.requestFullscreen();
+
+  const offset = tg.isFullscreen ? '16px' : '56px';
+  document.documentElement.style.setProperty('--safe-top-offset', offset);
+
+  const isMobile = ['android', 'ios', 'android_x'].includes(tg.platform);
+  if (isMobile) document.body.classList.add('mobile-body');
+}
+
+const API_URL = 'https://dowdily-jocular-stint.cloudpub.ru';
+
+// ============ DOM ============
+const screenHome = document.getElementById('screen-home');
+const screenWorkout = document.getElementById('screen-workout');
+const screenHistory = document.getElementById('screen-history');
+const screenWorkoutDetail = document.getElementById('screen-workout-detail');
+const screenProfile = document.getElementById('screen-profile');
+const bottomNav = document.getElementById('bottom-nav');
+
+const userNameEl = document.getElementById('user-name');
+const recentListEl = document.getElementById('recent-list');
+const exercisesPickerEl = document.getElementById('exercises-picker');
+const workoutExercisesEl = document.getElementById('workout-exercises');
+const workoutHeaderEl = document.getElementById('workout-header');
+const workoutDividerEl = document.getElementById('workout-divider');
+const finishWorkoutBtn = document.getElementById('finish-workout');
+const searchInput = document.getElementById('exercise-search');
+const historyListEl = document.getElementById('history-list');
+const detailContentEl = document.getElementById('detail-content');
+const detailTitleEl = document.getElementById('detail-title');
+const startWorkoutBtn = document.getElementById('start-workout');
+
+const profileNameEl = document.getElementById('profile-name');
+const profileUsernameEl = document.getElementById('profile-username');
+const statStreakEl = document.getElementById('stat-streak');
+const statWorkoutsEl = document.getElementById('stat-workouts');
+const statSetsEl = document.getElementById('stat-sets');
+const statVolumeEl = document.getElementById('stat-volume');
+const streakHintEl = document.getElementById('streak-hint');
+
+// ============ STATE ============
+let allExercises = [];
+let currentWorkoutId = null;
+let workoutExercises = [];
+let allWorkouts = [];
+
+function authHeaders() {
+  return { 'X-Init-Data': tg?.initData || '' };
+}
+
+// ============ ЭКРАНЫ ============
+function showScreen(name) {
+  screenHome.classList.toggle('hidden-screen', name !== 'home');
+  screenWorkout.classList.toggle('hidden-screen', name !== 'workout');
+  screenHistory.classList.toggle('hidden-screen', name !== 'history');
+  screenWorkoutDetail.classList.toggle('hidden-screen', name !== 'workout-detail');
+  screenProfile.classList.toggle('hidden-screen', name !== 'profile');
+
+  // Показываем навигацию на главной, истории и профиле
+  const showNav = ['home', 'history', 'profile'].includes(name);
+  bottomNav.style.display = showNav ? '' : 'none';
+
+  // Подсветка активной вкладки
+  document.getElementById('nav-home')?.querySelector('.text-xs')?.classList.toggle('text-primary', name === 'home');
+  document.getElementById('nav-home')?.querySelector('.text-xs')?.classList.toggle('text-slate-400', name !== 'home');
+  document.getElementById('nav-history')?.querySelector('.text-xs')?.classList.toggle('text-primary', name === 'history');
+  document.getElementById('nav-history')?.querySelector('.text-xs')?.classList.toggle('text-slate-400', name !== 'history');
+  document.getElementById('nav-profile')?.querySelector('.text-xs')?.classList.toggle('text-primary', name === 'profile');
+  document.getElementById('nav-profile')?.querySelector('.text-xs')?.classList.toggle('text-slate-400', name !== 'profile');
+
+  document.getElementById('wrap')?.scrollTo(0, 0);
+}
+
+// ============ ПРОФИЛЬ (имя в шапке) ============
+async function loadMe() {
+  if (!tg?.initData) {
+    if (userNameEl) userNameEl.textContent = 'Гость';
+    return;
+  }
+  try {
+    const res = await fetch(`${API_URL}/api/me`, { headers: authHeaders() });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const me = await res.json();
+    if (userNameEl) userNameEl.textContent = me.first_name || me.username || 'Гость';
+  } catch (e) {
+    console.error(e);
+    if (userNameEl) userNameEl.textContent = 'Ошибка загрузки';
+  }
+}
+
+// ============ ГЛАВНАЯ ============
+async function loadRecentWorkouts() {
+  if (!tg?.initData) return;
+  try {
+    const res = await fetch(`${API_URL}/api/workouts`, { headers: authHeaders() });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    renderRecent(data.workouts);
+  } catch (e) {
+    console.error('loadRecentWorkouts', e);
+    if (recentListEl) {
+      recentListEl.innerHTML =
+        '<p class="text-red-400 text-sm py-4 text-center">Ошибка: ' + e.message + '</p>';
     }
+  }
+}
 
-    .safe-top {
-      padding-top: calc(env(safe-area-inset-top, 0) + var(--safe-top-offset, 56px));
+function renderRecent(workouts) {
+  if (!recentListEl) return;
+  if (!workouts || workouts.length === 0) {
+    recentListEl.innerHTML =
+      '<p class="text-slate-500 text-sm py-4 text-center">Пока нет тренировок</p>';
+    return;
+  }
+  recentListEl.innerHTML = workouts.slice(0, 3).map(w => {
+    const date = new Date(w.finished_at || w.started_at);
+    const dateStr = date.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' });
+    const exNames = (w.exercises || []).map(e => e.exercise_name).join(', ');
+    const preview = w.total_sets
+      ? `${w.total_sets} подх. · ${exNames || 'без упражнений'}`
+      : 'Без подходов';
+    return `
+      <div class="bg-surface rounded-xl p-4 flex items-center justify-between gap-2">
+        <div class="min-w-0 flex-1">
+          <p class="font-medium truncate">${exNames || 'Тренировка'}</p>
+          <p class="text-sm text-slate-400 truncate">${preview}</p>
+        </div>
+        <span class="text-slate-500 text-sm shrink-0">${dateStr}</span>
+      </div>
+    `;
+  }).join('');
+}
+
+// ============ УПРАЖНЕНИЯ ============
+async function loadExercises() {
+  const cached = localStorage.getItem('exercises_cache');
+  if (cached) {
+    try {
+      allExercises = JSON.parse(cached);
+      renderExercisesPicker(allExercises);
+    } catch {}
+  }
+
+  try {
+    const res = await fetch(`${API_URL}/api/exercises`);
+    const data = await res.json();
+    allExercises = data.exercises;
+    localStorage.setItem('exercises_cache', JSON.stringify(allExercises));
+    renderExercisesPicker(allExercises);
+  } catch (e) {
+    if (!cached) {
+      console.error(e);
+      exercisesPickerEl.innerHTML =
+        '<p class="text-red-400 text-center py-4 text-sm">Не удалось загрузить</p>';
     }
-    .safe-bottom { padding-bottom: calc(env(safe-area-inset-bottom, 0) + 80px); }
-    .hidden-screen { display: none; }
+  }
+}
 
-    input[type="number"]::-webkit-outer-spin-button,
-    input[type="number"]::-webkit-inner-spin-button {
-      -webkit-appearance: none;
-      margin: 0;
-    }
+function renderExercisesPicker(list) {
+  if (list.length === 0) {
+    exercisesPickerEl.innerHTML =
+      '<p class="text-slate-500 text-center py-4 text-sm">Ничего не найдено</p>';
+    return;
+  }
+  const inWorkoutIds = new Set(workoutExercises.map(e => e.id));
+  const available = list.filter(ex => !inWorkoutIds.has(ex.id));
 
-    body.mobile-body {
-      overflow: hidden;
-      height: 100vh;
-      position: fixed;
-      width: 100%;
-    }
-    body.mobile-body #wrap {
-      position: absolute;
-      left: 0;
-      top: 0;
-      right: 0;
-      bottom: 0;
-      overflow-x: hidden;
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
-      height: calc(100% + 1px);
-    }
-  </style>
-</head>
-<body class="bg-bg text-white font-sans min-h-screen">
+  if (available.length === 0) {
+    exercisesPickerEl.innerHTML =
+      '<p class="text-slate-500 text-center py-4 text-sm">Все упражнения добавлены</p>';
+    return;
+  }
 
-  <div id="wrap">
-    <div class="max-w-md mx-auto px-4 safe-top safe-bottom">
-
-      <!-- ЭКРАН 1: ГЛАВНАЯ -->
-      <div id="screen-home">
-        <header class="mb-6">
-          <p class="text-slate-400 text-sm">Привет,</p>
-          <h1 id="user-name" class="text-2xl font-bold">Гость</h1>
-        </header>
-
-        <button id="start-workout"
-                class="w-full bg-primary hover:bg-indigo-500 active:scale-[0.98] transition
-                       rounded-2xl p-5 mb-6 text-left flex items-center justify-between">
-          <div>
-            <p class="start-subtitle text-xs uppercase tracking-wide text-indigo-200">Новая сессия</p>
-            <p class="start-title text-xl font-semibold">Начать тренировку</p>
-          </div>
-          <span class="start-icon text-3xl">🏋️</span>
+  const groups = {};
+  for (const ex of available) {
+    if (!groups[ex.muscle_group]) groups[ex.muscle_group] = [];
+    groups[ex.muscle_group].push(ex);
+  }
+  let html = '';
+  for (const [group, items] of Object.entries(groups)) {
+    html += `<p class="text-xs uppercase tracking-wide text-slate-500 mt-3 mb-1">${group}</p>`;
+    for (const ex of items) {
+      html += `
+        <button class="exercise-pick w-full bg-surface hover:bg-surface2 active:scale-[0.98]
+                       transition rounded-xl px-4 py-3 text-left flex items-center justify-between gap-2"
+                data-id="${ex.id}" data-name="${ex.name}">
+          <span class="font-medium text-sm break-words min-w-0 text-left">${ex.name}</span>
+          <span class="text-primary text-lg leading-none shrink-0">+</span>
         </button>
+      `;
+    }
+  }
+  exercisesPickerEl.innerHTML = html;
 
-        <section>
-          <div class="flex items-center justify-between mb-3">
-            <h2 class="text-lg font-semibold">Последние тренировки</h2>
-          </div>
-          <div id="recent-list" class="space-y-3">
-            <p class="text-slate-500 text-sm py-4 text-center">Загрузка...</p>
-          </div>
-        </section>
+  exercisesPickerEl.querySelectorAll('.exercise-pick').forEach(btn => {
+    btn.addEventListener('click', () => addExerciseToWorkout(parseInt(btn.dataset.id), btn.dataset.name));
+  });
+}
+
+// ============ ТРЕНИРОВКА ============
+async function startWorkout() {
+  try {
+    const res = await fetch(`${API_URL}/api/workouts`, {
+      method: 'POST',
+      headers: authHeaders(),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    currentWorkoutId = data.workout_id;
+  } catch (e) {
+    console.error(e);
+    tg?.showAlert('Не удалось начать тренировку');
+  }
+}
+
+async function loadActiveWorkout() {
+  if (!tg?.initData) return;
+  try {
+    const res = await fetch(`${API_URL}/api/workouts/active`, { headers: authHeaders() });
+    if (!res.ok) return;
+    const data = await res.json();
+    if (data.active) {
+      currentWorkoutId = data.active.id;
+      const map = {};
+      for (const s of data.active.sets) {
+        if (!map[s.exercise_id]) {
+          map[s.exercise_id] = { id: s.exercise_id, name: '', sets: [] };
+        }
+        map[s.exercise_id].sets.push(s);
+      }
+      workoutExercises = Object.values(map);
+
+      for (const we of workoutExercises) {
+        const found = allExercises.find(ex => ex.id === we.id);
+        if (found) we.name = found.name;
+      }
+      updateStartButton();
+      renderWorkoutExercises();
+      updateWorkoutUI();
+    }
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+function updateStartButton() {
+  if (!startWorkoutBtn) return;
+  const titleEl = startWorkoutBtn.querySelector('.start-title');
+  const subtitleEl = startWorkoutBtn.querySelector('.start-subtitle');
+  const iconEl = startWorkoutBtn.querySelector('.start-icon');
+
+  if (currentWorkoutId) {
+    if (subtitleEl) subtitleEl.textContent = 'Продолжить';
+    if (titleEl) titleEl.textContent = 'Тренировка идёт';
+    if (iconEl) iconEl.textContent = '⏵';
+  } else {
+    if (subtitleEl) subtitleEl.textContent = 'Новая сессия';
+    if (titleEl) titleEl.textContent = 'Начать тренировку';
+    if (iconEl) iconEl.textContent = '🏋️';
+  }
+}
+
+function addExerciseToWorkout(id, name) {
+  tg?.HapticFeedback?.impactOccurred('light');
+  if (workoutExercises.some(e => e.id === id)) return;
+  workoutExercises.push({ id, name, sets: [] });
+  renderWorkoutExercises();
+  renderExercisesPicker(allExercises);
+  updateWorkoutUI();
+}
+
+function removeExerciseFromWorkout(id) {
+  workoutExercises = workoutExercises.filter(e => e.id !== id);
+  renderWorkoutExercises();
+  renderExercisesPicker(allExercises);
+  updateWorkoutUI();
+}
+
+function updateWorkoutUI() {
+  const has = workoutExercises.length > 0;
+  workoutHeaderEl.classList.toggle('hidden', !has);
+  workoutDividerEl.classList.toggle('hidden', !has);
+  finishWorkoutBtn.classList.toggle('hidden', !has);
+}
+
+function renderWorkoutExercises() {
+  if (workoutExercises.length === 0) {
+    workoutExercisesEl.innerHTML = '';
+    return;
+  }
+
+  workoutExercisesEl.innerHTML = workoutExercises.map(ex => `
+    <div class="bg-surface rounded-xl p-4 overflow-hidden" data-ex-id="${ex.id}">
+      <div class="flex items-start justify-between gap-2 mb-3">
+        <p class="font-semibold break-words min-w-0 flex-1">${ex.name}</p>
+        <button class="remove-ex text-slate-500 text-xs hover:text-red-400 shrink-0"
+                data-ex-id="${ex.id}">удалить</button>
       </div>
 
-      <!-- ЭКРАН 2: ТРЕНИРОВКА -->
-      <div id="screen-workout" class="hidden-screen">
-        <header class="flex items-center gap-3 mb-4">
-          <button id="workout-back" class="text-slate-300 text-2xl leading-none">←</button>
-          <h1 class="text-xl font-bold">Тренировка</h1>
-        </header>
+      <div class="sets-container space-y-1 mb-3" data-ex-id="${ex.id}"></div>
 
-        <input id="exercise-search" type="text" placeholder="🔍 Поиск упражнения..."
-               class="w-full bg-surface border border-slate-700 rounded-xl px-4 py-3 mb-3
-                      text-white placeholder-slate-500 focus:outline-none focus:border-primary">
-
-        <div id="exercises-picker" class="space-y-2 mb-6">
-          <p class="text-slate-500 text-center py-4 text-sm">Загрузка...</p>
-        </div>
-
-        <div id="workout-divider" class="hidden border-t border-slate-700 my-6"></div>
-
-        <h2 id="workout-header" class="hidden text-xs uppercase tracking-wide text-slate-500 mb-3">
-          В тренировке
-        </h2>
-        <div id="workout-exercises" class="space-y-4"></div>
-
-        <button id="finish-workout"
-                class="hidden w-full mt-6 bg-red-600/20 hover:bg-red-600/30 active:scale-[0.98]
-                       transition rounded-xl py-3 font-semibold text-red-300 border border-red-600/40">
-          Завершить тренировку
-        </button>
+      <div class="flex gap-2 items-stretch">
+        <input type="number" step="0.5" min="0" inputmode="decimal"
+               placeholder="Вес"
+               class="set-weight flex-1 min-w-0 bg-surface2 rounded-lg px-3 py-2 text-white text-center
+                      focus:outline-none focus:ring-2 focus:ring-primary"
+               data-ex-id="${ex.id}">
+        <input type="number" min="1" inputmode="numeric"
+               placeholder="Повт"
+               class="set-reps flex-1 min-w-0 bg-surface2 rounded-lg px-3 py-2 text-white text-center
+                      focus:outline-none focus:ring-2 focus:ring-primary"
+               data-ex-id="${ex.id}">
+        <button class="add-set-btn bg-accent hover:bg-green-600 active:scale-95 transition
+                       rounded-lg w-12 shrink-0 font-bold"
+                data-ex-id="${ex.id}">+</button>
       </div>
-
-      <!-- ЭКРАН 3: ИСТОРИЯ -->
-      <div id="screen-history" class="hidden-screen">
-        <header class="mb-4">
-          <h1 class="text-xl font-bold">История тренировок</h1>
-        </header>
-        <div id="history-list" class="space-y-3">
-          <p class="text-slate-500 text-center py-8">Загрузка...</p>
-        </div>
-      </div>
-
-      <!-- ЭКРАН 4: ДЕТАЛИ ТРЕНИРОВКИ -->
-      <div id="screen-workout-detail" class="hidden-screen">
-        <header class="flex items-center gap-3 mb-4">
-          <button id="back-to-history" class="text-slate-300 text-2xl leading-none">←</button>
-          <h1 id="detail-title" class="text-xl font-bold">Тренировка</h1>
-        </header>
-        <div id="detail-content" class="space-y-3"></div>
-      </div>
-
-      <!-- ЭКРАН 5: ПРОФИЛЬ -->
-      <div id="screen-profile" class="hidden-screen">
-        <header class="mb-6">
-          <p class="text-slate-400 text-sm">Профиль</p>
-          <h1 id="profile-name" class="text-2xl font-bold">Гость</h1>
-          <p id="profile-username" class="text-sm text-slate-500"></p>
-        </header>
-
-        <!-- Стрик -->
-        <div class="bg-gradient-to-br from-orange-500/20 to-red-500/20 border border-orange-500/30
-                    rounded-2xl p-5 mb-4">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-xs uppercase tracking-wide text-orange-300">Дней подряд</p>
-              <p id="stat-streak" class="text-4xl font-bold mt-1">0</p>
-            </div>
-            <span class="text-5xl">🔥</span>
-          </div>
-          <p id="streak-hint" class="text-xs text-orange-200/70 mt-2"></p>
-        </div>
-
-        <!-- Счётчики -->
-        <div class="grid grid-cols-2 gap-3 mb-4">
-          <div class="bg-surface rounded-2xl p-4">
-            <p class="text-xs uppercase tracking-wide text-slate-500">Тренировок</p>
-            <p id="stat-workouts" class="text-2xl font-bold mt-1">0</p>
-          </div>
-          <div class="bg-surface rounded-2xl p-4">
-            <p class="text-xs uppercase tracking-wide text-slate-500">Подходов</p>
-            <p id="stat-sets" class="text-2xl font-bold mt-1">0</p>
-          </div>
-        </div>
-
-        <div class="bg-surface rounded-2xl p-4 mb-4">
-          <p class="text-xs uppercase tracking-wide text-slate-500">Общий тоннаж</p>
-          <p id="stat-volume" class="text-2xl font-bold mt-1">0 т</p>
-          <p class="text-xs text-slate-500 mt-1">Сумма вес × повторы за всё время</p>
-        </div>
-
-        <p class="text-xs text-slate-500 text-center mt-8">Gymly · v0.1</p>
-      </div>
-
     </div>
+  `).join('');
 
-    <!-- Нижняя навигация -->
-    <nav id="bottom-nav"
-         class="fixed bottom-0 left-0 right-0 bg-surface/95 backdrop-blur
-                border-t border-slate-700 max-w-md mx-auto
-                grid grid-cols-3 safe-bottom">
-      <button id="nav-home" class="py-4 text-center">
-        <span class="block text-xl">🏠</span>
-        <span class="text-xs text-slate-400">Главная</span>
-      </button>
-      <button id="nav-history" class="py-4 text-center">
-        <span class="block text-xl">📊</span>
-        <span class="text-xs text-slate-400">История</span>
-      </button>
-      <button id="nav-profile" class="py-4 text-center">
-        <span class="block text-xl">👤</span>
-        <span class="text-xs text-slate-400">Профиль</span>
-      </button>
-    </nav>
-  </div>
+  workoutExercises.forEach(ex => {
+    renderSetsForExercise(ex.id, ex.sets);
+  });
 
-  <script src="app.js"></script>
-</body>
-</html>
+  workoutExercisesEl.querySelectorAll('.remove-ex').forEach(btn => {
+    btn.addEventListener('click', () => removeExerciseFromWorkout(parseInt(btn.dataset.exId)));
+  });
+
+  workoutExercisesEl.querySelectorAll('.add-set-btn').forEach(btn => {
+    btn.addEventListener('click', () => addSetInline(parseInt(btn.dataset.exId)));
+  });
+
+  workoutExercisesEl.querySelectorAll('.set-reps').forEach(inp => {
+    inp.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') addSetInline(parseInt(inp.dataset.exId));
+    });
+  });
+}
+
+function renderSetsForExercise(exerciseId, sets) {
+  const container = workoutExercisesEl.querySelector(`.sets-container[data-ex-id="${exerciseId}"]`);
+  if (!container) return;
+
+  if (!sets || sets.length === 0) {
+    container.innerHTML = '';
+    return;
+  }
+
+  container.innerHTML = sets.map((s, i) => `
+    <div class="set-row flex items-center justify-between text-sm" data-set-id="${s.id}">
+      <span class="text-slate-500">#${i + 1}</span>
+      <span><b>${s.weight}</b> кг × <b>${s.reps}</b></span>
+    </div>
+  `).join('');
+}
+
+async function addSetInline(exerciseId) {
+  const card = workoutExercisesEl.querySelector(`[data-ex-id="${exerciseId}"]`);
+  if (!card) return;
+
+  const weightInput = card.querySelector('.set-weight');
+  const repsInput = card.querySelector('.set-reps');
+  const weight = parseFloat(weightInput.value);
+  const reps = parseInt(repsInput.value);
+
+  if (isNaN(weight) || weight < 0) { tg?.showAlert('Введи вес'); return; }
+  if (isNaN(reps) || reps < 1) { tg?.showAlert('Введи повторы'); return; }
+
+  const we = workoutExercises.find(e => e.id === exerciseId);
+  if (!we) return;
+
+  // Оптимистичный UI
+  const tempId = 'temp_' + Date.now();
+  const optimisticSet = {
+    id: tempId,
+    exercise_id: exerciseId,
+    set_number: we.sets.length + 1,
+    weight: weight,
+    reps: reps,
+  };
+  we.sets.push(optimisticSet);
+
+  renderSetsForExercise(exerciseId, we.sets);
+
+  weightInput.value = '';
+  repsInput.value = '';
+  weightInput.focus();
+  tg?.HapticFeedback?.notificationOccurred('success');
+
+  if (!currentWorkoutId) {
+    await startWorkout();
+    if (!currentWorkoutId) {
+      we.sets = we.sets.filter(s => s.id !== tempId);
+      renderSetsForExercise(exerciseId, we.sets);
+      tg?.showAlert('Не удалось начать тренировку');
+      return;
+    }
+  }
+
+  try {
+    const params = new URLSearchParams({
+      exercise_id: exerciseId,
+      weight: weight,
+      reps: reps,
+    });
+    const res = await fetch(
+      `${API_URL}/api/workouts/${currentWorkoutId}/sets?${params}`,
+      { method: 'POST', headers: authHeaders() }
+    );
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const realSet = await res.json();
+
+    const idx = we.sets.findIndex(s => s.id === tempId);
+    if (idx !== -1) we.sets[idx] = realSet;
+    renderSetsForExercise(exerciseId, we.sets);
+  } catch (e) {
+    console.error(e);
+    we.sets = we.sets.filter(s => s.id !== tempId);
+    renderSetsForExercise(exerciseId, we.sets);
+    tg?.showAlert('Не удалось сохранить подход');
+  }
+}
+
+async function finishWorkout() {
+  if (!currentWorkoutId) return;
+  const ok = await new Promise(resolve => {
+    if (tg?.showConfirm) tg.showConfirm('Завершить тренировку?', (yes) => resolve(yes));
+    else resolve(confirm('Завершить тренировку?'));
+  });
+  if (!ok) return;
+
+  try {
+    const res = await fetch(
+      `${API_URL}/api/workouts/${currentWorkoutId}/finish`,
+      { method: 'PATCH', headers: authHeaders() }
+    );
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    tg?.HapticFeedback?.notificationOccurred('success');
+    currentWorkoutId = null;
+    workoutExercises = [];
+    updateStartButton();
+    await loadRecentWorkouts();
+    showScreen('home');
+  } catch (e) {
+    console.error(e);
+    tg?.showAlert('Не удалось завершить');
+  }
+}
+
+// ============ ИСТОРИЯ ============
+async function loadHistory() {
+  if (!tg?.initData) return;
+  historyListEl.innerHTML = '<p class="text-slate-500 text-center py-8">Загрузка...</p>';
+  try {
+    const res = await fetch(`${API_URL}/api/workouts`, { headers: authHeaders() });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    allWorkouts = data.workouts;
+    renderHistory(allWorkouts);
+  } catch (e) {
+    console.error(e);
+    historyListEl.innerHTML = '<p class="text-red-400 text-center py-8">Ошибка: ' + e.message + '</p>';
+  }
+}
+
+function renderHistory(workouts) {
+  if (!workouts || workouts.length === 0) {
+    historyListEl.innerHTML = '<p class="text-slate-500 text-center py-8">Пока нет тренировок</p>';
+    return;
+  }
+  historyListEl.innerHTML = workouts.map(w => {
+    const date = new Date(w.finished_at || w.started_at);
+    const dateStr = date.toLocaleDateString('ru-RU', { day: '2-digit', month: 'long' });
+    const timeStr = date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+    const exNames = (w.exercises || []).map(e => e.exercise_name).join(', ');
+    return `
+      <button class="workout-item w-full bg-surface hover:bg-surface2 active:scale-[0.98]
+                     transition rounded-xl p-4 text-left overflow-hidden"
+              data-id="${w.id}">
+        <div class="flex items-start justify-between gap-2 mb-2">
+          <div class="min-w-0">
+            <p class="font-semibold">${dateStr}</p>
+            <p class="text-xs text-slate-500">${timeStr}</p>
+          </div>
+          <span class="text-xs text-slate-400 bg-surface2 rounded-full px-2 py-1 shrink-0">
+            ${w.total_sets || 0} подх.
+          </span>
+        </div>
+        <p class="text-sm text-slate-400 truncate">${exNames || 'Без упражнений'}</p>
+      </button>
+    `;
+  }).join('');
+
+  historyListEl.querySelectorAll('.workout-item').forEach(btn => {
+    btn.addEventListener('click', () => openWorkoutDetail(parseInt(btn.dataset.id)));
+  });
+}
+
+function openWorkoutDetail(workoutId) {
+  const workout = allWorkouts.find(w => w.id === workoutId);
+  if (!workout) return;
+  tg?.HapticFeedback?.impactOccurred('light');
+
+  const date = new Date(workout.finished_at || workout.started_at);
+  detailTitleEl.textContent = date.toLocaleDateString('ru-RU', {
+    day: '2-digit', month: 'long', hour: '2-digit', minute: '2-digit',
+  });
+
+  if (!workout.exercises || workout.exercises.length === 0) {
+    detailContentEl.innerHTML =
+      '<p class="text-slate-500 text-center py-8">В тренировке не было подходов</p>';
+  } else {
+    detailContentEl.innerHTML = workout.exercises.map(ex => `
+      <div class="bg-surface rounded-xl p-4 overflow-hidden">
+        <p class="font-semibold mb-3 break-words">${ex.exercise_name}</p>
+        <div class="space-y-1">
+          ${ex.sets.map((s, i) => `
+            <div class="flex items-center justify-between text-sm">
+              <span class="text-slate-400">#${i + 1}</span>
+              <span><b>${s.weight}</b> кг × <b>${s.reps}</b></span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `).join('');
+  }
+  showScreen('workout-detail');
+}
+
+// ============ ПРОФИЛЬ ============
+async function loadProfile() {
+  if (!tg?.initData) return;
+
+  const tgUser = tg.initDataUnsafe?.user;
+  if (tgUser) {
+    profileNameEl.textContent = [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ') || 'Гость';
+    profileUsernameEl.textContent = tgUser.username ? `@${tgUser.username}` : '';
+  }
+
+  statStreakEl.textContent = '—';
+  statWorkoutsEl.textContent = '—';
+  statSetsEl.textContent = '—';
+  statVolumeEl.textContent = '—';
+  streakHintEl.textContent = '';
+
+  try {
+    const res = await fetch(`${API_URL}/api/profile/stats`, { headers: authHeaders() });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const stats = await res.json();
+
+    statStreakEl.textContent = stats.streak;
+    statWorkoutsEl.textContent = stats.workouts_count;
+    statSetsEl.textContent = stats.sets_count;
+
+    const kg = stats.total_volume_kg;
+    if (kg < 1000) {
+      statVolumeEl.textContent = `${Math.round(kg)} кг`;
+    } else {
+      statVolumeEl.textContent = `${(kg / 1000).toFixed(1)} т`;
+    }
+
+    if (stats.streak === 0 && stats.workouts_count > 0) {
+      streakHintEl.textContent = 'Тренируйся, чтобы начать стрик!';
+    } else if (stats.streak === 0) {
+      streakHintEl.textContent = 'Сделай первую тренировку';
+    } else if (stats.streak === 1) {
+      streakHintEl.textContent = 'Начало положено. Продолжай завтра!';
+    } else {
+      streakHintEl.textContent = 'Не разрывай серию! Тренируйся и завтра';
+    }
+  } catch (e) {
+    console.error(e);
+    statStreakEl.textContent = '?';
+    statWorkoutsEl.textContent = '?';
+    statSetsEl.textContent = '?';
+    statVolumeEl.textContent = '?';
+  }
+}
+
+// ============ СОБЫТИЯ ============
+startWorkoutBtn?.addEventListener('click', async () => {
+  tg?.HapticFeedback?.impactOccurred('medium');
+
+  if (!currentWorkoutId) {
+    startWorkoutBtn.style.opacity = '0.6';
+    await startWorkout();
+    startWorkoutBtn.style.opacity = '1';
+  }
+  updateStartButton();
+  updateWorkoutUI();
+  renderWorkoutExercises();
+  showScreen('workout');
+  if (allExercises.length === 0) await loadExercises();
+});
+
+document.getElementById('workout-back')?.addEventListener('click', () => {
+  showScreen('home');
+  updateStartButton();
+});
+
+finishWorkoutBtn?.addEventListener('click', finishWorkout);
+
+searchInput?.addEventListener('input', (e) => {
+  const q = e.target.value.trim().toLowerCase();
+  const filtered = !q ? allExercises : allExercises.filter(ex =>
+    ex.name.toLowerCase().includes(q) || ex.muscle_group.toLowerCase().includes(q)
+  );
+  renderExercisesPicker(filtered);
+});
+
+document.getElementById('nav-home')?.addEventListener('click', () => {
+  showScreen('home');
+  updateStartButton();
+});
+
+document.getElementById('nav-history')?.addEventListener('click', () => {
+  tg?.HapticFeedback?.impactOccurred('light');
+  showScreen('history');
+  loadHistory();
+});
+
+document.getElementById('back-to-history')?.addEventListener('click', () => {
+  showScreen('history');
+});
+
+document.getElementById('nav-profile')?.addEventListener('click', () => {
+  tg?.HapticFeedback?.impactOccurred('light');
+  showScreen('profile');
+  loadProfile();
+});
+
+// ============ СТАРТ ============
+(async () => {
+  await Promise.all([
+    loadMe(),
+    loadExercises(),
+    loadRecentWorkouts(),
+  ]);
+  await loadActiveWorkout();
+})();
