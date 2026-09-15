@@ -107,12 +107,12 @@ function renderRecent(workouts) {
       ? `${w.total_sets} подх. · ${exNames || 'без упражнений'}`
       : 'Без подходов';
     return `
-      <div class="bg-surface rounded-xl p-4 flex items-center justify-between">
+      <div class="bg-surface rounded-xl p-4 flex items-center justify-between gap-2">
         <div class="min-w-0 flex-1">
           <p class="font-medium truncate">${exNames || 'Тренировка'}</p>
           <p class="text-sm text-slate-400 truncate">${preview}</p>
         </div>
-        <span class="text-slate-500 text-sm ml-2">${dateStr}</span>
+        <span class="text-slate-500 text-sm shrink-0">${dateStr}</span>
       </div>
     `;
   }).join('');
@@ -120,7 +120,6 @@ function renderRecent(workouts) {
 
 // ============ УПРАЖНЕНИЯ (с кэшем) ============
 async function loadExercises() {
-  // 1. Сначала — из кэша (мгновенно)
   const cached = localStorage.getItem('exercises_cache');
   if (cached) {
     try {
@@ -129,7 +128,6 @@ async function loadExercises() {
     } catch {}
   }
 
-  // 2. Потом — свежие с сервера
   try {
     const res = await fetch(`${API_URL}/api/exercises`);
     const data = await res.json();
@@ -171,10 +169,10 @@ function renderExercisesPicker(list) {
     for (const ex of items) {
       html += `
         <button class="exercise-pick w-full bg-surface hover:bg-surface2 active:scale-[0.98]
-                       transition rounded-xl px-4 py-3 text-left flex items-center justify-between"
+                       transition rounded-xl px-4 py-3 text-left flex items-center justify-between gap-2"
                 data-id="${ex.id}" data-name="${ex.name}">
-          <span class="font-medium text-sm">${ex.name}</span>
-          <span class="text-primary text-lg leading-none">+</span>
+          <span class="font-medium text-sm break-words min-w-0 text-left">${ex.name}</span>
+          <span class="text-primary text-lg leading-none shrink-0">+</span>
         </button>
       `;
     }
@@ -279,10 +277,10 @@ function renderWorkoutExercises() {
   }
 
   workoutExercisesEl.innerHTML = workoutExercises.map(ex => `
-    <div class="bg-surface rounded-xl p-4" data-ex-id="${ex.id}">
-      <div class="flex items-center justify-between mb-3">
-        <p class="font-semibold">${ex.name}</p>
-        <button class="remove-ex text-slate-500 text-xs hover:text-red-400"
+    <div class="bg-surface rounded-xl p-4 overflow-hidden" data-ex-id="${ex.id}">
+      <div class="flex items-start justify-between gap-2 mb-3">
+        <p class="font-semibold break-words min-w-0 flex-1">${ex.name}</p>
+        <button class="remove-ex text-slate-500 text-xs hover:text-red-400 shrink-0"
                 data-ex-id="${ex.id}">удалить</button>
       </div>
 
@@ -297,19 +295,19 @@ function renderWorkoutExercises() {
         </div>
       ` : ''}
 
-      <div class="grid grid-cols-[1fr_1fr_auto] gap-2">
+      <div class="flex gap-2 items-stretch">
         <input type="number" step="0.5" min="0" inputmode="decimal"
                placeholder="Вес"
-               class="set-weight bg-surface2 rounded-lg px-3 py-2 text-white text-center
+               class="set-weight flex-1 min-w-0 bg-surface2 rounded-lg px-3 py-2 text-white text-center
                       focus:outline-none focus:ring-2 focus:ring-primary"
                data-ex-id="${ex.id}">
         <input type="number" min="1" inputmode="numeric"
                placeholder="Повт"
-               class="set-reps bg-surface2 rounded-lg px-3 py-2 text-white text-center
+               class="set-reps flex-1 min-w-0 bg-surface2 rounded-lg px-3 py-2 text-white text-center
                       focus:outline-none focus:ring-2 focus:ring-primary"
                data-ex-id="${ex.id}">
         <button class="add-set-btn bg-accent hover:bg-green-600 active:scale-95 transition
-                       rounded-lg px-4 font-bold"
+                       rounded-lg w-12 shrink-0 font-bold"
                 data-ex-id="${ex.id}">+</button>
       </div>
     </div>
@@ -430,14 +428,14 @@ function renderHistory(workouts) {
     const exNames = (w.exercises || []).map(e => e.exercise_name).join(', ');
     return `
       <button class="workout-item w-full bg-surface hover:bg-surface2 active:scale-[0.98]
-                     transition rounded-xl p-4 text-left"
+                     transition rounded-xl p-4 text-left overflow-hidden"
               data-id="${w.id}">
-        <div class="flex items-start justify-between mb-2">
-          <div>
+        <div class="flex items-start justify-between gap-2 mb-2">
+          <div class="min-w-0">
             <p class="font-semibold">${dateStr}</p>
             <p class="text-xs text-slate-500">${timeStr}</p>
           </div>
-          <span class="text-xs text-slate-400 bg-surface2 rounded-full px-2 py-1">
+          <span class="text-xs text-slate-400 bg-surface2 rounded-full px-2 py-1 shrink-0">
             ${w.total_sets || 0} подх.
           </span>
         </div>
@@ -466,8 +464,8 @@ function openWorkoutDetail(workoutId) {
       '<p class="text-slate-500 text-center py-8">В тренировке не было подходов</p>';
   } else {
     detailContentEl.innerHTML = workout.exercises.map(ex => `
-      <div class="bg-surface rounded-xl p-4">
-        <p class="font-semibold mb-3">${ex.exercise_name}</p>
+      <div class="bg-surface rounded-xl p-4 overflow-hidden">
+        <p class="font-semibold mb-3 break-words">${ex.exercise_name}</p>
         <div class="space-y-1">
           ${ex.sets.map((s, i) => `
             <div class="flex items-center justify-between text-sm">
