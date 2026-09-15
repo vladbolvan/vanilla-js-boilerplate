@@ -6,42 +6,44 @@ if (tg) {
   tg.setHeaderColor('#0f172a');
   tg.setBackgroundColor('#0f172a');
 
-  // Метод 1: официальные методы Telegram (Bot API 7.7+)
-  if (typeof tg.disableVerticalSwipes === 'function') {
-    tg.disableVerticalSwipes();
-  }
-  if (typeof tg.requestFullscreen === 'function') {
-    tg.requestFullscreen();
-  }
+  if (typeof tg.disableVerticalSwipes === 'function') tg.disableVerticalSwipes();
+  if (typeof tg.requestFullscreen === 'function') tg.requestFullscreen();
 
-  // Метод 2: CSS-хак — только на мобильных
+  // Динамический верхний отступ: fullscreen = 16px, иначе = 56px (системный хедер TG)
+  const offset = tg.isFullscreen ? '16px' : '56px';
+  document.documentElement.style.setProperty('--safe-top-offset', offset);
+
   const isMobile = ['android', 'ios', 'android_x'].includes(tg.platform);
-  if (isMobile) {
-    document.body.classList.add('mobile-body');
-  }
+  if (isMobile) document.body.classList.add('mobile-body');
 }
 
 const API_URL = 'https://dowdily-jocular-stint.cloudpub.ru';
 
 // ============ DOM ============
 const screenHome = document.getElementById('screen-home');
-const screenExercises = document.getElementById('screen-exercises');
-const screenInput = document.getElementById('screen-input');
+const screenWorkout = document.getElementById('screen-workout');
+const screenHistory = document.getElementById('screen-history');
+const screenWorkoutDetail = document.getElementById('screen-workout-detail');
 const bottomNav = document.getElementById('bottom-nav');
+
 const userNameEl = document.getElementById('user-name');
-const exercisesListEl = document.getElementById('exercises-list');
-const searchInput = document.getElementById('exercise-search');
-const exerciseTitle = document.getElementById('exercise-title');
-const setsListEl = document.getElementById('sets-list');
-const startWorkoutBtn = document.getElementById('start-workout');
 const recentListEl = document.getElementById('recent-list');
+const exercisesPickerEl = document.getElementById('exercises-picker');
+const workoutExercisesEl = document.getElementById('workout-exercises');
+const workoutHeaderEl = document.getElementById('workout-header');
+const workoutDividerEl = document.getElementById('workout-divider');
+const finishWorkoutBtn = document.getElementById('finish-workout');
+const searchInput = document.getElementById('exercise-search');
+const historyListEl = document.getElementById('history-list');
+const detailContentEl = document.getElementById('detail-content');
+const detailTitleEl = document.getElementById('detail-title');
+const startWorkoutBtn = document.getElementById('start-workout');
 
 // ============ STATE ============
 let allExercises = [];
 let currentWorkoutId = null;
-let currentExercise = null;
-let currentSets = [];
-let activeWorkout = null;
+let workoutExercises = []; // [{id, name, sets: [{id, weight, reps, set_number}]}]
+let allWorkouts = [];
 
 function authHeaders() {
   return { 'X-Init-Data': tg?.initData || '' };
@@ -49,7 +51,10 @@ function authHeaders() {
 
 // ============ ПРОФИЛЬ ============
 async function loadMe() {
-  if (!tg?.initData) return;
+  if (!tg?.initData) {
+    if (userNameEl) userNameEl.textContent = 'Гость';
+    return;
+  }
   try {
     const res = await fetch(`${API_URL}/api/me`, { headers: authHeaders() });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -57,66 +62,120 @@ async function loadMe() {
     if (userNameEl) userNameEl.textContent = me.first_name || me.username || 'Гость';
   } catch (e) {
     console.error(e);
+    if (userNameEl) userNameEl.textContent = 'Ошибка загрузки';
   }
 }
 
 // ============ ЭКРАНЫ ============
 function showScreen(name) {
   screenHome.classList.toggle('hidden-screen', name !== 'home');
-  screenExercises.classList.toggle('hidden-screen', name !== 'exercises');
-  screenInput.classList.toggle('hidden-screen', name !== 'input');
+  screenWorkout.classList.toggle('hidden-screen', name !== 'workout');
+  screenHistory.classList.toggle('hidden-screen', name !== 'history');
+  screenWorkoutDetail.classList.toggle('hidden-screen', name !== 'workout-detail');
   bottomNav.style.display = name === 'home' ? '' : 'none';
-  window.scrollTo(0, 0);
   document.getElementById('wrap')?.scrollTo(0, 0);
 }
 
-// ============ УПРАЖНЕНИЯ ============
+// ============ ГЛАВНАЯ ============
+async function loadRecentWorkouts() {
+  if (!tg?.initData) return;
+  try {
+    const res = await fetch(`${API_URL}/api/workouts`, { headers: authHeaders() });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    renderRecent(data.workouts);
+  } catch (e) {
+    console.error('loadRecentWorkouts', e);
+    if (recentListEl) {
+      recentListEl.innerHTML =
+        '<p class="text-red-400 text-sm py-4 text-center">Ошибка: ' + e.message + '</p>';
+    }
+  }
+}
+
+function renderRecent(workouts) {
+  if (!recentListEl) return;
+  if (!workouts || workouts.length === 0) {
+    recentListEl.innerHTML =
+      '<p class="text-slate-500 text-sm py-4 text-center">Пока нет тренировок</p>';
+    return;
+  }
+  recentListEl.innerHTML = workouts.slice(0, 3).map(w => {
+    const date = new Date(w.finished_at || w.started_at);
+    const dateStr = date.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' });
+    const exNames = (w.exercises || []).map(e => e.exercise_name).join(', ');
+    const preview = w.total_sets
+      ? `${w.total_sets} подх. · ${exNames || 'без упражнений'}`
+      : 'Без подходов';
+    return `
+      <div class="bg-surface rounded-xl p-4 flex items-center justify-between">
+        <div class="min-w-0 flex-1">
+          <p class="font-medium truncate">${exNames || 'Тренировка'}</p>
+          <p class="text-sm text-slate-400 truncate">${preview}</p>
+        </div>
+        <span class="text-slate-500 text-sm ml-2">${dateStr}</span>
+      </div>
+    `;
+  }).join('');
+}
+
+// ============ УПРАЖНЕНИЯ (для выбора) ============
 async function loadExercises() {
   try {
     const res = await fetch(`${API_URL}/api/exercises`);
     const data = await res.json();
     allExercises = data.exercises;
-    renderExercises(allExercises);
+    renderExercisesPicker(allExercises);
   } catch (e) {
     console.error(e);
-    exercisesListEl.innerHTML =
-      '<p class="text-red-400 text-center py-8">Не удалось загрузить</p>';
+    exercisesPickerEl.innerHTML =
+      '<p class="text-red-400 text-center py-4 text-sm">Не удалось загрузить</p>';
   }
 }
 
-function renderExercises(list) {
+function renderExercisesPicker(list) {
   if (list.length === 0) {
-    exercisesListEl.innerHTML =
-      '<p class="text-slate-500 text-center py-8">Ничего не найдено</p>';
+    exercisesPickerEl.innerHTML =
+      '<p class="text-slate-500 text-center py-4 text-sm">Ничего не найдено</p>';
     return;
   }
+  // Показываем только те, которых ещё нет в тренировке
+  const inWorkoutIds = new Set(workoutExercises.map(e => e.id));
+  const available = list.filter(ex => !inWorkoutIds.has(ex.id));
+
+  if (available.length === 0) {
+    exercisesPickerEl.innerHTML =
+      '<p class="text-slate-500 text-center py-4 text-sm">Все упражнения добавлены</p>';
+    return;
+  }
+
   const groups = {};
-  for (const ex of list) {
+  for (const ex of available) {
     if (!groups[ex.muscle_group]) groups[ex.muscle_group] = [];
     groups[ex.muscle_group].push(ex);
   }
   let html = '';
   for (const [group, items] of Object.entries(groups)) {
-    html += `<p class="text-xs uppercase tracking-wide text-slate-500 mt-4 mb-2">${group}</p>`;
+    html += `<p class="text-xs uppercase tracking-wide text-slate-500 mt-3 mb-1">${group}</p>`;
     for (const ex of items) {
       html += `
-        <button class="exercise-item w-full bg-surface hover:bg-surface2 active:scale-[0.98]
-                       transition rounded-xl p-4 text-left flex items-center justify-between"
+        <button class="exercise-pick w-full bg-surface hover:bg-surface2 active:scale-[0.98]
+                       transition rounded-xl px-4 py-3 text-left flex items-center justify-between"
                 data-id="${ex.id}" data-name="${ex.name}">
-          <span class="font-medium">${ex.name}</span>
-          ${ex.is_compound ? '<span class="text-xs text-accent">базовое</span>' : ''}
+          <span class="font-medium text-sm">${ex.name}</span>
+          <span class="text-primary text-lg leading-none">+</span>
         </button>
       `;
     }
   }
-  exercisesListEl.innerHTML = html;
+  exercisesPickerEl.innerHTML = html;
 
-  exercisesListEl.querySelectorAll('.exercise-item').forEach(btn => {
-    btn.addEventListener('click', () => onExercisePick(btn.dataset.id, btn.dataset.name));
+  exercisesPickerEl.querySelectorAll('.exercise-pick').forEach(btn => {
+    btn.addEventListener('click', () => addExerciseToWorkout(parseInt(btn.dataset.id), btn.dataset.name));
   });
 }
 
-// ============ ТРЕНИРОВКА ============
+// ============ АКТИВНАЯ ТРЕНИРОВКА ============
 async function startWorkout() {
   try {
     const res = await fetch(`${API_URL}/api/workouts`, {
@@ -126,8 +185,6 @@ async function startWorkout() {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     currentWorkoutId = data.workout_id;
-    activeWorkout = { id: currentWorkoutId, sets: [] };
-    updateStartButton();
     console.log('Workout started:', currentWorkoutId);
   } catch (e) {
     console.error(e);
@@ -138,17 +195,32 @@ async function startWorkout() {
 async function loadActiveWorkout() {
   if (!tg?.initData) return;
   try {
-    const res = await fetch(`${API_URL}/api/workouts/active`, {
-      headers: authHeaders(),
-    });
+    const res = await fetch(`${API_URL}/api/workouts/active`, { headers: authHeaders() });
     if (!res.ok) return;
     const data = await res.json();
     if (data.active) {
       currentWorkoutId = data.active.id;
-      activeWorkout = data.active;
-      currentSets = data.active.sets;
+
+      // Восстанавливаем список упражнений из подходов
+      const map = {};
+      for (const s of data.active.sets) {
+        if (!map[s.exercise_id]) {
+          map[s.exercise_id] = { id: s.exercise_id, name: '', sets: [] };
+        }
+        map[s.exercise_id].sets.push(s);
+      }
+      workoutExercises = Object.values(map);
+
+      // Подтягиваем имена упражнений
+      if (workoutExercises.length > 0 && allExercises.length > 0) {
+        for (const we of workoutExercises) {
+          const found = allExercises.find(ex => ex.id === we.id);
+          if (found) we.name = found.name;
+        }
+      }
       updateStartButton();
-      console.log('Active workout restored:', currentWorkoutId);
+      renderWorkoutExercises();
+      updateWorkoutUI();
     }
   } catch (e) {
     console.error(e);
@@ -172,34 +244,111 @@ function updateStartButton() {
   }
 }
 
-function onExercisePick(id, name) {
+function addExerciseToWorkout(id, name) {
   tg?.HapticFeedback?.impactOccurred('light');
-  currentExercise = { id: parseInt(id), name };
-  const exerciseSets = currentSets.filter(s => s.exercise_id === currentExercise.id);
-  exerciseTitle.textContent = name;
-  renderSets(exerciseSets);
-  showScreen('input');
-  document.getElementById('input-weight').value = '';
-  document.getElementById('input-reps').value = '';
-  setTimeout(() => document.getElementById('input-weight').focus(), 100);
+  if (workoutExercises.some(e => e.id === id)) return;
+  workoutExercises.push({ id, name, sets: [] });
+  renderWorkoutExercises();
+  renderExercisesPicker(allExercises);
+  updateWorkoutUI();
 }
 
-async function addSet() {
+function removeExerciseFromWorkout(id) {
+  // Просто убираем с фронта (подходы останутся в БД, но это MVP)
+  workoutExercises = workoutExercises.filter(e => e.id !== id);
+  renderWorkoutExercises();
+  renderExercisesPicker(allExercises);
+  updateWorkoutUI();
+}
+
+function updateWorkoutUI() {
+  const has = workoutExercises.length > 0;
+  workoutHeaderEl.classList.toggle('hidden', !has);
+  workoutDividerEl.classList.toggle('hidden', !has);
+  finishWorkoutBtn.classList.toggle('hidden', !has);
+}
+
+function renderWorkoutExercises() {
+  if (workoutExercises.length === 0) {
+    workoutExercisesEl.innerHTML = '';
+    return;
+  }
+
+  workoutExercisesEl.innerHTML = workoutExercises.map(ex => `
+    <div class="bg-surface rounded-xl p-4" data-ex-id="${ex.id}">
+      <div class="flex items-center justify-between mb-3">
+        <p class="font-semibold">${ex.name}</p>
+        <button class="remove-ex text-slate-500 text-xs hover:text-red-400"
+                data-ex-id="${ex.id}">удалить</button>
+      </div>
+
+      ${ex.sets.length > 0 ? `
+        <div class="space-y-1 mb-3">
+          ${ex.sets.map((s, i) => `
+            <div class="flex items-center justify-between text-sm">
+              <span class="text-slate-500">#${i + 1}</span>
+              <span><b>${s.weight}</b> кг × <b>${s.reps}</b></span>
+            </div>
+          `).join('')}
+        </div>
+      ` : ''}
+
+      <div class="grid grid-cols-[1fr_1fr_auto] gap-2">
+        <input type="number" step="0.5" min="0" inputmode="decimal"
+               placeholder="Вес"
+               class="set-weight bg-surface2 rounded-lg px-3 py-2 text-white text-center
+                      focus:outline-none focus:ring-2 focus:ring-primary"
+               data-ex-id="${ex.id}">
+        <input type="number" min="1" inputmode="numeric"
+               placeholder="Повт"
+               class="set-reps bg-surface2 rounded-lg px-3 py-2 text-white text-center
+                      focus:outline-none focus:ring-2 focus:ring-primary"
+               data-ex-id="${ex.id}">
+        <button class="add-set-btn bg-accent hover:bg-green-600 active:scale-95 transition
+                       rounded-lg px-4 font-bold"
+                data-ex-id="${ex.id}">+</button>
+      </div>
+    </div>
+  `).join('');
+
+  // Удаление упражнения
+  workoutExercisesEl.querySelectorAll('.remove-ex').forEach(btn => {
+    btn.addEventListener('click', () => removeExerciseFromWorkout(parseInt(btn.dataset.exId)));
+  });
+
+  // Добавление подхода
+  workoutExercisesEl.querySelectorAll('.add-set-btn').forEach(btn => {
+    btn.addEventListener('click', () => addSetInline(parseInt(btn.dataset.exId)));
+  });
+
+  // Enter на поле повторов
+  workoutExercisesEl.querySelectorAll('.set-reps').forEach(inp => {
+    inp.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') addSetInline(parseInt(inp.dataset.exId));
+    });
+  });
+}
+
+async function addSetInline(exerciseId) {
   if (!currentWorkoutId) {
     await startWorkout();
     if (!currentWorkoutId) return;
   }
-  if (!currentExercise) return;
 
-  const weight = parseFloat(document.getElementById('input-weight').value);
-  const reps = parseInt(document.getElementById('input-reps').value);
+  const card = workoutExercisesEl.querySelector(`[data-ex-id="${exerciseId}"]`);
+  if (!card) return;
+
+  const weightInput = card.querySelector('.set-weight');
+  const repsInput = card.querySelector('.set-reps');
+  const weight = parseFloat(weightInput.value);
+  const reps = parseInt(repsInput.value);
 
   if (isNaN(weight) || weight < 0) { tg?.showAlert('Введи вес'); return; }
   if (isNaN(reps) || reps < 1) { tg?.showAlert('Введи повторы'); return; }
 
   try {
     const params = new URLSearchParams({
-      exercise_id: currentExercise.id,
+      exercise_id: exerciseId,
       weight: weight,
       reps: reps,
     });
@@ -209,42 +358,29 @@ async function addSet() {
     );
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const set = await res.json();
-    currentSets.push(set);
-    const exerciseSets = currentSets.filter(s => s.exercise_id === currentExercise.id);
-    renderSets(exerciseSets);
+
+    const we = workoutExercises.find(e => e.id === exerciseId);
+    if (we) we.sets.push(set);
+
+    renderWorkoutExercises();
     tg?.HapticFeedback?.notificationOccurred('success');
-    document.getElementById('input-weight').value = '';
-    document.getElementById('input-reps').value = '';
-    document.getElementById('input-weight').focus();
+
+    // Возвращаем фокус на вес
+    setTimeout(() => {
+      const newCard = workoutExercisesEl.querySelector(`[data-ex-id="${exerciseId}"]`);
+      newCard?.querySelector('.set-weight')?.focus();
+    }, 50);
   } catch (e) {
     console.error(e);
     tg?.showAlert('Не удалось сохранить подход');
   }
 }
 
-function renderSets(sets) {
-  if (!sets || sets.length === 0) {
-    setsListEl.innerHTML =
-      '<p class="text-slate-500 text-sm py-4 text-center">Пока пусто</p>';
-    return;
-  }
-  setsListEl.innerHTML = sets.map((s, i) => `
-    <div class="bg-surface rounded-xl p-3 flex items-center justify-between">
-      <span class="text-slate-400 text-sm">#${i + 1}</span>
-      <span class="font-semibold">${s.weight} кг × ${s.reps}</span>
-    </div>
-  `).join('');
-}
-
 async function finishWorkout() {
   if (!currentWorkoutId) return;
-
   const ok = await new Promise(resolve => {
-    if (tg?.showConfirm) {
-      tg.showConfirm('Завершить тренировку?', (yes) => resolve(yes));
-    } else {
-      resolve(confirm('Завершить тренировку?'));
-    }
+    if (tg?.showConfirm) tg.showConfirm('Завершить тренировку?', (yes) => resolve(yes));
+    else resolve(confirm('Завершить тренировку?'));
   });
   if (!ok) return;
 
@@ -256,9 +392,7 @@ async function finishWorkout() {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     tg?.HapticFeedback?.notificationOccurred('success');
     currentWorkoutId = null;
-    activeWorkout = null;
-    currentSets = [];
-    currentExercise = null;
+    workoutExercises = [];
     updateStartButton();
     await loadRecentWorkouts();
     showScreen('home');
@@ -269,79 +403,134 @@ async function finishWorkout() {
 }
 
 // ============ ИСТОРИЯ ============
-async function loadRecentWorkouts() {
+async function loadHistory() {
   if (!tg?.initData) return;
+  historyListEl.innerHTML = '<p class="text-slate-500 text-center py-8">Загрузка...</p>';
   try {
     const res = await fetch(`${API_URL}/api/workouts`, { headers: authHeaders() });
-    if (!res.ok) return;
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
-    renderRecent(data.workouts);
+    allWorkouts = data.workouts;
+    renderHistory(allWorkouts);
   } catch (e) {
     console.error(e);
+    historyListEl.innerHTML = '<p class="text-red-400 text-center py-8">Ошибка: ' + e.message + '</p>';
   }
 }
 
-function renderRecent(workouts) {
-  if (!recentListEl) return;
+function renderHistory(workouts) {
   if (!workouts || workouts.length === 0) {
-    recentListEl.innerHTML =
-      '<p class="text-slate-500 text-sm py-4 text-center">Пока нет тренировок</p>';
+    historyListEl.innerHTML = '<p class="text-slate-500 text-center py-8">Пока нет тренировок</p>';
     return;
   }
-
-  recentListEl.innerHTML = workouts.slice(0, 3).map(w => {
-    const date = w.finished_at ? new Date(w.finished_at) : new Date(w.started_at);
-    const dateStr = date.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' });
-    const exIds = new Set(w.sets.map(s => s.exercise_id));
-    const preview = w.sets.length > 0
-      ? `${w.sets.length} подходов · ${exIds.size} упражн.`
-      : 'Без подходов';
+  historyListEl.innerHTML = workouts.map(w => {
+    const date = new Date(w.finished_at || w.started_at);
+    const dateStr = date.toLocaleDateString('ru-RU', { day: '2-digit', month: 'long' });
+    const timeStr = date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+    const exNames = (w.exercises || []).map(e => e.exercise_name).join(', ');
     return `
-      <div class="bg-surface rounded-xl p-4 flex items-center justify-between">
-        <div>
-          <p class="font-medium">Тренировка</p>
-          <p class="text-sm text-slate-400">${preview}</p>
+      <button class="workout-item w-full bg-surface hover:bg-surface2 active:scale-[0.98]
+                     transition rounded-xl p-4 text-left"
+              data-id="${w.id}">
+        <div class="flex items-start justify-between mb-2">
+          <div>
+            <p class="font-semibold">${dateStr}</p>
+            <p class="text-xs text-slate-500">${timeStr}</p>
+          </div>
+          <span class="text-xs text-slate-400 bg-surface2 rounded-full px-2 py-1">
+            ${w.total_sets || 0} подх.
+          </span>
         </div>
-        <span class="text-slate-500 text-sm">${dateStr}</span>
-      </div>
+        <p class="text-sm text-slate-400 truncate">${exNames || 'Без упражнений'}</p>
+      </button>
     `;
   }).join('');
+
+  historyListEl.querySelectorAll('.workout-item').forEach(btn => {
+    btn.addEventListener('click', () => openWorkoutDetail(parseInt(btn.dataset.id)));
+  });
+}
+
+function openWorkoutDetail(workoutId) {
+  const workout = allWorkouts.find(w => w.id === workoutId);
+  if (!workout) return;
+  tg?.HapticFeedback?.impactOccurred('light');
+
+  const date = new Date(workout.finished_at || workout.started_at);
+  detailTitleEl.textContent = date.toLocaleDateString('ru-RU', {
+    day: '2-digit', month: 'long', hour: '2-digit', minute: '2-digit',
+  });
+
+  if (!workout.exercises || workout.exercises.length === 0) {
+    detailContentEl.innerHTML =
+      '<p class="text-slate-500 text-center py-8">В тренировке не было подходов</p>';
+  } else {
+    detailContentEl.innerHTML = workout.exercises.map(ex => `
+      <div class="bg-surface rounded-xl p-4">
+        <p class="font-semibold mb-3">${ex.exercise_name}</p>
+        <div class="space-y-1">
+          ${ex.sets.map((s, i) => `
+            <div class="flex items-center justify-between text-sm">
+              <span class="text-slate-400">#${i + 1}</span>
+              <span><b>${s.weight}</b> кг × <b>${s.reps}</b></span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    `).join('');
+  }
+  showScreen('workout-detail');
 }
 
 // ============ СОБЫТИЯ ============
 startWorkoutBtn?.addEventListener('click', async () => {
   tg?.HapticFeedback?.impactOccurred('medium');
   if (!currentWorkoutId) await startWorkout();
-  showScreen('exercises');
-  if (allExercises.length === 0) loadExercises();
+  updateStartButton();
+  updateWorkoutUI();
+  renderWorkoutExercises();
+  showScreen('workout');
+  if (allExercises.length === 0) await loadExercises();
 });
 
-document.getElementById('back-to-home')?.addEventListener('click', () => {
+document.getElementById('workout-back')?.addEventListener('click', () => {
   showScreen('home');
+  updateStartButton();
 });
 
-document.getElementById('back-to-exercises')?.addEventListener('click', () => {
-  showScreen('exercises');
-});
-
-document.getElementById('add-set')?.addEventListener('click', addSet);
-document.getElementById('finish-workout')?.addEventListener('click', finishWorkout);
+finishWorkoutBtn?.addEventListener('click', finishWorkout);
 
 searchInput?.addEventListener('input', (e) => {
   const q = e.target.value.trim().toLowerCase();
   const filtered = !q ? allExercises : allExercises.filter(ex =>
     ex.name.toLowerCase().includes(q) || ex.muscle_group.toLowerCase().includes(q)
   );
-  renderExercises(filtered);
+  renderExercisesPicker(filtered);
 });
 
-document.getElementById('input-reps')?.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') addSet();
+document.getElementById('nav-home')?.addEventListener('click', () => {
+  showScreen('home');
+  updateStartButton();
+});
+
+document.getElementById('nav-history')?.addEventListener('click', () => {
+  tg?.HapticFeedback?.impactOccurred('light');
+  showScreen('history');
+  loadHistory();
+});
+
+document.getElementById('back-to-history')?.addEventListener('click', () => {
+  showScreen('history');
+});
+
+document.getElementById('nav-profile')?.addEventListener('click', () => {
+  tg?.showAlert('Профиль скоро появится');
 });
 
 // ============ СТАРТ ============
 (async () => {
   await loadMe();
-  await loadActiveWorkout();
+  await loadExercises();       // загружаем справочник сразу — он нужен для имён
+  await loadActiveWorkout();   // потом восстанавливаем активную
   await loadRecentWorkouts();
 })();
