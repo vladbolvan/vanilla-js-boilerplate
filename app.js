@@ -3,8 +3,8 @@ const tg = window.Telegram?.WebApp;
 if (tg) {
   tg.ready();
   tg.expand();
-  tg.setHeaderColor('#0a0a0f');
-  tg.setBackgroundColor('#0a0a0f');
+  tg.setHeaderColor('#08080c');
+  tg.setBackgroundColor('#08080c');
 
   if (typeof tg.disableVerticalSwipes === 'function') tg.disableVerticalSwipes();
   if (typeof tg.requestFullscreen === 'function') tg.requestFullscreen();
@@ -28,14 +28,40 @@ function parseServerDate(iso) {
   return new Date(iso);
 }
 
-// ============ ФИКС КЛАВИАТУРЫ ============
+// Парсим ввод веса: поддерживаем "75.5" и "75,5"
+function parseWeightInput(str) {
+  if (str == null) return NaN;
+  let s = String(str).trim().replace(',', '.').replace(/[^\d.\-]/g, '');
+  if (!s) return NaN;
+  const n = parseFloat(s);
+  return n;
+}
+
+// ============ УМНЫЙ BLUR ============
+// Скрываем клавиатуру только при тапе по области ВНЕ модалок.
+// Внутри модалок (шторок) — не трогаем, чтобы не «выкидывало».
+const MODAL_IDS = [
+  'sheet-backdrop',
+  'create-ex-backdrop',
+  'programs-sheet-backdrop',
+  'weight-sheet-backdrop',
+  'reminder-sheet-backdrop',
+  'profile-edit-backdrop',
+];
+
 document.addEventListener('pointerdown', (e) => {
   const active = document.activeElement;
   if (!active) return;
   const tag = active.tagName;
   if (tag !== 'INPUT' && tag !== 'TEXTAREA') return;
   if (e.target === active) return;
-  if (e.target.closest && e.target.closest('input, textarea')) return;
+
+  // Не blur-им если тап внутри модалки
+  if (MODAL_IDS.some(id => e.target.closest && e.target.closest('#' + id))) return;
+
+  // Не blur-им если тап по интерактивному элементу
+  if (e.target.closest && e.target.closest('button, a, label, input, textarea, select, [role="button"]')) return;
+
   active.blur();
 }, true);
 
@@ -64,7 +90,6 @@ const detailContentEl = document.getElementById('detail-content');
 const detailTitleEl = document.getElementById('detail-title');
 const startWorkoutBtn = document.getElementById('start-workout');
 
-// Exercise sheet
 const sheetBackdrop = document.getElementById('sheet-backdrop');
 const sheetContent = document.getElementById('sheet-content');
 const sheetCloseBtn = document.getElementById('sheet-close');
@@ -72,16 +97,13 @@ const exercisesPickerEl = document.getElementById('exercises-picker');
 const searchInput = document.getElementById('exercise-search');
 const sheetCreateBtn = document.getElementById('sheet-create-btn');
 
-// Create exercise sheet
 const createExBackdrop = document.getElementById('create-ex-backdrop');
 const createExPanel = document.getElementById('create-ex-panel');
 const createExClose = document.getElementById('create-ex-close');
 const createExName = document.getElementById('create-ex-name');
 const createExGroup = document.getElementById('create-ex-group');
-const createExCompound = document.getElementById('create-ex-compound');
 const createExSave = document.getElementById('create-ex-save');
 
-// Program sheet
 const progSheetBackdrop = document.getElementById('programs-sheet-backdrop');
 const progSheetContent = document.getElementById('programs-sheet-content');
 const progSheetClose = document.getElementById('programs-sheet-close');
@@ -89,7 +111,6 @@ const progListEl = document.getElementById('programs-list');
 const progEmptyWorkoutBtn = document.getElementById('programs-empty-workout');
 const progCreateBtn = document.getElementById('programs-create-btn');
 
-// Program editor
 const programEditorName = document.getElementById('program-name-input');
 const programEditorList = document.getElementById('program-exercises-list');
 const programEditorAddBtn = document.getElementById('program-add-exercise');
@@ -97,13 +118,11 @@ const programSaveBtn = document.getElementById('program-save-btn');
 const programEditorBack = document.getElementById('program-editor-back');
 const programEditorEmpty = document.getElementById('program-editor-empty');
 
-// Rest timer
 const restTimerEl = document.getElementById('rest-timer');
 const restProgressEl = document.getElementById('rest-progress');
 const restTimeEl = document.getElementById('rest-time');
 const restSkipBtn = document.getElementById('rest-skip');
 
-// Profile
 const profileNameEl = document.getElementById('profile-name');
 const profileUsernameEl = document.getElementById('profile-username');
 const profileExpChipEl = document.getElementById('profile-experience-chip');
@@ -128,7 +147,6 @@ const profileEditPanel = document.getElementById('profile-edit-panel');
 const profileEditClose = document.getElementById('profile-edit-close');
 const profileSaveBtn = document.getElementById('profile-save-btn');
 
-// Weight
 const weightCurrentEl = document.getElementById('weight-current');
 const weightDeltaEl = document.getElementById('weight-delta');
 const weightSparkEl = document.getElementById('weight-sparkline');
@@ -140,20 +158,6 @@ const weightInput = document.getElementById('weight-input');
 const weightSaveBtn = document.getElementById('weight-save-btn');
 const weightHistoryEl = document.getElementById('weight-history');
 
-// Авто-выделение содержимого number-полей при фокусе.
-// Иначе после pre-fill (прошлый вес) курсор встаёт в конец, и цифры склеиваются: 90 + 91 = 9091.
-document.addEventListener('focusin', (e) => {
-  const t = e.target;
-  if (!t || !t.matches) return;
-  if (t.matches('input[type="number"]')) {
-    // Небольшая задержка — на iOS/Android клавиатура открывается и сбивает выделение
-    setTimeout(() => {
-      try { t.select(); } catch (err) {}
-    }, 30);
-  }
-});
-
-// Reminders
 const reminderToggle = document.getElementById('reminder-toggle');
 const reminderStatusEl = document.getElementById('reminder-status');
 const reminderOpenBtn = document.getElementById('reminder-open-btn');
@@ -163,14 +167,12 @@ const reminderSheetClose = document.getElementById('reminder-sheet-close');
 const reminderTimeInput = document.getElementById('reminder-time-input');
 const reminderSaveBtn = document.getElementById('reminder-save-btn');
 
-// Calendar
 const calendarTitleEl = document.getElementById('calendar-title');
 const calendarGridEl = document.getElementById('calendar-grid');
 const calendarPrevBtn = document.getElementById('calendar-prev');
 const calendarNextBtn = document.getElementById('calendar-next');
 const calendarDayListEl = document.getElementById('calendar-day-list');
 
-// Onboarding
 const obSaveBtn = document.getElementById('ob-save-btn');
 
 // ============ STATE ============
@@ -247,12 +249,8 @@ async function loadMe() {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const me = await res.json();
     if (userNameEl) userNameEl.textContent = me.first_name || me.username || 'Гость';
-
     currentProfile = me;
-
-    if (!me.onboarded_at) {
-      openOnboarding();
-    }
+    if (!me.onboarded_at) openOnboarding();
   } catch (e) {
     console.error(e);
     if (userNameEl) userNameEl.textContent = 'Ошибка загрузки';
@@ -272,53 +270,52 @@ function openOnboarding() {
   updateObGenderUI();
   updateObGoalUI();
   updateObExperienceUI();
-
   showScreen('onboarding');
 }
 
 function updateObGenderUI() {
   document.querySelectorAll('[data-ob-gender]').forEach(btn => {
-    const isActive = btn.dataset.obGender === obGender;
-    btn.classList.toggle('bg-primary', isActive);
-    btn.classList.toggle('text-white', isActive);
-    btn.classList.toggle('border-primary', isActive);
-    btn.classList.toggle('bg-surface2', !isActive);
-    btn.classList.toggle('text-muted', !isActive);
-    btn.classList.toggle('border-white/5', !isActive);
+    const a = btn.dataset.obGender === obGender;
+    btn.classList.toggle('bg-primary', a);
+    btn.classList.toggle('text-white', a);
+    btn.classList.toggle('border-primary', a);
+    btn.classList.toggle('bg-surface2', !a);
+    btn.classList.toggle('text-muted', !a);
+    btn.classList.toggle('border-white/5', !a);
   });
 }
 
 function updateObGoalUI() {
   document.querySelectorAll('[data-ob-goal]').forEach(btn => {
-    const isActive = btn.dataset.obGoal === obGoal;
-    btn.classList.toggle('bg-primary', isActive);
-    btn.classList.toggle('text-white', isActive);
-    btn.classList.toggle('border-primary', isActive);
-    btn.classList.toggle('bg-surface2', !isActive);
-    btn.classList.toggle('text-muted', !isActive);
-    btn.classList.toggle('border-white/5', !isActive);
+    const a = btn.dataset.obGoal === obGoal;
+    btn.classList.toggle('bg-primary', a);
+    btn.classList.toggle('text-white', a);
+    btn.classList.toggle('border-primary', a);
+    btn.classList.toggle('bg-surface2', !a);
+    btn.classList.toggle('text-muted', !a);
+    btn.classList.toggle('border-white/5', !a);
   });
 }
 
 function updateObExperienceUI() {
   document.querySelectorAll('[data-ob-exp]').forEach(btn => {
-    const isActive = btn.dataset.obExp === obExperience;
-    btn.classList.toggle('bg-primary', isActive);
-    btn.classList.toggle('text-white', isActive);
-    btn.classList.toggle('border-primary', isActive);
-    btn.classList.toggle('bg-surface2', !isActive);
-    btn.classList.toggle('text-muted', !isActive);
-    btn.classList.toggle('border-white/5', !isActive);
+    const a = btn.dataset.obExp === obExperience;
+    btn.classList.toggle('bg-primary', a);
+    btn.classList.toggle('text-white', a);
+    btn.classList.toggle('border-primary', a);
+    btn.classList.toggle('bg-surface2', !a);
+    btn.classList.toggle('text-muted', !a);
+    btn.classList.toggle('border-white/5', !a);
     const sub = btn.querySelector('.exp-sub');
     if (sub) {
-      sub.classList.toggle('text-white/70', isActive);
-      sub.classList.toggle('text-muted', !isActive);
+      sub.classList.toggle('text-white/70', a);
+      sub.classList.toggle('text-muted', !a);
     }
   });
 }
 
 async function saveOnboarding() {
-  const w = parseFloat(document.getElementById('ob-input-weight').value);
+  const w = parseWeightInput(document.getElementById('ob-input-weight').value);
   const h = parseInt(document.getElementById('ob-input-height').value);
   const a = parseInt(document.getElementById('ob-input-age').value);
 
@@ -335,12 +332,8 @@ async function saveOnboarding() {
       method: 'PATCH',
       headers: { ...authHeaders(), 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        weight_kg: w,
-        height_cm: h,
-        age: a,
-        gender: obGender,
-        goal: obGoal,
-        experience: obExperience,
+        weight_kg: w, height_cm: h, age: a,
+        gender: obGender, goal: obGoal, experience: obExperience,
         mark_onboarded: true,
       }),
     });
@@ -370,8 +363,7 @@ async function loadRecentWorkouts() {
   } catch (e) {
     console.error('loadRecentWorkouts', e);
     if (recentListEl) {
-      recentListEl.innerHTML =
-        '<p class="text-red-400 text-sm py-4 text-center">Ошибка: ' + e.message + '</p>';
+      recentListEl.innerHTML = '<p class="text-red-400 text-sm py-4 text-center">Ошибка: ' + e.message + '</p>';
     }
   }
 }
@@ -379,17 +371,14 @@ async function loadRecentWorkouts() {
 function renderRecent(workouts) {
   if (!recentListEl) return;
   if (!workouts || workouts.length === 0) {
-    recentListEl.innerHTML =
-      '<p class="text-muted text-sm py-4 text-center">Пока нет тренировок</p>';
+    recentListEl.innerHTML = '<p class="text-muted text-sm py-4 text-center">Пока нет тренировок</p>';
     return;
   }
   recentListEl.innerHTML = workouts.slice(0, 3).map(w => {
     const date = parseServerDate(w.finished_at || w.started_at);
     const dateStr = date.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' });
     const exNames = (w.exercises || []).map(e => e.exercise_name).join(', ');
-    const preview = w.total_sets
-      ? `${w.total_sets} подх. · ${exNames || 'без упражнений'}`
-      : 'Без подходов';
+    const preview = w.total_sets ? `${w.total_sets} подх. · ${exNames || 'без упражнений'}` : 'Без подходов';
     return `
       <div class="bg-surface rounded-2xl p-4 border border-white/5 card-shadow flex items-center justify-between gap-2">
         <div class="min-w-0 flex-1">
@@ -411,7 +400,6 @@ async function loadExercises() {
       renderExercisesPicker(allExercises);
     } catch {}
   }
-
   try {
     const res = await fetch(`${API_URL}/api/exercises`, { headers: authHeaders() });
     const data = await res.json();
@@ -421,16 +409,15 @@ async function loadExercises() {
   } catch (e) {
     if (!cached) {
       console.error(e);
-      exercisesPickerEl.innerHTML =
-        '<p class="text-red-400 text-center py-4 text-sm">Не удалось загрузить</p>';
+      exercisesPickerEl.innerHTML = '<p class="text-red-400 text-center py-4 text-sm">Не удалось загрузить</p>';
     }
   }
 }
 
 function renderExercisesPicker(list) {
-  if (list.length === 0) {
-    exercisesPickerEl.innerHTML =
-      '<p class="text-muted text-center py-4 text-sm">Ничего не найдено</p>';
+  if (!exercisesPickerEl) return;
+  if (!list || list.length === 0) {
+    exercisesPickerEl.innerHTML = '<p class="text-muted text-center py-4 text-sm">Ничего не найдено</p>';
     return;
   }
   const inWorkoutIds = new Set(workoutExercises.map(e => e.id));
@@ -439,8 +426,7 @@ function renderExercisesPicker(list) {
   const available = list.filter(ex => !usedIds.has(ex.id));
 
   if (available.length === 0) {
-    exercisesPickerEl.innerHTML =
-      '<p class="text-muted text-center py-4 text-sm">Все упражнения добавлены</p>';
+    exercisesPickerEl.innerHTML = '<p class="text-muted text-center py-4 text-sm">Все упражнения добавлены</p>';
     return;
   }
 
@@ -453,7 +439,7 @@ function renderExercisesPicker(list) {
   for (const [group, items] of Object.entries(groups)) {
     html += `<p class="text-xs uppercase tracking-wider text-muted mt-3 mb-2">${group}</p>`;
     for (const ex of items) {
-      const customBadge = ex.is_custom
+      const badge = ex.is_custom
         ? '<span class="text-[9px] uppercase tracking-wider text-primary2/70 bg-primary/10 rounded-full px-1.5 py-0.5 ml-1.5 shrink-0">моё</span>'
         : '';
       html += `
@@ -461,7 +447,7 @@ function renderExercisesPicker(list) {
                        transition rounded-2xl px-4 py-3.5 text-left flex items-center justify-between gap-2
                        border border-white/5"
                 data-id="${ex.id}" data-name="${ex.name}">
-          <span class="font-medium text-sm break-words min-w-0 text-left">${ex.name}${customBadge}</span>
+          <span class="font-medium text-sm break-words min-w-0 text-left">${ex.name}${badge}</span>
           <span class="text-primary text-xl leading-none shrink-0 font-light">+</span>
         </button>
       `;
@@ -481,7 +467,6 @@ function renderExercisesPicker(list) {
   });
 }
 
-// ============ BOTTOM SHEET (exercises) ============
 function openSheet(mode = 'workout') {
   sheetMode = mode;
   renderExercisesPicker(allExercises);
@@ -500,15 +485,13 @@ function closeSheet() {
   tg?.HapticFeedback?.impactOccurred('light');
 }
 
-// ============ СОЗДАНИЕ СВОЕГО УПРАЖНЕНИЯ ============
+// ============ СОЗДАНИЕ УПРАЖНЕНИЯ ============
 function openCreateExerciseSheet() {
   closeSheet();
   setTimeout(() => {
     createExName.value = '';
     createExGroup.value = '';
-    createExCompound.checked = false;
     renderMuscleGroupPicker();
-
     createExBackdrop.classList.remove('hidden');
     requestAnimationFrame(() => {
       createExBackdrop.classList.remove('opacity-0');
@@ -529,22 +512,22 @@ function renderMuscleGroupPicker() {
   const container = document.getElementById('create-ex-group-chips');
   if (!container) return;
   container.innerHTML = MUSCLE_GROUPS.map(g => `
-    <button type="button" class="muscle-chip py-2 px-3 rounded-xl text-xs font-medium transition
+    <button type="button" class="muscle-chip py-2.5 px-3 rounded-2xl text-xs font-medium transition
                    border bg-surface2 text-muted border-white/5"
             data-group="${g}">${g}</button>
   `).join('');
-
   container.querySelectorAll('.muscle-chip').forEach(btn => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', (e) => {
+      e.preventDefault();
       createExGroup.value = btn.dataset.group;
       container.querySelectorAll('.muscle-chip').forEach(b => {
-        const active = b.dataset.group === btn.dataset.group;
-        b.classList.toggle('bg-primary', active);
-        b.classList.toggle('text-white', active);
-        b.classList.toggle('border-primary', active);
-        b.classList.toggle('bg-surface2', !active);
-        b.classList.toggle('text-muted', !active);
-        b.classList.toggle('border-white/5', !active);
+        const a = b.dataset.group === btn.dataset.group;
+        b.classList.toggle('bg-primary', a);
+        b.classList.toggle('text-white', a);
+        b.classList.toggle('border-primary', a);
+        b.classList.toggle('bg-surface2', !a);
+        b.classList.toggle('text-muted', !a);
+        b.classList.toggle('border-white/5', !a);
       });
       tg?.HapticFeedback?.selectionChanged?.();
     });
@@ -554,8 +537,6 @@ function renderMuscleGroupPicker() {
 async function saveCustomExercise() {
   const name = (createExName.value || '').trim();
   const group = (createExGroup.value || '').trim();
-  const isCompound = !!createExCompound.checked;
-
   if (!name || name.length > 128) { tg?.showAlert('Введи название (до 128 символов)'); return; }
   if (!group) { tg?.showAlert('Выбери группу мышц'); return; }
 
@@ -564,25 +545,16 @@ async function saveCustomExercise() {
     const res = await fetch(`${API_URL}/api/exercises`, {
       method: 'POST',
       headers: { ...authHeaders(), 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name,
-        muscle_group: group,
-        is_compound: isCompound,
-      }),
+      body: JSON.stringify({ name, muscle_group: group, is_compound: false }),
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const created = await res.json();
-
     allExercises.push(created);
     allExercises.sort((a, b) => a.name.localeCompare(b.name, 'ru'));
     localStorage.setItem('exercises_cache', JSON.stringify(allExercises));
-
     closeCreateExerciseSheet();
     tg?.HapticFeedback?.notificationOccurred('success');
-
-    setTimeout(() => {
-      openSheet(sheetMode);
-    }, 300);
+    setTimeout(() => { openSheet(sheetMode); }, 300);
   } catch (e) {
     console.error(e);
     tg?.showAlert('Не удалось создать упражнение');
@@ -591,20 +563,20 @@ async function saveCustomExercise() {
   }
 }
 
-// ============ BOTTOM SHEET (programs) ============
+// ============ ПРОГРАММЫ ============
 async function openProgramsSheet() {
   if (currentWorkoutId) {
     showScreen('workout');
+    renderWorkoutExercises();
+    updateWorkoutUI();
     return;
   }
-
   progSheetBackdrop.classList.remove('hidden');
   requestAnimationFrame(() => {
     progSheetBackdrop.classList.remove('opacity-0');
     progSheetContent.classList.remove('translate-y-full');
   });
   tg?.HapticFeedback?.impactOccurred('light');
-
   progListEl.innerHTML = '<p class="text-muted text-center py-4 text-sm">Загрузка...</p>';
   await loadPrograms();
   renderProgramsList();
@@ -632,7 +604,6 @@ async function loadPrograms() {
 function renderProgramsList() {
   const templates = allPrograms.filter(p => p.is_template);
   const mine = allPrograms.filter(p => !p.is_template);
-
   let html = '';
 
   if (templates.length > 0) {
@@ -686,13 +657,9 @@ function renderProgramsList() {
   }
 
   progListEl.innerHTML = html;
-
   progListEl.querySelectorAll('.program-item').forEach(btn => {
-    btn.addEventListener('click', () => {
-      startWorkoutFromProgram(parseInt(btn.dataset.programId));
-    });
+    btn.addEventListener('click', () => startWorkoutFromProgram(parseInt(btn.dataset.programId)));
   });
-
   progListEl.querySelectorAll('.delete-program').forEach(btn => {
     btn.addEventListener('click', (e) => {
       e.stopPropagation();
@@ -743,7 +710,6 @@ async function deleteProgram(programId) {
     else resolve(confirm('Удалить программу?'));
   });
   if (!ok) return;
-
   try {
     const res = await fetch(`${API_URL}/api/programs/${programId}`, {
       method: 'DELETE',
@@ -792,7 +758,6 @@ function renderProgramEditorExercises() {
     return;
   }
   if (programEditorEmpty) programEditorEmpty.classList.add('hidden');
-
   programEditorList.innerHTML = editingProgram.exercises.map((ex, idx) => `
     <div class="bg-surface rounded-2xl p-3.5 border border-white/5 card-shadow flex items-center gap-3">
       <span class="text-muted text-xs w-6 shrink-0 text-center">${idx + 1}</span>
@@ -802,7 +767,6 @@ function renderProgramEditorExercises() {
       </button>
     </div>
   `).join('');
-
   programEditorList.querySelectorAll('.remove-prog-ex').forEach(btn => {
     btn.addEventListener('click', () => removeExerciseFromProgram(parseInt(btn.dataset.id)));
   });
@@ -819,10 +783,7 @@ async function saveProgram() {
     const res = await fetch(`${API_URL}/api/programs`, {
       method: 'POST',
       headers: { ...authHeaders(), 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name,
-        exercise_ids: editingProgram.exercises.map(e => e.id),
-      }),
+      body: JSON.stringify({ name, exercise_ids: editingProgram.exercises.map(e => e.id) }),
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     tg?.HapticFeedback?.notificationOccurred('success');
@@ -836,7 +797,7 @@ async function saveProgram() {
   }
 }
 
-// ============ ТАЙМЕР ТРЕНИРОВКИ ============
+// ============ ТАЙМЕРЫ ============
 function startWorkoutTimer(startedAtISO) {
   stopWorkoutTimer();
   if (!startedAtISO) {
@@ -849,10 +810,7 @@ function startWorkoutTimer(startedAtISO) {
 }
 
 function stopWorkoutTimer() {
-  if (workoutTimerInterval) {
-    clearInterval(workoutTimerInterval);
-    workoutTimerInterval = null;
-  }
+  if (workoutTimerInterval) { clearInterval(workoutTimerInterval); workoutTimerInterval = null; }
   currentWorkoutStartedAt = null;
   if (workoutTimerEl) workoutTimerEl.textContent = '';
 }
@@ -867,47 +825,33 @@ function formatDuration(sec) {
   const h = Math.floor(sec / 3600);
   const m = Math.floor((sec % 3600) / 60);
   const s = sec % 60;
-  if (h > 0) {
-    return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
-  }
+  if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
   return `${m}:${String(s).padStart(2, '0')}`;
 }
 
-// ============ ТАЙМЕР ОТДЫХА ============
 function startRestTimer() {
   if (restTimerInterval) { clearInterval(restTimerInterval); restTimerInterval = null; }
-  if (restHideTimeout)   { clearTimeout(restHideTimeout);  restHideTimeout = null; }
-
+  if (restHideTimeout) { clearTimeout(restHideTimeout); restHideTimeout = null; }
   let remaining = REST_DURATION;
-
   restTimerEl.classList.remove('hidden');
   void restTimerEl.offsetHeight;
   restTimerEl.classList.remove('translate-y-full');
-
   updateRestUI(remaining);
-
   restTimerInterval = setInterval(() => {
     remaining -= 1;
-    if (remaining <= 0) {
-      stopRestTimer(true);
-      return;
-    }
+    if (remaining <= 0) { stopRestTimer(true); return; }
     updateRestUI(remaining);
   }, 1000);
 }
 
 function updateRestUI(remaining) {
   if (restTimeEl) restTimeEl.textContent = formatDuration(remaining);
-  if (restProgressEl) {
-    const pct = (remaining / REST_DURATION) * 100;
-    restProgressEl.style.width = pct + '%';
-  }
+  if (restProgressEl) restProgressEl.style.width = ((remaining / REST_DURATION) * 100) + '%';
 }
 
 function stopRestTimer(notify = false) {
   if (restTimerInterval) { clearInterval(restTimerInterval); restTimerInterval = null; }
-  if (restHideTimeout)   { clearTimeout(restHideTimeout);  restHideTimeout = null; }
-
+  if (restHideTimeout) { clearTimeout(restHideTimeout); restHideTimeout = null; }
   if (restTimerEl) {
     restTimerEl.classList.add('translate-y-full');
     restHideTimeout = setTimeout(() => {
@@ -915,9 +859,7 @@ function stopRestTimer(notify = false) {
       restHideTimeout = null;
     }, 300);
   }
-  if (notify) {
-    tg?.HapticFeedback?.notificationOccurred('success');
-  }
+  if (notify) tg?.HapticFeedback?.notificationOccurred('success');
 }
 
 // ============ ТРЕНИРОВКА ============
@@ -951,16 +893,12 @@ async function loadActiveWorkout() {
     if (data.active) {
       currentWorkoutId = data.active.id;
       startWorkoutTimer(data.active.started_at);
-
       const map = {};
       for (const s of data.active.sets) {
-        if (!map[s.exercise_id]) {
-          map[s.exercise_id] = { id: s.exercise_id, name: '', sets: [] };
-        }
+        if (!map[s.exercise_id]) map[s.exercise_id] = { id: s.exercise_id, name: '', sets: [] };
         map[s.exercise_id].sets.push(s);
       }
       workoutExercises = Object.values(map);
-
       for (const we of workoutExercises) {
         const found = allExercises.find(ex => ex.id === we.id);
         if (found) we.name = found.name;
@@ -969,9 +907,7 @@ async function loadActiveWorkout() {
       renderWorkoutExercises();
       updateWorkoutUI();
     }
-  } catch (e) {
-    console.error(e);
-  }
+  } catch (e) { console.error(e); }
 }
 
 function updateStartButton() {
@@ -1002,31 +938,25 @@ function addExerciseToWorkout(id, name) {
 
 async function fillLastSet(exerciseId) {
   try {
-    const res = await fetch(`${API_URL}/api/exercises/${exerciseId}/last-set`, {
-      headers: authHeaders(),
-    });
+    const res = await fetch(`${API_URL}/api/exercises/${exerciseId}/last-set`, { headers: authHeaders() });
     if (!res.ok) return;
     const data = await res.json();
     const we = workoutExercises.find(e => e.id === exerciseId);
     if (!we) return;
     we.lastWeight = data.weight;
     we.lastReps = data.reps;
-
     const card = workoutExercisesEl.querySelector(`[data-ex-id="${exerciseId}"]`);
     if (!card) return;
     const weightInput = card.querySelector('.set-weight');
     const repsInput = card.querySelector('.set-reps');
     if (weightInput && data.weight != null) weightInput.value = data.weight;
     if (repsInput && data.reps != null) repsInput.value = data.reps;
-
     const hint = card.querySelector('.last-set-hint');
     if (hint && data.weight != null && data.reps != null) {
       hint.textContent = `Прошлый раз: ${data.weight} кг × ${data.reps}`;
       hint.classList.remove('hidden');
     }
-  } catch (e) {
-    console.error('fillLastSet', e);
-  }
+  } catch (e) { console.error('fillLastSet', e); }
 }
 
 function removeExerciseFromWorkout(id) {
@@ -1048,7 +978,6 @@ function renderWorkoutExercises() {
     workoutExercisesEl.innerHTML = '';
     return;
   }
-
   workoutExercisesEl.innerHTML = workoutExercises.map(ex => {
     const planHint = (ex.target_sets && ex.target_reps)
       ? `<p class="plan-hint text-xs text-primary2/80 mb-2">План: ${ex.target_sets} × ${ex.target_reps}</p>`
@@ -1057,23 +986,17 @@ function renderWorkoutExercises() {
       <div class="bg-surface rounded-2xl p-4 overflow-hidden border border-white/5 card-shadow" data-ex-id="${ex.id}">
         <div class="flex items-start justify-between gap-2 mb-2">
           <p class="font-semibold break-words min-w-0 flex-1">${ex.name}</p>
-          <button class="remove-ex text-muted text-xs hover:text-red-400 shrink-0"
-                  data-ex-id="${ex.id}">удалить</button>
+          <button class="remove-ex text-muted text-xs hover:text-red-400 shrink-0" data-ex-id="${ex.id}">удалить</button>
         </div>
-
         <p class="last-set-hint hidden text-xs text-muted mb-1"></p>
         ${planHint}
-
         <div class="sets-container space-y-1.5 mb-3" data-ex-id="${ex.id}"></div>
-
         <div class="flex gap-2 items-stretch">
-          <input type="number" step="0.5" min="0" inputmode="decimal"
-                 placeholder="Вес"
+          <input type="text" inputmode="decimal" placeholder="Вес"
                  class="set-weight flex-1 min-w-0 bg-surface2 rounded-xl px-3 py-3 text-white text-center
                         focus:outline-none focus:ring-2 focus:ring-primary/40 transition"
                  data-ex-id="${ex.id}">
-          <input type="number" min="1" inputmode="numeric"
-                 placeholder="Повт"
+          <input type="text" inputmode="numeric" placeholder="Повт"
                  class="set-reps flex-1 min-w-0 bg-surface2 rounded-xl px-3 py-3 text-white text-center
                         focus:outline-none focus:ring-2 focus:ring-primary/40 transition"
                  data-ex-id="${ex.id}">
@@ -1085,18 +1008,14 @@ function renderWorkoutExercises() {
     `;
   }).join('');
 
-  workoutExercises.forEach(ex => {
-    renderSetsForExercise(ex.id, ex.sets);
-  });
+  workoutExercises.forEach(ex => renderSetsForExercise(ex.id, ex.sets));
 
   workoutExercisesEl.querySelectorAll('.remove-ex').forEach(btn => {
     btn.addEventListener('click', () => removeExerciseFromWorkout(parseInt(btn.dataset.exId)));
   });
-
   workoutExercisesEl.querySelectorAll('.add-set-btn').forEach(btn => {
     btn.addEventListener('click', () => addSetInline(parseInt(btn.dataset.exId)));
   });
-
   workoutExercisesEl.querySelectorAll('.set-reps').forEach(inp => {
     inp.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') addSetInline(parseInt(inp.dataset.exId));
@@ -1107,12 +1026,7 @@ function renderWorkoutExercises() {
 function renderSetsForExercise(exerciseId, sets) {
   const container = workoutExercisesEl.querySelector(`.sets-container[data-ex-id="${exerciseId}"]`);
   if (!container) return;
-
-  if (!sets || sets.length === 0) {
-    container.innerHTML = '';
-    return;
-  }
-
+  if (!sets || sets.length === 0) { container.innerHTML = ''; return; }
   container.innerHTML = sets.map((s, i) => {
     const isLast = i === sets.length - 1;
     return `
@@ -1125,34 +1039,26 @@ function renderSetsForExercise(exerciseId, sets) {
       </div>
     `;
   }).join('');
-
   container.querySelectorAll('.delete-set').forEach(btn => {
-    btn.addEventListener('click', () => {
-      deleteSetInline(parseInt(btn.dataset.exId), btn.dataset.setId);
-    });
+    btn.addEventListener('click', () => deleteSetInline(parseInt(btn.dataset.exId), btn.dataset.setId));
   });
 }
 
 async function deleteSetInline(exerciseId, setId) {
   const we = workoutExercises.find(e => e.id === exerciseId);
   if (!we) return;
-
   const idx = we.sets.findIndex(s => String(s.id) === String(setId));
   if (idx === -1) return;
-
   const removed = we.sets[idx];
   we.sets.splice(idx, 1);
   renderSetsForExercise(exerciseId, we.sets);
   tg?.HapticFeedback?.impactOccurred('medium');
-
   if (String(setId).startsWith('temp_')) return;
   if (!currentWorkoutId) return;
-
   try {
-    const res = await fetch(
-      `${API_URL}/api/workouts/${currentWorkoutId}/sets/${setId}`,
-      { method: 'DELETE', headers: authHeaders() }
-    );
+    const res = await fetch(`${API_URL}/api/workouts/${currentWorkoutId}/sets/${setId}`, {
+      method: 'DELETE', headers: authHeaders(),
+    });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     calendarCache.clear();
   } catch (e) {
@@ -1166,30 +1072,19 @@ async function deleteSetInline(exerciseId, setId) {
 async function addSetInline(exerciseId) {
   const card = workoutExercisesEl.querySelector(`[data-ex-id="${exerciseId}"]`);
   if (!card) return;
-
   const weightInput = card.querySelector('.set-weight');
   const repsInput = card.querySelector('.set-reps');
-  const weight = parseFloat(weightInput.value);
+  const weight = parseWeightInput(weightInput.value);
   const reps = parseInt(repsInput.value);
-
   if (isNaN(weight) || weight < 0) { tg?.showAlert('Введи вес'); return; }
   if (isNaN(reps) || reps < 1) { tg?.showAlert('Введи повторы'); return; }
 
   const we = workoutExercises.find(e => e.id === exerciseId);
   if (!we) return;
-
   const tempId = 'temp_' + Date.now();
-  const optimisticSet = {
-    id: tempId,
-    exercise_id: exerciseId,
-    set_number: we.sets.length + 1,
-    weight: weight,
-    reps: reps,
-  };
+  const optimisticSet = { id: tempId, exercise_id: exerciseId, set_number: we.sets.length + 1, weight, reps };
   we.sets.push(optimisticSet);
-
   renderSetsForExercise(exerciseId, we.sets);
-
   repsInput.blur();
   tg?.HapticFeedback?.notificationOccurred('success');
 
@@ -1202,24 +1097,16 @@ async function addSetInline(exerciseId) {
       return;
     }
   }
-
   try {
-    const params = new URLSearchParams({
-      exercise_id: exerciseId,
-      weight: weight,
-      reps: reps,
+    const params = new URLSearchParams({ exercise_id: exerciseId, weight, reps });
+    const res = await fetch(`${API_URL}/api/workouts/${currentWorkoutId}/sets?${params}`, {
+      method: 'POST', headers: authHeaders(),
     });
-    const res = await fetch(
-      `${API_URL}/api/workouts/${currentWorkoutId}/sets?${params}`,
-      { method: 'POST', headers: authHeaders() }
-    );
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const realSet = await res.json();
-
     const idx = we.sets.findIndex(s => s.id === tempId);
     if (idx !== -1) we.sets[idx] = realSet;
     renderSetsForExercise(exerciseId, we.sets);
-
     startRestTimer();
     calendarCache.clear();
   } catch (e) {
@@ -1237,12 +1124,10 @@ async function finishWorkout() {
     else resolve(confirm('Завершить тренировку?'));
   });
   if (!ok) return;
-
   try {
-    const res = await fetch(
-      `${API_URL}/api/workouts/${currentWorkoutId}/finish`,
-      { method: 'PATCH', headers: authHeaders() }
-    );
+    const res = await fetch(`${API_URL}/api/workouts/${currentWorkoutId}/finish`, {
+      method: 'PATCH', headers: authHeaders(),
+    });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     tg?.HapticFeedback?.notificationOccurred('success');
     currentWorkoutId = null;
@@ -1295,15 +1180,12 @@ function renderHistory(workouts) {
             <p class="font-semibold">${dateStr}</p>
             <p class="text-xs text-muted mt-0.5">${timeStr}</p>
           </div>
-          <span class="text-xs text-muted bg-surface2 rounded-full px-2.5 py-1 shrink-0">
-            ${w.total_sets || 0} подх.
-          </span>
+          <span class="text-xs text-muted bg-surface2 rounded-full px-2.5 py-1 shrink-0">${w.total_sets || 0} подх.</span>
         </div>
         <p class="text-sm text-muted truncate">${exNames || 'Без упражнений'}</p>
       </button>
     `;
   }).join('');
-
   historyListEl.querySelectorAll('.workout-item').forEach(btn => {
     btn.addEventListener('click', () => openWorkoutDetail(parseInt(btn.dataset.id)));
   });
@@ -1311,20 +1193,14 @@ function renderHistory(workouts) {
 
 function openWorkoutDetail(workoutId) {
   const workout = allWorkouts.find(w => w.id === workoutId);
-  if (!workout) {
-    tg?.showAlert('Тренировка не найдена');
-    return;
-  }
+  if (!workout) { tg?.showAlert('Тренировка не найдена'); return; }
   tg?.HapticFeedback?.impactOccurred('light');
-
   const date = parseServerDate(workout.finished_at || workout.started_at);
   detailTitleEl.textContent = date.toLocaleDateString('ru-RU', {
     day: '2-digit', month: 'long', hour: '2-digit', minute: '2-digit',
   });
-
   if (!workout.exercises || workout.exercises.length === 0) {
-    detailContentEl.innerHTML =
-      '<p class="text-muted text-center py-8">В тренировке не было подходов</p>';
+    detailContentEl.innerHTML = '<p class="text-muted text-center py-8">В тренировке не было подходов</p>';
   } else {
     detailContentEl.innerHTML = workout.exercises.map(ex => `
       <div class="bg-surface rounded-2xl p-4 overflow-hidden border border-white/5 card-shadow">
@@ -1350,11 +1226,7 @@ const WEEKDAYS = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
 async function loadCalendarMonth(year, month) {
   const key = `${year}-${month}`;
   if (calendarCache.has(key)) return calendarCache.get(key);
-
-  const res = await fetch(
-    `${API_URL}/api/workouts/calendar?year=${year}&month=${month}`,
-    { headers: authHeaders() }
-  );
+  const res = await fetch(`${API_URL}/api/workouts/calendar?year=${year}&month=${month}`, { headers: authHeaders() });
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const data = await res.json();
   const days = data.days || [];
@@ -1363,33 +1235,21 @@ async function loadCalendarMonth(year, month) {
 }
 
 async function renderCalendar(year, month) {
-  calYear = year;
-  calMonth = month;
-
-  if (calendarTitleEl) {
-    calendarTitleEl.textContent = `${MONTH_NAMES[month - 1]} ${year}`;
-  }
-
-  if (calendarDayListEl) {
-    calendarDayListEl.classList.add('hidden');
-    calendarDayListEl.innerHTML = '';
-  }
+  calYear = year; calMonth = month;
+  if (calendarTitleEl) calendarTitleEl.textContent = `${MONTH_NAMES[month - 1]} ${year}`;
+  if (calendarDayListEl) { calendarDayListEl.classList.add('hidden'); calendarDayListEl.innerHTML = ''; }
   calSelectedDay = null;
-
   calendarGridEl.innerHTML = '<p class="col-span-7 text-muted text-center py-4 text-sm">Загрузка...</p>';
 
   let days = [];
-  try {
-    days = await loadCalendarMonth(year, month);
-  } catch (e) {
+  try { days = await loadCalendarMonth(year, month); }
+  catch (e) {
     console.error('calendar', e);
     calendarGridEl.innerHTML = '<p class="col-span-7 text-red-400 text-center py-4 text-sm">Ошибка загрузки</p>';
     return;
   }
 
-  const dayMap = new Map();
-  days.forEach(d => dayMap.set(d.day, d));
-
+  const dayMap = new Map(); days.forEach(d => dayMap.set(d.day, d));
   const firstDay = new Date(year, month - 1, 1).getDay();
   const offset = (firstDay + 6) % 7;
   const daysInMonth = new Date(year, month, 0).getDate();
@@ -1400,53 +1260,39 @@ async function renderCalendar(year, month) {
   let html = WEEKDAYS.map(w =>
     `<div class="text-center text-[10px] uppercase tracking-wider text-muted py-2">${w}</div>`
   ).join('');
-
   for (let i = 0; i < offset; i++) html += '<div></div>';
 
   for (let d = 1; d <= daysInMonth; d++) {
     const info = dayMap.get(d);
     const isToday = isCurrentMonth && d === todayDate;
     const hasWorkout = !!info;
-
     const baseCls = 'aspect-square rounded-xl flex items-center justify-center text-sm transition relative';
-    const stateCls = hasWorkout
-      ? 'bg-primary/15 text-white font-semibold active:scale-95 cursor-pointer'
-      : 'text-muted/70';
+    const stateCls = hasWorkout ? 'bg-primary/15 text-white font-semibold active:scale-95 cursor-pointer' : 'text-muted/70';
     const ringCls = isToday ? 'ring-1 ring-primary/60' : '';
-    const dayAttr = `data-day="${d}"`;
-
     const countBadge = hasWorkout && info.workouts.length > 1
       ? `<span class="absolute top-1 right-1 min-w-[16px] h-4 px-1 rounded-full bg-primary text-[9px] font-bold text-white flex items-center justify-center leading-none">${info.workouts.length}</span>`
       : '';
-
     html += `
-      <div class="${baseCls} ${stateCls} ${ringCls}" ${dayAttr}>
+      <div class="${baseCls} ${stateCls} ${ringCls}" data-day="${d}">
         <span>${d}</span>
         ${hasWorkout ? '<span class="absolute bottom-1.5 w-1 h-1 rounded-full bg-primary"></span>' : ''}
         ${countBadge}
       </div>
     `;
   }
-
   calendarGridEl.innerHTML = html;
 
   calendarGridEl.querySelectorAll('[data-day]').forEach(el => {
     el.addEventListener('click', async () => {
       const d = parseInt(el.dataset.day);
       const info = dayMap.get(d);
-
       if (!info || !info.workouts || info.workouts.length === 0) {
-        if (calendarDayListEl) {
-          calendarDayListEl.classList.add('hidden');
-          calendarDayListEl.innerHTML = '';
-        }
+        if (calendarDayListEl) { calendarDayListEl.classList.add('hidden'); calendarDayListEl.innerHTML = ''; }
         calSelectedDay = null;
         return;
       }
-
       tg?.HapticFeedback?.impactOccurred('light');
       await ensureWorkoutsLoaded();
-
       if (info.workouts.length === 1) {
         openWorkoutDetail(info.workouts[0].workout_id);
       } else {
@@ -1459,18 +1305,15 @@ async function renderCalendar(year, month) {
 
 function renderCalendarDayList(day, workouts) {
   if (!calendarDayListEl) return;
-
   const monthName = MONTH_NAMES[calMonth - 1].toLowerCase();
   let html = `<p class="text-xs uppercase tracking-wider text-muted mb-2">${day} ${monthName} · ${workouts.length} тренировки</p>`;
   html += '<div class="space-y-2">';
-
   for (const w of workouts) {
     const date = parseServerDate(w.finished_at);
     const time = date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
     html += `
       <button class="calendar-day-workout w-full bg-surface2 hover:bg-surface rounded-xl p-3 text-left
-                     border border-white/5 flex items-center justify-between gap-2
-                     active:scale-[0.98] transition"
+                     border border-white/5 flex items-center justify-between gap-2 active:scale-[0.98] transition"
               data-workout-id="${w.workout_id}">
         <div class="min-w-0">
           <p class="text-sm font-medium">${time}</p>
@@ -1481,10 +1324,8 @@ function renderCalendarDayList(day, workouts) {
     `;
   }
   html += '</div>';
-
   calendarDayListEl.innerHTML = html;
   calendarDayListEl.classList.remove('hidden');
-
   calendarDayListEl.querySelectorAll('.calendar-day-workout').forEach(btn => {
     btn.addEventListener('click', async () => {
       const wid = parseInt(btn.dataset.workoutId);
@@ -1502,9 +1343,7 @@ async function ensureWorkoutsLoaded() {
     if (!res.ok) return;
     const data = await res.json();
     allWorkouts = data.workouts;
-  } catch (e) {
-    console.error(e);
-  }
+  } catch (e) { console.error(e); }
 }
 
 // ============ ПРОФИЛЬ ============
@@ -1516,8 +1355,8 @@ function calcBMI(weight, height) {
 
 function bmiLabel(bmi) {
   if (bmi < 18.5) return { text: 'Недовес', color: 'text-blue-400' };
-  if (bmi < 25)   return { text: 'Норма',   color: 'text-green-400' };
-  if (bmi < 30)   return { text: 'Избыток', color: 'text-yellow-400' };
+  if (bmi < 25) return { text: 'Норма', color: 'text-green-400' };
+  if (bmi < 30) return { text: 'Избыток', color: 'text-yellow-400' };
   return { text: 'Ожирение', color: 'text-red-400' };
 }
 
@@ -1532,6 +1371,7 @@ function calcCalories(weight, height, age, gender, goal) {
 }
 
 function renderProfileMetrics(p) {
+  if (!p) return;
   if (profileExpChipEl) {
     if (p.experience && EXPERIENCE_LABELS[p.experience]) {
       profileExpChipEl.textContent = EXPERIENCE_LABELS[p.experience];
@@ -1540,7 +1380,6 @@ function renderProfileMetrics(p) {
       profileExpChipEl.classList.add('hidden');
     }
   }
-
   const hasAny = p.weight_kg || p.height_cm || p.age;
   if (!hasAny) {
     if (profileMetricsEl) profileMetricsEl.classList.add('hidden');
@@ -1551,9 +1390,9 @@ function renderProfileMetrics(p) {
   if (profileEmptyHintEl) profileEmptyHintEl.classList.add('hidden');
 
   const w = p.weight_kg, h = p.height_cm, a = p.age;
-  if (pmWeightEl)  pmWeightEl.textContent  = w ? `${w} кг`   : '—';
-  if (pmHeightEl)  pmHeightEl.textContent  = h ? `${h} см`   : '—';
-  if (pmAgeEl)     pmAgeEl.textContent     = a ? `${a}`      : '—';
+  if (pmWeightEl) pmWeightEl.textContent = w ? `${w} кг` : '—';
+  if (pmHeightEl) pmHeightEl.textContent = h ? `${h} см` : '—';
+  if (pmAgeEl) pmAgeEl.textContent = a ? `${a}` : '—';
 
   const bmi = calcBMI(w, h);
   if (bmi) {
@@ -1565,12 +1404,8 @@ function renderProfileMetrics(p) {
     }
   } else {
     if (pmBmiEl) pmBmiEl.textContent = '—';
-    if (pmBmiLabelEl) {
-      pmBmiLabelEl.textContent = '';
-      pmBmiLabelEl.className = 'text-xs';
-    }
+    if (pmBmiLabelEl) { pmBmiLabelEl.textContent = ''; pmBmiLabelEl.className = 'text-xs'; }
   }
-
   const cal = calcCalories(w, h, a, p.gender, p.goal);
   if (pmCaloriesEl) pmCaloriesEl.textContent = cal ? `${cal} ккал` : '—';
 }
@@ -1592,16 +1427,13 @@ async function loadWeight() {
 
 function renderWeightCard(latest, logs) {
   if (!weightCurrentEl) return;
-
   if (!latest) {
     weightCurrentEl.textContent = '—';
     if (weightDeltaEl) weightDeltaEl.textContent = '';
     if (weightSparkEl) weightSparkEl.innerHTML = '';
     return;
   }
-
   weightCurrentEl.textContent = `${latest.weight_kg} кг`;
-
   if (logs.length >= 2) {
     const prev = logs[1].weight_kg;
     const delta = latest.weight_kg - prev;
@@ -1612,57 +1444,39 @@ function renderWeightCard(latest, logs) {
       weightDeltaEl.textContent = `${sign}${delta.toFixed(1)} кг`;
     }
   } else {
-    if (weightDeltaEl) {
-      weightDeltaEl.textContent = '';
-      weightDeltaEl.className = 'text-xs';
-    }
+    if (weightDeltaEl) { weightDeltaEl.textContent = ''; weightDeltaEl.className = 'text-xs'; }
   }
-
   renderWeightSparkline(logs);
 }
 
-// Минималистичный спарклайн: тонкая линия без заливки, акцентируем только последнюю точку
 function renderWeightSparkline(logs) {
   if (!weightSparkEl) return;
-  if (!logs || logs.length < 2) {
-    weightSparkEl.innerHTML = '';
-    return;
-  }
-
+  if (!logs || logs.length < 2) { weightSparkEl.innerHTML = ''; return; }
   const last = logs.slice(0, 30).reverse();
   const weights = last.map(l => l.weight_kg);
   const minW = Math.min(...weights);
   const maxW = Math.max(...weights);
   const range = maxW - minW || 1;
-
-  const W = 280;
-  const H = 56;
-  const pad = 6;
+  const W = 280, H = 56, pad = 6;
   const stepX = (W - pad * 2) / (weights.length - 1);
-
   const points = weights.map((w, i) => {
     const x = pad + stepX * i;
     const y = H - pad - ((w - minW) / range) * (H - pad * 2);
     return [x, y];
   });
-
   const linePath = points.map((p, i) => (i === 0 ? 'M' : 'L') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ');
-
-  const lastPoint = points[points.length - 1];
-
+  const lp = points[points.length - 1];
   weightSparkEl.innerHTML = `
     <svg width="100%" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="display:block">
-      <path d="${linePath}" fill="none" stroke="#7c6cff" stroke-width="1.5"
-            stroke-linecap="round" stroke-linejoin="round"/>
-      <circle cx="${lastPoint[0].toFixed(1)}" cy="${lastPoint[1].toFixed(1)}" r="3" fill="#7c6cff"/>
-      <circle cx="${lastPoint[0].toFixed(1)}" cy="${lastPoint[1].toFixed(1)}" r="5.5" fill="#7c6cff" opacity="0.25"/>
+      <path d="${linePath}" fill="none" stroke="#7c6cff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="${lp[0].toFixed(1)}" cy="${lp[1].toFixed(1)}" r="3" fill="#7c6cff"/>
+      <circle cx="${lp[0].toFixed(1)}" cy="${lp[1].toFixed(1)}" r="5.5" fill="#7c6cff" opacity="0.25"/>
     </svg>
   `;
 }
 
 function openWeightSheet() {
-  // Поле пустое — юзер сразу вводит новое значение.
-  // Прошлый вес показываем как placeholder.
+  // Поле ВСЕГДА пустое, прошлый вес в placeholder.
   let placeholder = '75.5';
   if (weightHistory && weightHistory.length > 0) {
     placeholder = weightHistory[0].weight_kg;
@@ -1671,21 +1485,15 @@ function openWeightSheet() {
   }
   if (weightInput) {
     weightInput.value = '';
-    weightInput.placeholder = placeholder;
+    weightInput.placeholder = String(placeholder);
   }
   renderWeightHistory();
-
   weightSheetBackdrop.classList.remove('hidden');
   requestAnimationFrame(() => {
     weightSheetBackdrop.classList.remove('opacity-0');
     weightSheetPanel.classList.remove('translate-y-full');
   });
   tg?.HapticFeedback?.impactOccurred('light');
-
-  // Фокус сразу в поле — клавиатура выезжает
-  setTimeout(() => {
-    try { weightInput?.focus(); } catch (e) {}
-  }, 320);
 }
 
 function closeWeightSheet() {
@@ -1717,15 +1525,19 @@ function renderWeightHistory() {
       </div>
     `;
   }).join('');
-
   weightHistoryEl.querySelectorAll('.delete-weight').forEach(btn => {
     btn.addEventListener('click', () => deleteWeightLog(parseInt(btn.dataset.id)));
   });
 }
 
 async function saveWeight() {
-  const w = parseFloat(weightInput?.value);
-  if (isNaN(w) || w < 20 || w > 400) { tg?.showAlert('Введи вес (20–400 кг)'); return; }
+  // Читаем значение из input, нормализуем строку
+  const raw = weightInput?.value || '';
+  const w = parseWeightInput(raw);
+  if (isNaN(w) || w < 20 || w > 400) {
+    tg?.showAlert(`Введи вес (20–400 кг). Сейчас: "${raw}"`);
+    return;
+  }
 
   weightSaveBtn.style.opacity = '0.6';
   try {
@@ -1734,45 +1546,36 @@ async function saveWeight() {
       headers: { ...authHeaders(), 'Content-Type': 'application/json' },
       body: JSON.stringify({ weight_kg: w }),
     });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-
+    if (!res.ok) {
+      const errText = await res.text().catch(() => '');
+      throw new Error(`HTTP ${res.status} ${errText}`);
+    }
     tg?.HapticFeedback?.notificationOccurred('success');
-
-    // Синхронизируем профильный вес, чтобы ИМТ обновился сразу
     if (currentProfile) currentProfile.weight_kg = w;
     renderProfileMetrics(currentProfile);
-
     await loadWeight();
     renderWeightHistory();
-
-    // Поле очищаем — следующий ввод с нуля
+    // Очищаем поле — пользователь может сразу вводить новое
     if (weightInput) weightInput.value = '';
-    try { weightInput?.focus(); } catch (e) {}
   } catch (e) {
     console.error(e);
-    tg?.showAlert('Не удалось записать вес');
+    tg?.showAlert('Не удалось записать вес: ' + e.message);
   } finally {
     weightSaveBtn.style.opacity = '1';
   }
 }
+
 async function deleteWeightLog(logId) {
   const ok = await new Promise(resolve => {
     if (tg?.showConfirm) tg.showConfirm('Удалить запись?', (yes) => resolve(yes));
     else resolve(confirm('Удалить запись?'));
   });
   if (!ok) return;
-
   try {
-    const res = await fetch(`${API_URL}/api/weight/${logId}`, {
-      method: 'DELETE',
-      headers: authHeaders(),
-    });
+    const res = await fetch(`${API_URL}/api/weight/${logId}`, { method: 'DELETE', headers: authHeaders() });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     tg?.HapticFeedback?.notificationOccurred('success');
-
     await loadWeight();
-
-    // ФИКС: пересчёт профильного веса из истории после удаления
     if (weightHistory.length > 0 && currentProfile) {
       currentProfile.weight_kg = weightHistory[0].weight_kg;
       renderProfileMetrics(currentProfile);
@@ -1785,8 +1588,6 @@ async function deleteWeightLog(logId) {
 }
 
 // ============ НАПОМИНАНИЯ ============
-// На бэке время в UTC. На фронте показываем в локальном часовом поясе.
-
 function utcToLocalHHMM(utcHHMM) {
   if (!utcHHMM) return null;
   const [h, m] = utcHHMM.split(':').map(Number);
@@ -1807,11 +1608,9 @@ function renderReminderCard(p) {
   if (!reminderToggle) return;
   const enabled = !!p?.reminder_enabled;
   reminderToggle.checked = enabled;
-
   if (reminderStatusEl) {
     if (enabled && p.reminder_time) {
-      const local = utcToLocalHHMM(p.reminder_time);
-      reminderStatusEl.textContent = `Каждый день в ${local}`;
+      reminderStatusEl.textContent = `Каждый день в ${utcToLocalHHMM(p.reminder_time)}`;
       reminderStatusEl.className = 'text-xs text-muted mt-1';
     } else if (enabled) {
       reminderStatusEl.textContent = 'Задай время напоминания';
@@ -1821,21 +1620,14 @@ function renderReminderCard(p) {
       reminderStatusEl.className = 'text-xs text-muted mt-1';
     }
   }
-
-  if (reminderOpenBtn) {
-    reminderOpenBtn.classList.toggle('hidden', !enabled);
-  }
+  if (reminderOpenBtn) reminderOpenBtn.classList.toggle('hidden', !enabled);
 }
 
 function openReminderSheet() {
   if (!currentProfile) return;
-  reminderEditTime = currentProfile.reminder_time
-    ? utcToLocalHHMM(currentProfile.reminder_time)
-    : '18:00';
-
+  reminderEditTime = currentProfile.reminder_time ? utcToLocalHHMM(currentProfile.reminder_time) : '18:00';
   if (reminderTimeInput) reminderTimeInput.value = reminderEditTime;
   updateReminderChips();
-
   reminderSheetBackdrop.classList.remove('hidden');
   requestAnimationFrame(() => {
     reminderSheetBackdrop.classList.remove('opacity-0');
@@ -1853,33 +1645,26 @@ function closeReminderSheet() {
 
 function updateReminderChips() {
   document.querySelectorAll('[data-reminder-preset]').forEach(btn => {
-    const active = btn.dataset.reminderPreset === reminderEditTime;
-    btn.classList.toggle('bg-primary', active);
-    btn.classList.toggle('text-white', active);
-    btn.classList.toggle('border-primary', active);
-    btn.classList.toggle('bg-surface2', !active);
-    btn.classList.toggle('text-muted', !active);
-    btn.classList.toggle('border-white/5', !active);
+    const a = btn.dataset.reminderPreset === reminderEditTime;
+    btn.classList.toggle('bg-primary', a);
+    btn.classList.toggle('text-white', a);
+    btn.classList.toggle('border-primary', a);
+    btn.classList.toggle('bg-surface2', !a);
+    btn.classList.toggle('text-muted', !a);
+    btn.classList.toggle('border-white/5', !a);
   });
 }
 
 async function saveReminder() {
   const localTime = reminderTimeInput?.value;
-  if (!localTime || !/^\d{2}:\d{2}$/.test(localTime)) {
-    tg?.showAlert('Выбери время');
-    return;
-  }
+  if (!localTime || !/^\d{2}:\d{2}$/.test(localTime)) { tg?.showAlert('Выбери время'); return; }
   const utcTime = localToUtcHHMM(localTime);
-
   reminderSaveBtn.style.opacity = '0.6';
   try {
     const res = await fetch(`${API_URL}/api/me`, {
       method: 'PATCH',
       headers: { ...authHeaders(), 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        reminder_enabled: true,
-        reminder_time: utcTime,
-      }),
+      body: JSON.stringify({ reminder_enabled: true, reminder_time: utcTime }),
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     currentProfile = await res.json();
@@ -1916,10 +1701,9 @@ async function toggleReminder(enabled) {
   }
 }
 
-// ============ ПРОФИЛЬ ============
+// ============ ПРОФИЛЬ ЗАГРУЗКА ============
 async function loadProfile() {
   if (!tg?.initData) return;
-
   const tgUser = tg.initDataUnsafe?.user;
   if (tgUser) {
     profileNameEl.textContent = [tgUser.first_name, tgUser.last_name].filter(Boolean).join(' ') || 'Гость';
@@ -1943,23 +1727,14 @@ async function loadProfile() {
       statStreakEl.textContent = stats.streak;
       statWorkoutsEl.textContent = stats.workouts_count;
       statSetsEl.textContent = stats.sets_count;
-
       const kg = stats.total_volume_kg;
-      if (kg < 1000) {
-        statVolumeEl.textContent = `${Math.round(kg)} кг`;
-      } else {
-        statVolumeEl.textContent = `${(kg / 1000).toFixed(1)} т`;
-      }
+      if (kg < 1000) statVolumeEl.textContent = `${Math.round(kg)} кг`;
+      else statVolumeEl.textContent = `${(kg / 1000).toFixed(1)} т`;
 
-      if (stats.streak === 0 && stats.workouts_count > 0) {
-        streakHintEl.textContent = 'Тренируйся, чтобы начать стрик!';
-      } else if (stats.streak === 0) {
-        streakHintEl.textContent = 'Сделай первую тренировку';
-      } else if (stats.streak === 1) {
-        streakHintEl.textContent = 'Начало положено. Продолжай завтра!';
-      } else {
-        streakHintEl.textContent = 'Не разрывай серию! Тренируйся и завтра';
-      }
+      if (stats.streak === 0 && stats.workouts_count > 0) streakHintEl.textContent = 'Тренируйся, чтобы начать стрик!';
+      else if (stats.streak === 0) streakHintEl.textContent = 'Сделай первую тренировку';
+      else if (stats.streak === 1) streakHintEl.textContent = 'Начало положено. Продолжай завтра!';
+      else streakHintEl.textContent = 'Не разрывай серию! Тренируйся и завтра';
     }
 
     if (meRes.ok) {
@@ -1983,15 +1758,12 @@ function openProfileEdit() {
   editGender = currentProfile.gender || null;
   editGoal = currentProfile.goal || null;
   editExperience = currentProfile.experience || null;
-
   document.getElementById('input-weight').value = currentProfile.weight_kg ?? '';
   document.getElementById('input-height').value = currentProfile.height_cm ?? '';
-  document.getElementById('input-age').value    = currentProfile.age ?? '';
-
+  document.getElementById('input-age').value = currentProfile.age ?? '';
   updateGenderUI();
   updateGoalUI();
   updateExperienceUI();
-
   profileEditBackdrop.classList.remove('hidden');
   requestAnimationFrame(() => {
     profileEditBackdrop.classList.remove('opacity-0');
@@ -2009,49 +1781,47 @@ function closeProfileEdit() {
 
 function updateGenderUI() {
   document.querySelectorAll('[data-gender]').forEach(btn => {
-    const isActive = btn.dataset.gender === editGender;
-    btn.classList.toggle('bg-primary', isActive);
-    btn.classList.toggle('text-white', isActive);
-    btn.classList.toggle('border-primary', isActive);
-    btn.classList.toggle('bg-surface2', !isActive);
-    btn.classList.toggle('text-muted', !isActive);
-    btn.classList.toggle('border-white/5', !isActive);
+    const a = btn.dataset.gender === editGender;
+    btn.classList.toggle('bg-primary', a);
+    btn.classList.toggle('text-white', a);
+    btn.classList.toggle('border-primary', a);
+    btn.classList.toggle('bg-surface2', !a);
+    btn.classList.toggle('text-muted', !a);
+    btn.classList.toggle('border-white/5', !a);
   });
 }
 
 function updateGoalUI() {
   document.querySelectorAll('[data-goal]').forEach(btn => {
-    const isActive = btn.dataset.goal === editGoal;
-    btn.classList.toggle('bg-primary', isActive);
-    btn.classList.toggle('text-white', isActive);
-    btn.classList.toggle('border-primary', isActive);
-    btn.classList.toggle('bg-surface2', !isActive);
-    btn.classList.toggle('text-muted', !isActive);
-    btn.classList.toggle('border-white/5', !isActive);
+    const a = btn.dataset.goal === editGoal;
+    btn.classList.toggle('bg-primary', a);
+    btn.classList.toggle('text-white', a);
+    btn.classList.toggle('border-primary', a);
+    btn.classList.toggle('bg-surface2', !a);
+    btn.classList.toggle('text-muted', !a);
+    btn.classList.toggle('border-white/5', !a);
   });
 }
 
 function updateExperienceUI() {
   document.querySelectorAll('[data-experience]').forEach(btn => {
-    const isActive = btn.dataset.experience === editExperience;
-    btn.classList.toggle('bg-primary', isActive);
-    btn.classList.toggle('text-white', isActive);
-    btn.classList.toggle('border-primary', isActive);
-    btn.classList.toggle('bg-surface2', !isActive);
-    btn.classList.toggle('text-muted', !isActive);
-    btn.classList.toggle('border-white/5', !isActive);
+    const a = btn.dataset.experience === editExperience;
+    btn.classList.toggle('bg-primary', a);
+    btn.classList.toggle('text-white', a);
+    btn.classList.toggle('border-primary', a);
+    btn.classList.toggle('bg-surface2', !a);
+    btn.classList.toggle('text-muted', !a);
+    btn.classList.toggle('border-white/5', !a);
   });
 }
 
 async function saveProfile() {
-  const w = parseFloat(document.getElementById('input-weight').value);
+  const w = parseWeightInput(document.getElementById('input-weight').value);
   const h = parseInt(document.getElementById('input-height').value);
   const a = parseInt(document.getElementById('input-age').value);
-
   if (!isNaN(w) && (w < 20 || w > 400)) { tg?.showAlert('Вес должен быть 20–400 кг'); return; }
   if (!isNaN(h) && (h < 100 || h > 250)) { tg?.showAlert('Рост должен быть 100–250 см'); return; }
   if (!isNaN(a) && (a < 10 || a > 100)) { tg?.showAlert('Возраст 10–100 лет'); return; }
-
   const payload = {};
   if (!isNaN(w)) payload.weight_kg = w;
   if (!isNaN(h)) payload.height_cm = h;
@@ -2059,12 +1829,7 @@ async function saveProfile() {
   if (editGender) payload.gender = editGender;
   if (editGoal) payload.goal = editGoal;
   if (editExperience) payload.experience = editExperience;
-
-  if (Object.keys(payload).length === 0) {
-    tg?.showAlert('Заполни хотя бы одно поле');
-    return;
-  }
-
+  if (Object.keys(payload).length === 0) { tg?.showAlert('Заполни хотя бы одно поле'); return; }
   profileSaveBtn.style.opacity = '0.6';
   try {
     const res = await fetch(`${API_URL}/api/me`, {
@@ -2102,17 +1867,14 @@ async function loadRecords() {
 
 function renderRecords(records) {
   if (!records || records.length === 0) {
-    recordsListEl.innerHTML =
-      '<p class="text-muted text-center py-8">Пока нет рекордов.<br>Добавь подход — и он появится здесь.</p>';
+    recordsListEl.innerHTML = '<p class="text-muted text-center py-8">Пока нет рекордов.<br>Добавь подход — и он появится здесь.</p>';
     return;
   }
-
   const groups = {};
   for (const r of records) {
     if (!groups[r.muscle_group]) groups[r.muscle_group] = [];
     groups[r.muscle_group].push(r);
   }
-
   let html = '';
   for (const [group, items] of Object.entries(groups)) {
     html += `<p class="text-xs uppercase tracking-wider text-muted mt-4 mb-2">${group}</p>`;
@@ -2127,9 +1889,7 @@ function renderRecords(records) {
           </div>
           <div class="flex items-center justify-between gap-2">
             <span class="text-sm"><b>${r.weight}</b> кг × <b>${r.reps}</b></span>
-            <span class="text-xs bg-primary/15 text-primary2 rounded-full px-2.5 py-1 font-medium">
-              1RM ≈ ${r.estimated_1rm} кг
-            </span>
+            <span class="text-xs bg-primary/15 text-primary2 rounded-full px-2.5 py-1 font-medium">1RM ≈ ${r.estimated_1rm} кг</span>
           </div>
         </div>
       `;
@@ -2141,7 +1901,6 @@ function renderRecords(records) {
 // ============ СОБЫТИЯ ============
 startWorkoutBtn?.addEventListener('click', async () => {
   tg?.HapticFeedback?.impactOccurred('medium');
-
   if (currentWorkoutId) {
     showScreen('workout');
     renderWorkoutExercises();
@@ -2168,14 +1927,10 @@ sheetBackdrop?.addEventListener('click', (e) => {
 });
 sheetCreateBtn?.addEventListener('click', openCreateExerciseSheet);
 
-// Create exercise sheet
 createExClose?.addEventListener('click', closeCreateExerciseSheet);
-createExBackdrop?.addEventListener('click', (e) => {
-  if (e.target === createExBackdrop) closeCreateExerciseSheet();
-});
+// НЕ закрываем шторку по клику на backdrop — избегаем случайных закрытий при тапе по чипам
 createExSave?.addEventListener('click', saveCustomExercise);
 
-// Program sheet
 progSheetClose?.addEventListener('click', closeProgramsSheet);
 progSheetBackdrop?.addEventListener('click', (e) => {
   if (e.target === progSheetBackdrop) closeProgramsSheet();
@@ -2183,14 +1938,11 @@ progSheetBackdrop?.addEventListener('click', (e) => {
 progEmptyWorkoutBtn?.addEventListener('click', startEmptyWorkout);
 progCreateBtn?.addEventListener('click', openProgramEditor);
 
-// Program editor
 programEditorAddBtn?.addEventListener('click', () => openSheet('program'));
 programSaveBtn?.addEventListener('click', saveProgram);
 programEditorBack?.addEventListener('click', closeProgramEditor);
 
-restSkipBtn?.addEventListener('click', () => {
-  stopRestTimer(true);
-});
+restSkipBtn?.addEventListener('click', () => stopRestTimer(true));
 
 searchInput?.addEventListener('input', (e) => {
   const q = e.target.value.trim().toLowerCase();
@@ -2200,9 +1952,7 @@ searchInput?.addEventListener('input', (e) => {
   renderExercisesPicker(filtered);
 });
 
-// Onboarding
 obSaveBtn?.addEventListener('click', saveOnboarding);
-
 document.querySelectorAll('[data-ob-gender]').forEach(btn => {
   btn.addEventListener('click', () => {
     obGender = btn.dataset.obGender;
@@ -2225,7 +1975,6 @@ document.querySelectorAll('[data-ob-exp]').forEach(btn => {
   });
 });
 
-// Profile edit
 profileEditBtn?.addEventListener('click', openProfileEdit);
 profileEditClose?.addEventListener('click', closeProfileEdit);
 profileEditBackdrop?.addEventListener('click', (e) => {
@@ -2255,7 +2004,6 @@ document.querySelectorAll('[data-experience]').forEach(btn => {
   });
 });
 
-// Weight
 weightCardBtn?.addEventListener('click', openWeightSheet);
 weightSheetClose?.addEventListener('click', closeWeightSheet);
 weightSheetBackdrop?.addEventListener('click', (e) => {
@@ -2266,10 +2014,7 @@ weightInput?.addEventListener('keydown', (e) => {
   if (e.key === 'Enter') saveWeight();
 });
 
-// Reminders
-reminderToggle?.addEventListener('change', (e) => {
-  toggleReminder(e.target.checked);
-});
+reminderToggle?.addEventListener('change', (e) => toggleReminder(e.target.checked));
 reminderOpenBtn?.addEventListener('click', openReminderSheet);
 reminderSheetClose?.addEventListener('click', closeReminderSheet);
 reminderSheetBackdrop?.addEventListener('click', (e) => {
@@ -2289,7 +2034,6 @@ document.querySelectorAll('[data-reminder-preset]').forEach(btn => {
   });
 });
 
-// Calendar
 calendarPrevBtn?.addEventListener('click', () => {
   let y = calYear, m = calMonth - 1;
   if (m < 1) { m = 12; y -= 1; }
@@ -2304,7 +2048,6 @@ calendarNextBtn?.addEventListener('click', () => {
   renderCalendar(y, m);
 });
 
-// Navigation
 document.getElementById('nav-home')?.addEventListener('click', () => {
   tg?.HapticFeedback?.impactOccurred('light');
   showScreen('home');
