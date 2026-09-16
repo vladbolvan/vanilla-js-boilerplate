@@ -1661,14 +1661,18 @@ function renderWeightSparkline(logs) {
 }
 
 function openWeightSheet() {
-  // ФИКС: подставляем последнюю запись из истории, а не вес из профиля
-  let prefill = '';
+  // Поле пустое — юзер сразу вводит новое значение.
+  // Прошлый вес показываем как placeholder.
+  let placeholder = '75.5';
   if (weightHistory && weightHistory.length > 0) {
-    prefill = weightHistory[0].weight_kg;
+    placeholder = weightHistory[0].weight_kg;
   } else if (currentProfile?.weight_kg) {
-    prefill = currentProfile.weight_kg;
+    placeholder = currentProfile.weight_kg;
   }
-  if (weightInput) weightInput.value = prefill;
+  if (weightInput) {
+    weightInput.value = '';
+    weightInput.placeholder = placeholder;
+  }
   renderWeightHistory();
 
   weightSheetBackdrop.classList.remove('hidden');
@@ -1677,6 +1681,11 @@ function openWeightSheet() {
     weightSheetPanel.classList.remove('translate-y-full');
   });
   tg?.HapticFeedback?.impactOccurred('light');
+
+  // Фокус сразу в поле — клавиатура выезжает
+  setTimeout(() => {
+    try { weightInput?.focus(); } catch (e) {}
+  }, 320);
 }
 
 function closeWeightSheet() {
@@ -1729,13 +1738,16 @@ async function saveWeight() {
 
     tg?.HapticFeedback?.notificationOccurred('success');
 
-    // ФИКС: синхронизируем профильный вес, чтобы ИМТ и метрики обновились сразу
+    // Синхронизируем профильный вес, чтобы ИМТ обновился сразу
     if (currentProfile) currentProfile.weight_kg = w;
     renderProfileMetrics(currentProfile);
 
     await loadWeight();
     renderWeightHistory();
-    if (weightInput) weightInput.value = w;
+
+    // Поле очищаем — следующий ввод с нуля
+    if (weightInput) weightInput.value = '';
+    try { weightInput?.focus(); } catch (e) {}
   } catch (e) {
     console.error(e);
     tg?.showAlert('Не удалось записать вес');
@@ -1743,7 +1755,6 @@ async function saveWeight() {
     weightSaveBtn.style.opacity = '1';
   }
 }
-
 async function deleteWeightLog(logId) {
   const ok = await new Promise(resolve => {
     if (tg?.showConfirm) tg.showConfirm('Удалить запись?', (yes) => resolve(yes));
