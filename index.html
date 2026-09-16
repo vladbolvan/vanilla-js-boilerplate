@@ -193,6 +193,33 @@
         </div>
       </div>
 
+      <!-- ЭКРАН 7: КАЛЕНДАРЬ -->
+      <div id="screen-calendar" class="hidden-screen">
+        <header class="mb-6">
+          <h1 class="text-2xl font-bold tracking-tight">Календарь</h1>
+        </header>
+
+        <div class="bg-surface rounded-3xl p-5 border border-white/5 card-shadow mb-5">
+          <!-- Месяц + стрелки -->
+          <div class="flex items-center justify-between mb-5">
+            <button id="calendar-prev" class="text-muted p-2 -ml-2 active:opacity-60">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+            </button>
+            <p id="calendar-title" class="text-base font-semibold">Месяц</p>
+            <button id="calendar-next" class="text-muted p-2 -mr-2 active:opacity-60">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+            </button>
+          </div>
+
+          <!-- Сетка -->
+          <div id="calendar-grid" class="grid grid-cols-7 gap-1"></div>
+        </div>
+
+        <p class="text-xs text-muted/60 text-center">
+          Дни с тренировками подсвечены
+        </p>
+      </div>
+
       <!-- ЭКРАН 4: ДЕТАЛИ ТРЕНИРОВКИ -->
       <div id="screen-workout-detail" class="hidden-screen">
         <header class="flex items-center gap-3 mb-6">
@@ -235,7 +262,6 @@
           <p id="profile-username" class="text-sm text-muted mt-1"></p>
         </header>
 
-        <!-- Стрик -->
         <div class="rounded-3xl p-6 mb-4 card-shadow relative overflow-hidden"
              style="background: linear-gradient(135deg, rgba(249,115,22,.10) 0%, rgba(239,68,68,.08) 100%); border: 1px solid rgba(249,115,22,.15);">
           <div class="flex items-center justify-between relative z-10">
@@ -250,7 +276,6 @@
           <p id="streak-hint" class="text-xs text-orange-200/50 mt-3 relative z-10"></p>
         </div>
 
-        <!-- Кнопка редактирования профиля -->
         <button id="profile-edit-btn"
                 class="w-full bg-surface rounded-2xl p-4 border border-white/5 card-shadow
                        flex items-center justify-between active:scale-[0.98] transition mb-4">
@@ -269,7 +294,6 @@
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8b8b9e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
         </button>
 
-        <!-- Метрики профиля (показываются если заполнено) -->
         <div id="profile-metrics" class="hidden space-y-3 mb-4">
           <div class="grid grid-cols-3 gap-3">
             <div class="bg-surface rounded-2xl p-4 border border-white/5 card-shadow text-center">
@@ -302,7 +326,6 @@
           </div>
         </div>
 
-        <!-- Пустое состояние метрик -->
         <div id="profile-empty-hint"
              class="hidden bg-surface rounded-2xl p-4 border border-dashed border-white/10 text-center mb-4">
           <p class="text-sm text-muted">Заполни профиль — рассчитаем ИМТ и норму калорий</p>
@@ -347,16 +370,16 @@
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8b8b9e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
         </button>
 
-        <p class="text-xs text-muted/60 text-center mt-10">Gymly · v0.2</p>
+        <p class="text-xs text-muted/60 text-center mt-10">Gymly · v0.3</p>
       </div>
 
     </div>
   </div>
 
-  <!-- НИЖНЯЯ НАВИГАЦИЯ -->
+  <!-- НИЖНЯЯ НАВИГАЦИЯ (4 вкладки) -->
   <nav id="bottom-nav"
        class="fixed bottom-0 left-0 right-0 border-t border-white/5
-              max-w-md mx-auto grid grid-cols-3 z-40"
+              max-w-md mx-auto grid grid-cols-4 z-40"
        style="background: rgba(15,15,22,.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);">
     <button id="nav-home" class="nav-btn active py-3">
       <div class="nav-icon-bg">
@@ -374,6 +397,15 @@
         </svg>
       </div>
       <span class="nav-label text-[11px] font-medium">История</span>
+    </button>
+    <button id="nav-calendar" class="nav-btn py-3">
+      <div class="nav-icon-bg">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="4" width="18" height="18" rx="2"/>
+          <path d="M16 2v4M8 2v4M3 10h18"/>
+        </svg>
+      </div>
+      <span class="nav-label text-[11px] font-medium">Календарь</span>
     </button>
     <button id="nav-profile" class="nav-btn py-3">
       <div class="nav-icon-bg">
@@ -476,7 +508,6 @@
       <div class="flex-1 overflow-y-auto px-5 pb-6 space-y-5"
            style="-webkit-overflow-scrolling: touch;">
 
-        <!-- Вес / Рост / Возраст -->
         <div class="grid grid-cols-3 gap-3">
           <div>
             <label class="text-[10px] uppercase tracking-wider text-muted block mb-1.5">Вес, кг</label>
@@ -501,7 +532,6 @@
           </div>
         </div>
 
-        <!-- Пол -->
         <div>
           <p class="text-[10px] uppercase tracking-wider text-muted mb-2">Пол</p>
           <div class="grid grid-cols-2 gap-2">
@@ -518,7 +548,6 @@
           </div>
         </div>
 
-        <!-- Цель -->
         <div>
           <p class="text-[10px] uppercase tracking-wider text-muted mb-2">Цель</p>
           <div class="grid grid-cols-3 gap-2">
