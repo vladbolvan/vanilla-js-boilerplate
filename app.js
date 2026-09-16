@@ -74,7 +74,6 @@ const statVolumeEl = document.getElementById('stat-volume');
 const streakHintEl = document.getElementById('streak-hint');
 const recordsListEl = document.getElementById('records-list');
 
-// Profile metrics & edit
 const profileEditBtn = document.getElementById('profile-edit-btn');
 const profileMetricsEl = document.getElementById('profile-metrics');
 const profileEmptyHintEl = document.getElementById('profile-empty-hint');
@@ -94,6 +93,7 @@ const calendarTitleEl = document.getElementById('calendar-title');
 const calendarGridEl = document.getElementById('calendar-grid');
 const calendarPrevBtn = document.getElementById('calendar-prev');
 const calendarNextBtn = document.getElementById('calendar-next');
+const calendarDayListEl = document.getElementById('calendar-day-list');
 
 // ============ STATE ============
 let allExercises = [];
@@ -107,9 +107,10 @@ let editGender = null;
 let editGoal = null;
 
 // Calendar
-const calendarCache = new Map(); // "YYYY-MM" -> days[]
+const calendarCache = new Map();
 let calYear = new Date().getFullYear();
 let calMonth = new Date().getMonth() + 1;
+let calSelectedDay = null;
 
 // Таймеры
 let workoutTimerInterval = null;
@@ -463,7 +464,6 @@ async function fillLastSet(exerciseId) {
     if (weightInput && data.weight != null) weightInput.value = data.weight;
     if (repsInput && data.reps != null) repsInput.value = data.reps;
 
-    // Показать подсказку о прошлом весе
     const hint = card.querySelector('.last-set-hint');
     if (hint && data.weight != null && data.reps != null) {
       hint.textContent = `Прошлый раз: ${data.weight} кг × ${data.reps}`;
@@ -552,12 +552,56 @@ function renderSetsForExercise(exerciseId, sets) {
     return;
   }
 
-  container.innerHTML = sets.map((s, i) => `
-    <div class="set-row flex items-center justify-between text-sm py-1" data-set-id="${s.id}">
-      <span class="text-muted text-xs">#${i + 1}</span>
-      <span><b>${s.weight}</b> кг × <b>${s.reps}</b></span>
-    </div>
-  `).join('');
+  container.innerHTML = sets.map((s, i) => {
+    const isLast = i === sets.length - 1;
+    return `
+      <div class="set-row flex items-center gap-2 text-sm py-1" data-set-id="${s.id}">
+        <span class="text-muted text-xs w-6 shrink-0">#${i + 1}</span>
+        <span class="flex-1"><b>${s.weight}</b> кг × <b>${s.reps}</b></span>
+        ${isLast ? `<button class="delete-set text-muted hover:text-red-400 transition p-1 -mr-1 shrink-0" data-set-id="${s.id}" data-ex-id="${exerciseId}">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>` : ''}
+      </div>
+    `;
+  }).join('');
+
+  container.querySelectorAll('.delete-set').forEach(btn => {
+    btn.addEventListener('click', () => {
+      deleteSetInline(parseInt(btn.dataset.exId), btn.dataset.setId);
+    });
+  });
+}
+
+async function deleteSetInline(exerciseId, setId) {
+  const we = workoutExercises.find(e => e.id === exerciseId);
+  if (!we) return;
+
+  const idx = we.sets.findIndex(s => String(s.id) === String(setId));
+  if (idx === -1) return;
+
+  const removed = we.sets[idx];
+  we.sets.splice(idx, 1);
+  renderSetsForExercise(exerciseId, we.sets);
+  tg?.HapticFeedback?.impactOccurred('medium');
+
+  // Если это оптимистичный подход (temp_), на сервере его нет — просто убрали визуально
+  if (String(setId).startsWith('temp_')) return;
+
+  if (!currentWorkoutId) return;
+
+  try {
+    const res = await fetch(
+      `${API_URL}/api/workouts/${currentWorkoutId}/sets/${setId}`,
+      { method: 'DELETE', headers: authHeaders() }
+    );
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    calendarCache.clear();
+  } catch (e) {
+    console.error(e);
+    we.sets.splice(idx, 0, removed);
+    renderSetsForExercise(exerciseId, we.sets);
+    tg?.showAlert('Не удалось удалить подход');
+  }
 }
 
 async function addSetInline(exerciseId) {
@@ -618,7 +662,6 @@ async function addSetInline(exerciseId) {
     renderSetsForExercise(exerciseId, we.sets);
 
     startRestTimer();
-    // Инвалидируем календарь текущего месяца, чтобы новые данные подтянулись
     calendarCache.clear();
   } catch (e) {
     console.error(e);
@@ -649,6 +692,7 @@ async function finishWorkout() {
     stopRestTimer();
     updateStartButton();
     calendarCache.clear();
+    calSelectedDay = null;
     await loadRecentWorkouts();
     showScreen('home');
   } catch (e) {
@@ -754,8 +798,9 @@ async function loadCalendarMonth(year, month) {
   );
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
   const data = await res.json();
-  calendarCache.set(key, data.days || []);
-  return data.days || [];
+  const days = data.days || [];
+  calendarCache.set(key, days);
+  return days;
 }
 
 async function renderCalendar(year, month) {
@@ -765,6 +810,12 @@ async function renderCalendar(year, month) {
   if (calendarTitleEl) {
     calendarTitleEl.textContent = `${MONTH_NAMES[month - 1]} ${year}`;
   }
+
+  if (calendarDayListEl) {
+    calendarDayListEl.classList.add('hidden');
+    calendarDayListEl.innerHTML = '';
+  }
+  calSelectedDay = null;
 
   calendarGridEl.innerHTML = '<p class="col-span-7 text-muted text-center py-4 text-sm">Загрузка...</p>';
 
@@ -780,8 +831,8 @@ async function renderCalendar(year, month) {
   const dayMap = new Map();
   days.forEach(d => dayMap.set(d.day, d));
 
-  const firstDay = new Date(year, month - 1, 1).getDay(); // 0=Sunday
-  const offset = (firstDay + 6) % 7; // Monday-start
+  const firstDay = new Date(year, month - 1, 1).getDay();
+  const offset = (firstDay + 6) % 7;
   const daysInMonth = new Date(year, month, 0).getDate();
   const today = new Date();
   const isCurrentMonth = today.getFullYear() === year && (today.getMonth() + 1) === month;
@@ -803,21 +854,82 @@ async function renderCalendar(year, month) {
       ? 'bg-primary/15 text-white font-semibold active:scale-95 cursor-pointer'
       : 'text-muted/70';
     const ringCls = isToday ? 'ring-1 ring-primary/60' : '';
-    const dataAttr = hasWorkout ? `data-workout-id="${info.workout_id}"` : '';
+    const dayAttr = `data-day="${d}"`;
+
+    const countBadge = hasWorkout && info.workouts.length > 1
+      ? `<span class="absolute top-1 right-1 min-w-[16px] h-4 px-1 rounded-full bg-primary text-[9px] font-bold text-white flex items-center justify-center leading-none">${info.workouts.length}</span>`
+      : '';
 
     html += `
-      <div class="${baseCls} ${stateCls} ${ringCls}" ${dataAttr}>
+      <div class="${baseCls} ${stateCls} ${ringCls}" ${dayAttr}>
         <span>${d}</span>
         ${hasWorkout ? '<span class="absolute bottom-1.5 w-1 h-1 rounded-full bg-primary"></span>' : ''}
+        ${countBadge}
       </div>
     `;
   }
 
   calendarGridEl.innerHTML = html;
 
-  calendarGridEl.querySelectorAll('[data-workout-id]').forEach(el => {
+  calendarGridEl.querySelectorAll('[data-day]').forEach(el => {
     el.addEventListener('click', async () => {
-      const wid = parseInt(el.dataset.workoutId);
+      const d = parseInt(el.dataset.day);
+      const info = dayMap.get(d);
+
+      if (!info || !info.workouts || info.workouts.length === 0) {
+        // Пустой день — скрываем список
+        if (calendarDayListEl) {
+          calendarDayListEl.classList.add('hidden');
+          calendarDayListEl.innerHTML = '';
+        }
+        calSelectedDay = null;
+        return;
+      }
+
+      tg?.HapticFeedback?.impactOccurred('light');
+      await ensureWorkoutsLoaded();
+
+      if (info.workouts.length === 1) {
+        openWorkoutDetail(info.workouts[0].workout_id);
+      } else {
+        calSelectedDay = d;
+        renderCalendarDayList(d, info.workouts);
+      }
+    });
+  });
+}
+
+function renderCalendarDayList(day, workouts) {
+  if (!calendarDayListEl) return;
+
+  const monthName = MONTH_NAMES[calMonth - 1].toLowerCase();
+  let html = `<p class="text-xs uppercase tracking-wider text-muted mb-2">${day} ${monthName} · ${workouts.length} тренировки</p>`;
+  html += '<div class="space-y-2">';
+
+  for (const w of workouts) {
+    const date = parseServerDate(w.finished_at);
+    const time = date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+    html += `
+      <button class="calendar-day-workout w-full bg-surface2 hover:bg-surface rounded-xl p-3 text-left
+                     border border-white/5 flex items-center justify-between gap-2
+                     active:scale-[0.98] transition"
+              data-workout-id="${w.workout_id}">
+        <div class="min-w-0">
+          <p class="text-sm font-medium">${time}</p>
+          <p class="text-xs text-muted mt-0.5">${w.total_sets || 0} подходов</p>
+        </div>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8b8b9e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+      </button>
+    `;
+  }
+  html += '</div>';
+
+  calendarDayListEl.innerHTML = html;
+  calendarDayListEl.classList.remove('hidden');
+
+  calendarDayListEl.querySelectorAll('.calendar-day-workout').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const wid = parseInt(btn.dataset.workoutId);
       tg?.HapticFeedback?.impactOccurred('light');
       await ensureWorkoutsLoaded();
       openWorkoutDetail(wid);
@@ -954,7 +1066,6 @@ async function loadProfile() {
   }
 }
 
-// ============ ПРОФИЛЬ: РЕДАКТИРОВАНИЕ ============
 function openProfileEdit() {
   if (!currentProfile) return;
   editGender = currentProfile.gender || null;
@@ -1145,7 +1256,6 @@ searchInput?.addEventListener('input', (e) => {
   renderExercisesPicker(filtered);
 });
 
-// Profile edit
 profileEditBtn?.addEventListener('click', openProfileEdit);
 profileEditClose?.addEventListener('click', closeProfileEdit);
 profileEditBackdrop?.addEventListener('click', (e) => {
@@ -1168,7 +1278,6 @@ document.querySelectorAll('[data-goal]').forEach(btn => {
   });
 });
 
-// Calendar navigation
 calendarPrevBtn?.addEventListener('click', () => {
   let y = calYear, m = calMonth - 1;
   if (m < 1) { m = 12; y -= 1; }
@@ -1183,7 +1292,6 @@ calendarNextBtn?.addEventListener('click', () => {
   renderCalendar(y, m);
 });
 
-// Navigation
 document.getElementById('nav-home')?.addEventListener('click', () => {
   tg?.HapticFeedback?.impactOccurred('light');
   showScreen('home');
