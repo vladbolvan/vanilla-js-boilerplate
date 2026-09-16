@@ -29,7 +29,6 @@ function parseServerDate(iso) {
 }
 
 // ============ ФИКС КЛАВИАТУРЫ ============
-// Тап по любому месту, кроме полей ввода — скрывает клавиатуру.
 document.addEventListener('pointerdown', (e) => {
   const active = document.activeElement;
   if (!active) return;
@@ -65,7 +64,7 @@ const detailContentEl = document.getElementById('detail-content');
 const detailTitleEl = document.getElementById('detail-title');
 const startWorkoutBtn = document.getElementById('start-workout');
 
-// Bottom sheet (exercises)
+// Exercise sheet
 const sheetBackdrop = document.getElementById('sheet-backdrop');
 const sheetContent = document.getElementById('sheet-content');
 const sheetCloseBtn = document.getElementById('sheet-close');
@@ -73,7 +72,7 @@ const exercisesPickerEl = document.getElementById('exercises-picker');
 const searchInput = document.getElementById('exercise-search');
 const sheetCreateBtn = document.getElementById('sheet-create-btn');
 
-// Bottom sheet (create exercise)
+// Create exercise sheet
 const createExBackdrop = document.getElementById('create-ex-backdrop');
 const createExPanel = document.getElementById('create-ex-panel');
 const createExClose = document.getElementById('create-ex-close');
@@ -82,7 +81,7 @@ const createExGroup = document.getElementById('create-ex-group');
 const createExCompound = document.getElementById('create-ex-compound');
 const createExSave = document.getElementById('create-ex-save');
 
-// Bottom sheet (programs)
+// Program sheet
 const progSheetBackdrop = document.getElementById('programs-sheet-backdrop');
 const progSheetContent = document.getElementById('programs-sheet-content');
 const progSheetClose = document.getElementById('programs-sheet-close');
@@ -129,19 +128,27 @@ const profileEditPanel = document.getElementById('profile-edit-panel');
 const profileEditClose = document.getElementById('profile-edit-close');
 const profileSaveBtn = document.getElementById('profile-save-btn');
 
-// Weight section
+// Weight
 const weightCurrentEl = document.getElementById('weight-current');
 const weightDeltaEl = document.getElementById('weight-delta');
 const weightSparkEl = document.getElementById('weight-sparkline');
 const weightCardBtn = document.getElementById('weight-card-btn');
-
-// Weight sheet
 const weightSheetBackdrop = document.getElementById('weight-sheet-backdrop');
 const weightSheetPanel = document.getElementById('weight-sheet-panel');
 const weightSheetClose = document.getElementById('weight-sheet-close');
 const weightInput = document.getElementById('weight-input');
 const weightSaveBtn = document.getElementById('weight-save-btn');
 const weightHistoryEl = document.getElementById('weight-history');
+
+// Reminders
+const reminderToggle = document.getElementById('reminder-toggle');
+const reminderStatusEl = document.getElementById('reminder-status');
+const reminderOpenBtn = document.getElementById('reminder-open-btn');
+const reminderSheetBackdrop = document.getElementById('reminder-sheet-backdrop');
+const reminderSheetPanel = document.getElementById('reminder-sheet-panel');
+const reminderSheetClose = document.getElementById('reminder-sheet-close');
+const reminderTimeInput = document.getElementById('reminder-time-input');
+const reminderSaveBtn = document.getElementById('reminder-save-btn');
 
 // Calendar
 const calendarTitleEl = document.getElementById('calendar-title');
@@ -164,7 +171,6 @@ let currentProfile = null;
 
 let editingProgram = { name: '', exercises: [] };
 let sheetMode = 'workout';
-let sheetReturnTo = null; // 'program-editor' — куда вернуться после создания упражнения
 
 let editGender = null;
 let editGoal = null;
@@ -180,6 +186,7 @@ let calMonth = new Date().getMonth() + 1;
 let calSelectedDay = null;
 
 let weightHistory = [];
+let reminderEditTime = null;
 
 let workoutTimerInterval = null;
 let restTimerInterval = null;
@@ -407,11 +414,6 @@ async function loadExercises() {
   }
 }
 
-async function reloadExercises() {
-  localStorage.removeItem('exercises_cache');
-  await loadExercises();
-}
-
 function renderExercisesPicker(list) {
   if (list.length === 0) {
     exercisesPickerEl.innerHTML =
@@ -467,9 +469,8 @@ function renderExercisesPicker(list) {
 }
 
 // ============ BOTTOM SHEET (exercises) ============
-function openSheet(mode = 'workout', returnTo = null) {
+function openSheet(mode = 'workout') {
   sheetMode = mode;
-  sheetReturnTo = returnTo;
   renderExercisesPicker(allExercises);
   sheetBackdrop.classList.remove('hidden');
   requestAnimationFrame(() => {
@@ -488,7 +489,6 @@ function closeSheet() {
 
 // ============ СОЗДАНИЕ СВОЕГО УПРАЖНЕНИЯ ============
 function openCreateExerciseSheet() {
-  // Закрываем шит выбора, чтобы не наслаивался
   closeSheet();
   setTimeout(() => {
     createExName.value = '';
@@ -560,7 +560,6 @@ async function saveCustomExercise() {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const created = await res.json();
 
-    // Обновляем локальный кеш — добавляем новое
     allExercises.push(created);
     allExercises.sort((a, b) => a.name.localeCompare(b.name, 'ru'));
     localStorage.setItem('exercises_cache', JSON.stringify(allExercises));
@@ -568,15 +567,8 @@ async function saveCustomExercise() {
     closeCreateExerciseSheet();
     tg?.HapticFeedback?.notificationOccurred('success');
 
-    // Сразу возвращаемся в шит выбора с обновлённым списком
     setTimeout(() => {
-      renderExercisesPicker(allExercises);
-      if (sheetMode === 'program') {
-        // Вернёмся в редактор программы, шит откроем снова
-        openSheet('program', 'program-editor');
-      } else {
-        openSheet('workout');
-      }
+      openSheet(sheetMode);
     }, 300);
   } catch (e) {
     console.error(e);
@@ -978,11 +970,11 @@ function updateStartButton() {
   if (currentWorkoutId) {
     if (subtitleEl) subtitleEl.textContent = 'Продолжить';
     if (titleEl) titleEl.textContent = 'Тренировка идёт';
-    if (iconEl) iconEl.innerHTML = `<svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" class="text-white/90"><path d="M8 5v14l11-7z"/></svg>`;
+    if (iconEl) iconEl.innerHTML = `<svg width="26" height="26" viewBox="0 0 24 24" fill="currentColor" class="text-white/90"><path d="M8 5v14l11-7z"/></svg>`;
   } else {
     if (subtitleEl) subtitleEl.textContent = 'Новая сессия';
     if (titleEl) titleEl.textContent = 'Начать тренировку';
-    if (iconEl) iconEl.innerHTML = `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-white/90"><path d="M5 12h14M13 6l6 6-6 6"/></svg>`;
+    if (iconEl) iconEl.innerHTML = `<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-white/90"><path d="M5 12h14M13 6l6 6-6 6"/></svg>`;
   }
 }
 
@@ -1597,7 +1589,6 @@ function renderWeightCard(latest, logs) {
 
   weightCurrentEl.textContent = `${latest.weight_kg} кг`;
 
-  // Дельта: сравним с предыдущей записью (не с самой собой)
   if (logs.length >= 2) {
     const prev = logs[1].weight_kg;
     const delta = latest.weight_kg - prev;
@@ -1617,15 +1608,14 @@ function renderWeightCard(latest, logs) {
   renderWeightSparkline(logs);
 }
 
+// Минималистичный спарклайн: тонкая линия без заливки, акцентируем только последнюю точку
 function renderWeightSparkline(logs) {
   if (!weightSparkEl) return;
-  // Нужно минимум 2 точки
   if (!logs || logs.length < 2) {
     weightSparkEl.innerHTML = '';
     return;
   }
 
-  // Берём последние 30 записей, переворачиваем (старые → новые)
   const last = logs.slice(0, 30).reverse();
   const weights = last.map(l => l.weight_kg);
   const minW = Math.min(...weights);
@@ -1633,46 +1623,41 @@ function renderWeightSparkline(logs) {
   const range = maxW - minW || 1;
 
   const W = 280;
-  const H = 60;
-  const padding = 6;
-  const stepX = (W - padding * 2) / (weights.length - 1);
+  const H = 56;
+  const pad = 6;
+  const stepX = (W - pad * 2) / (weights.length - 1);
 
   const points = weights.map((w, i) => {
-    const x = padding + stepX * i;
-    const y = H - padding - ((w - minW) / range) * (H - padding * 2);
+    const x = pad + stepX * i;
+    const y = H - pad - ((w - minW) / range) * (H - pad * 2);
     return [x, y];
   });
 
   const linePath = points.map((p, i) => (i === 0 ? 'M' : 'L') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ');
 
-  // Заливка под линией
-  const fillPath = linePath
-    + ` L ${points[points.length - 1][0].toFixed(1)} ${H}`
-    + ` L ${points[0][0].toFixed(1)} ${H} Z`;
-
-  // Точки
-  const dots = points.map(p =>
-    `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="2" fill="#7c6cff"/>`
-  ).join('');
+  const lastPoint = points[points.length - 1];
 
   weightSparkEl.innerHTML = `
     <svg width="100%" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="display:block">
-      <defs>
-        <linearGradient id="wgrad" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stop-color="#7c6cff" stop-opacity="0.25"/>
-          <stop offset="100%" stop-color="#7c6cff" stop-opacity="0"/>
-        </linearGradient>
-      </defs>
-      <path d="${fillPath}" fill="url(#wgrad)"/>
-      <path d="${linePath}" fill="none" stroke="#7c6cff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-      ${dots}
+      <path d="${linePath}" fill="none" stroke="#7c6cff" stroke-width="1.5"
+            stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="${lastPoint[0].toFixed(1)}" cy="${lastPoint[1].toFixed(1)}" r="3" fill="#7c6cff"/>
+      <circle cx="${lastPoint[0].toFixed(1)}" cy="${lastPoint[1].toFixed(1)}" r="5.5" fill="#7c6cff" opacity="0.25"/>
     </svg>
   `;
 }
 
 function openWeightSheet() {
-  if (weightInput) weightInput.value = currentProfile?.weight_kg ?? '';
+  // ФИКС: подставляем последнюю запись из истории, а не вес из профиля
+  let prefill = '';
+  if (weightHistory && weightHistory.length > 0) {
+    prefill = weightHistory[0].weight_kg;
+  } else if (currentProfile?.weight_kg) {
+    prefill = currentProfile.weight_kg;
+  }
+  if (weightInput) weightInput.value = prefill;
   renderWeightHistory();
+
   weightSheetBackdrop.classList.remove('hidden');
   requestAnimationFrame(() => {
     weightSheetBackdrop.classList.remove('opacity-0');
@@ -1728,10 +1713,16 @@ async function saveWeight() {
       body: JSON.stringify({ weight_kg: w }),
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
     tg?.HapticFeedback?.notificationOccurred('success');
+
+    // ФИКС: синхронизируем профильный вес, чтобы ИМТ и метрики обновились сразу
+    if (currentProfile) currentProfile.weight_kg = w;
+    renderProfileMetrics(currentProfile);
+
     await loadWeight();
     renderWeightHistory();
-    if (weightInput) weightInput.value = '';
+    if (weightInput) weightInput.value = w;
   } catch (e) {
     console.error(e);
     tg?.showAlert('Не удалось записать вес');
@@ -1754,7 +1745,14 @@ async function deleteWeightLog(logId) {
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     tg?.HapticFeedback?.notificationOccurred('success');
+
     await loadWeight();
+
+    // ФИКС: пересчёт профильного веса из истории после удаления
+    if (weightHistory.length > 0 && currentProfile) {
+      currentProfile.weight_kg = weightHistory[0].weight_kg;
+      renderProfileMetrics(currentProfile);
+    }
     renderWeightHistory();
   } catch (e) {
     console.error(e);
@@ -1762,6 +1760,139 @@ async function deleteWeightLog(logId) {
   }
 }
 
+// ============ НАПОМИНАНИЯ ============
+// На бэке время в UTC. На фронте показываем в локальном часовом поясе.
+
+function utcToLocalHHMM(utcHHMM) {
+  if (!utcHHMM) return null;
+  const [h, m] = utcHHMM.split(':').map(Number);
+  const d = new Date();
+  d.setUTCHours(h, m, 0, 0);
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+}
+
+function localToUtcHHMM(localHHMM) {
+  if (!localHHMM) return null;
+  const [h, m] = localHHMM.split(':').map(Number);
+  const d = new Date();
+  d.setHours(h, m, 0, 0);
+  return `${String(d.getUTCHours()).padStart(2, '0')}:${String(d.getUTCMinutes()).padStart(2, '0')}`;
+}
+
+function renderReminderCard(p) {
+  if (!reminderToggle) return;
+  const enabled = !!p?.reminder_enabled;
+  reminderToggle.checked = enabled;
+
+  if (reminderStatusEl) {
+    if (enabled && p.reminder_time) {
+      const local = utcToLocalHHMM(p.reminder_time);
+      reminderStatusEl.textContent = `Каждый день в ${local}`;
+      reminderStatusEl.className = 'text-xs text-muted mt-1';
+    } else if (enabled) {
+      reminderStatusEl.textContent = 'Задай время напоминания';
+      reminderStatusEl.className = 'text-xs text-yellow-300/80 mt-1';
+    } else {
+      reminderStatusEl.textContent = 'Напоминания выключены';
+      reminderStatusEl.className = 'text-xs text-muted mt-1';
+    }
+  }
+
+  if (reminderOpenBtn) {
+    reminderOpenBtn.classList.toggle('hidden', !enabled);
+  }
+}
+
+function openReminderSheet() {
+  if (!currentProfile) return;
+  reminderEditTime = currentProfile.reminder_time
+    ? utcToLocalHHMM(currentProfile.reminder_time)
+    : '18:00';
+
+  if (reminderTimeInput) reminderTimeInput.value = reminderEditTime;
+  updateReminderChips();
+
+  reminderSheetBackdrop.classList.remove('hidden');
+  requestAnimationFrame(() => {
+    reminderSheetBackdrop.classList.remove('opacity-0');
+    reminderSheetPanel.classList.remove('translate-y-full');
+  });
+  tg?.HapticFeedback?.impactOccurred('light');
+}
+
+function closeReminderSheet() {
+  reminderSheetBackdrop.classList.add('opacity-0');
+  reminderSheetPanel.classList.add('translate-y-full');
+  setTimeout(() => reminderSheetBackdrop.classList.add('hidden'), 250);
+  tg?.HapticFeedback?.impactOccurred('light');
+}
+
+function updateReminderChips() {
+  document.querySelectorAll('[data-reminder-preset]').forEach(btn => {
+    const active = btn.dataset.reminderPreset === reminderEditTime;
+    btn.classList.toggle('bg-primary', active);
+    btn.classList.toggle('text-white', active);
+    btn.classList.toggle('border-primary', active);
+    btn.classList.toggle('bg-surface2', !active);
+    btn.classList.toggle('text-muted', !active);
+    btn.classList.toggle('border-white/5', !active);
+  });
+}
+
+async function saveReminder() {
+  const localTime = reminderTimeInput?.value;
+  if (!localTime || !/^\d{2}:\d{2}$/.test(localTime)) {
+    tg?.showAlert('Выбери время');
+    return;
+  }
+  const utcTime = localToUtcHHMM(localTime);
+
+  reminderSaveBtn.style.opacity = '0.6';
+  try {
+    const res = await fetch(`${API_URL}/api/me`, {
+      method: 'PATCH',
+      headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        reminder_enabled: true,
+        reminder_time: utcTime,
+      }),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    currentProfile = await res.json();
+    renderReminderCard(currentProfile);
+    closeReminderSheet();
+    tg?.HapticFeedback?.notificationOccurred('success');
+  } catch (e) {
+    console.error(e);
+    tg?.showAlert('Не удалось сохранить');
+  } finally {
+    reminderSaveBtn.style.opacity = '1';
+  }
+}
+
+async function toggleReminder(enabled) {
+  try {
+    const payload = { reminder_enabled: enabled };
+    if (enabled && !currentProfile?.reminder_time) {
+      payload.reminder_time = localToUtcHHMM('18:00');
+    }
+    const res = await fetch(`${API_URL}/api/me`, {
+      method: 'PATCH',
+      headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    currentProfile = await res.json();
+    renderReminderCard(currentProfile);
+    tg?.HapticFeedback?.notificationOccurred('success');
+  } catch (e) {
+    console.error(e);
+    renderReminderCard(currentProfile);
+    tg?.showAlert('Не удалось переключить');
+  }
+}
+
+// ============ ПРОФИЛЬ ============
 async function loadProfile() {
   if (!tg?.initData) return;
 
@@ -1810,6 +1941,7 @@ async function loadProfile() {
     if (meRes.ok) {
       currentProfile = await meRes.json();
       renderProfileMetrics(currentProfile);
+      renderReminderCard(currentProfile);
     }
 
     await loadWeight();
@@ -2010,7 +2142,6 @@ sheetCloseBtn?.addEventListener('click', closeSheet);
 sheetBackdrop?.addEventListener('click', (e) => {
   if (e.target === sheetBackdrop) closeSheet();
 });
-
 sheetCreateBtn?.addEventListener('click', openCreateExerciseSheet);
 
 // Create exercise sheet
@@ -2109,6 +2240,29 @@ weightSheetBackdrop?.addEventListener('click', (e) => {
 weightSaveBtn?.addEventListener('click', saveWeight);
 weightInput?.addEventListener('keydown', (e) => {
   if (e.key === 'Enter') saveWeight();
+});
+
+// Reminders
+reminderToggle?.addEventListener('change', (e) => {
+  toggleReminder(e.target.checked);
+});
+reminderOpenBtn?.addEventListener('click', openReminderSheet);
+reminderSheetClose?.addEventListener('click', closeReminderSheet);
+reminderSheetBackdrop?.addEventListener('click', (e) => {
+  if (e.target === reminderSheetBackdrop) closeReminderSheet();
+});
+reminderSaveBtn?.addEventListener('click', saveReminder);
+reminderTimeInput?.addEventListener('change', (e) => {
+  reminderEditTime = e.target.value;
+  updateReminderChips();
+});
+document.querySelectorAll('[data-reminder-preset]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    reminderEditTime = btn.dataset.reminderPreset;
+    if (reminderTimeInput) reminderTimeInput.value = reminderEditTime;
+    updateReminderChips();
+    tg?.HapticFeedback?.selectionChanged?.();
+  });
 });
 
 // Calendar
