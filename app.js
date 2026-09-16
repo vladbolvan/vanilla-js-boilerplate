@@ -28,6 +28,18 @@ function parseServerDate(iso) {
   return new Date(iso);
 }
 
+// ============ ФИКС КЛАВИАТУРЫ ============
+// Тап по любому месту, кроме полей ввода — скрывает клавиатуру.
+document.addEventListener('pointerdown', (e) => {
+  const active = document.activeElement;
+  if (!active) return;
+  const tag = active.tagName;
+  if (tag !== 'INPUT' && tag !== 'TEXTAREA') return;
+  if (e.target === active) return;
+  if (e.target.closest && e.target.closest('input, textarea')) return;
+  active.blur();
+}, true);
+
 // ============ DOM ============
 const screenHome = document.getElementById('screen-home');
 const screenWorkout = document.getElementById('screen-workout');
@@ -59,6 +71,16 @@ const sheetContent = document.getElementById('sheet-content');
 const sheetCloseBtn = document.getElementById('sheet-close');
 const exercisesPickerEl = document.getElementById('exercises-picker');
 const searchInput = document.getElementById('exercise-search');
+const sheetCreateBtn = document.getElementById('sheet-create-btn');
+
+// Bottom sheet (create exercise)
+const createExBackdrop = document.getElementById('create-ex-backdrop');
+const createExPanel = document.getElementById('create-ex-panel');
+const createExClose = document.getElementById('create-ex-close');
+const createExName = document.getElementById('create-ex-name');
+const createExGroup = document.getElementById('create-ex-group');
+const createExCompound = document.getElementById('create-ex-compound');
+const createExSave = document.getElementById('create-ex-save');
 
 // Bottom sheet (programs)
 const progSheetBackdrop = document.getElementById('programs-sheet-backdrop');
@@ -107,6 +129,20 @@ const profileEditPanel = document.getElementById('profile-edit-panel');
 const profileEditClose = document.getElementById('profile-edit-close');
 const profileSaveBtn = document.getElementById('profile-save-btn');
 
+// Weight section
+const weightCurrentEl = document.getElementById('weight-current');
+const weightDeltaEl = document.getElementById('weight-delta');
+const weightSparkEl = document.getElementById('weight-sparkline');
+const weightCardBtn = document.getElementById('weight-card-btn');
+
+// Weight sheet
+const weightSheetBackdrop = document.getElementById('weight-sheet-backdrop');
+const weightSheetPanel = document.getElementById('weight-sheet-panel');
+const weightSheetClose = document.getElementById('weight-sheet-close');
+const weightInput = document.getElementById('weight-input');
+const weightSaveBtn = document.getElementById('weight-save-btn');
+const weightHistoryEl = document.getElementById('weight-history');
+
 // Calendar
 const calendarTitleEl = document.getElementById('calendar-title');
 const calendarGridEl = document.getElementById('calendar-grid');
@@ -126,29 +162,25 @@ let workoutExercises = [];
 let allWorkouts = [];
 let currentProfile = null;
 
-// Редактор программы
 let editingProgram = { name: '', exercises: [] };
-
-// Sheet mode: 'workout' | 'program'
 let sheetMode = 'workout';
+let sheetReturnTo = null; // 'program-editor' — куда вернуться после создания упражнения
 
-// Profile edit
 let editGender = null;
 let editGoal = null;
 let editExperience = null;
 
-// Onboarding
 let obGender = null;
 let obGoal = null;
 let obExperience = null;
 
-// Calendar
 const calendarCache = new Map();
 let calYear = new Date().getFullYear();
 let calMonth = new Date().getMonth() + 1;
 let calSelectedDay = null;
 
-// Таймеры
+let weightHistory = [];
+
 let workoutTimerInterval = null;
 let restTimerInterval = null;
 let restHideTimeout = null;
@@ -159,6 +191,8 @@ const EXPERIENCE_LABELS = {
   intermediate: 'Средний',
   advanced: 'Опытный',
 };
+
+const MUSCLE_GROUPS = ['Грудь', 'Спина', 'Ноги', 'Плечи', 'Руки', 'Пресс', 'Кардио', 'Другое'];
 
 function authHeaders() {
   return { 'X-Init-Data': tg?.initData || '' };
@@ -182,7 +216,7 @@ function showScreen(name) {
   document.getElementById('wrap')?.scrollTo(0, 0);
 }
 
-// ============ ИМЯ В ШАПКЕ + ОНБОРДИНГ ============
+// ============ ИМЯ + ОНБОРДИНГ ============
 async function loadMe() {
   if (!tg?.initData) {
     if (userNameEl) userNameEl.textContent = 'Гость';
@@ -359,7 +393,7 @@ async function loadExercises() {
   }
 
   try {
-    const res = await fetch(`${API_URL}/api/exercises`);
+    const res = await fetch(`${API_URL}/api/exercises`, { headers: authHeaders() });
     const data = await res.json();
     allExercises = data.exercises;
     localStorage.setItem('exercises_cache', JSON.stringify(allExercises));
@@ -371,6 +405,11 @@ async function loadExercises() {
         '<p class="text-red-400 text-center py-4 text-sm">Не удалось загрузить</p>';
     }
   }
+}
+
+async function reloadExercises() {
+  localStorage.removeItem('exercises_cache');
+  await loadExercises();
 }
 
 function renderExercisesPicker(list) {
@@ -399,12 +438,15 @@ function renderExercisesPicker(list) {
   for (const [group, items] of Object.entries(groups)) {
     html += `<p class="text-xs uppercase tracking-wider text-muted mt-3 mb-2">${group}</p>`;
     for (const ex of items) {
+      const customBadge = ex.is_custom
+        ? '<span class="text-[9px] uppercase tracking-wider text-primary2/70 bg-primary/10 rounded-full px-1.5 py-0.5 ml-1.5 shrink-0">моё</span>'
+        : '';
       html += `
         <button class="exercise-pick w-full bg-surface2 hover:bg-surface active:scale-[0.98]
                        transition rounded-2xl px-4 py-3.5 text-left flex items-center justify-between gap-2
                        border border-white/5"
                 data-id="${ex.id}" data-name="${ex.name}">
-          <span class="font-medium text-sm break-words min-w-0 text-left">${ex.name}</span>
+          <span class="font-medium text-sm break-words min-w-0 text-left">${ex.name}${customBadge}</span>
           <span class="text-primary text-xl leading-none shrink-0 font-light">+</span>
         </button>
       `;
@@ -425,8 +467,9 @@ function renderExercisesPicker(list) {
 }
 
 // ============ BOTTOM SHEET (exercises) ============
-function openSheet(mode = 'workout') {
+function openSheet(mode = 'workout', returnTo = null) {
   sheetMode = mode;
+  sheetReturnTo = returnTo;
   renderExercisesPicker(allExercises);
   sheetBackdrop.classList.remove('hidden');
   requestAnimationFrame(() => {
@@ -443,9 +486,108 @@ function closeSheet() {
   tg?.HapticFeedback?.impactOccurred('light');
 }
 
+// ============ СОЗДАНИЕ СВОЕГО УПРАЖНЕНИЯ ============
+function openCreateExerciseSheet() {
+  // Закрываем шит выбора, чтобы не наслаивался
+  closeSheet();
+  setTimeout(() => {
+    createExName.value = '';
+    createExGroup.value = '';
+    createExCompound.checked = false;
+    renderMuscleGroupPicker();
+
+    createExBackdrop.classList.remove('hidden');
+    requestAnimationFrame(() => {
+      createExBackdrop.classList.remove('opacity-0');
+      createExPanel.classList.remove('translate-y-full');
+    });
+    tg?.HapticFeedback?.impactOccurred('light');
+  }, 260);
+}
+
+function closeCreateExerciseSheet() {
+  createExBackdrop.classList.add('opacity-0');
+  createExPanel.classList.add('translate-y-full');
+  setTimeout(() => createExBackdrop.classList.add('hidden'), 250);
+  tg?.HapticFeedback?.impactOccurred('light');
+}
+
+function renderMuscleGroupPicker() {
+  const container = document.getElementById('create-ex-group-chips');
+  if (!container) return;
+  container.innerHTML = MUSCLE_GROUPS.map(g => `
+    <button type="button" class="muscle-chip py-2 px-3 rounded-xl text-xs font-medium transition
+                   border bg-surface2 text-muted border-white/5"
+            data-group="${g}">${g}</button>
+  `).join('');
+
+  container.querySelectorAll('.muscle-chip').forEach(btn => {
+    btn.addEventListener('click', () => {
+      createExGroup.value = btn.dataset.group;
+      container.querySelectorAll('.muscle-chip').forEach(b => {
+        const active = b.dataset.group === btn.dataset.group;
+        b.classList.toggle('bg-primary', active);
+        b.classList.toggle('text-white', active);
+        b.classList.toggle('border-primary', active);
+        b.classList.toggle('bg-surface2', !active);
+        b.classList.toggle('text-muted', !active);
+        b.classList.toggle('border-white/5', !active);
+      });
+      tg?.HapticFeedback?.selectionChanged?.();
+    });
+  });
+}
+
+async function saveCustomExercise() {
+  const name = (createExName.value || '').trim();
+  const group = (createExGroup.value || '').trim();
+  const isCompound = !!createExCompound.checked;
+
+  if (!name || name.length > 128) { tg?.showAlert('Введи название (до 128 символов)'); return; }
+  if (!group) { tg?.showAlert('Выбери группу мышц'); return; }
+
+  createExSave.style.opacity = '0.6';
+  try {
+    const res = await fetch(`${API_URL}/api/exercises`, {
+      method: 'POST',
+      headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name,
+        muscle_group: group,
+        is_compound: isCompound,
+      }),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const created = await res.json();
+
+    // Обновляем локальный кеш — добавляем новое
+    allExercises.push(created);
+    allExercises.sort((a, b) => a.name.localeCompare(b.name, 'ru'));
+    localStorage.setItem('exercises_cache', JSON.stringify(allExercises));
+
+    closeCreateExerciseSheet();
+    tg?.HapticFeedback?.notificationOccurred('success');
+
+    // Сразу возвращаемся в шит выбора с обновлённым списком
+    setTimeout(() => {
+      renderExercisesPicker(allExercises);
+      if (sheetMode === 'program') {
+        // Вернёмся в редактор программы, шит откроем снова
+        openSheet('program', 'program-editor');
+      } else {
+        openSheet('workout');
+      }
+    }, 300);
+  } catch (e) {
+    console.error(e);
+    tg?.showAlert('Не удалось создать упражнение');
+  } finally {
+    createExSave.style.opacity = '1';
+  }
+}
+
 // ============ BOTTOM SHEET (programs) ============
 async function openProgramsSheet() {
-  // Если есть активная тренировка — просто открываем её
   if (currentWorkoutId) {
     showScreen('workout');
     return;
@@ -458,7 +600,6 @@ async function openProgramsSheet() {
   });
   tg?.HapticFeedback?.impactOccurred('light');
 
-  // Загружаем программы
   progListEl.innerHTML = '<p class="text-muted text-center py-4 text-sm">Загрузка...</p>';
   await loadPrograms();
   renderProgramsList();
@@ -489,7 +630,6 @@ function renderProgramsList() {
 
   let html = '';
 
-  // Шаблоны
   if (templates.length > 0) {
     html += '<p class="text-[10px] uppercase tracking-wider text-muted mb-2">Программы для тебя</p>';
     for (const p of templates) {
@@ -510,7 +650,6 @@ function renderProgramsList() {
     }
   }
 
-  // Свои
   if (mine.length > 0) {
     html += '<p class="text-[10px] uppercase tracking-wider text-muted mt-4 mb-2">Мои программы</p>';
     for (const p of mine) {
@@ -584,7 +723,6 @@ async function startWorkoutFromProgram(programId) {
     updateWorkoutUI();
     showScreen('workout');
 
-    // Подтянем прошлые веса для каждого упражнения
     for (const we of workoutExercises) {
       fillLastSet(we.id);
     }
@@ -1432,6 +1570,198 @@ function renderProfileMetrics(p) {
   if (pmCaloriesEl) pmCaloriesEl.textContent = cal ? `${cal} ккал` : '—';
 }
 
+// ============ ВЕС ============
+async function loadWeight() {
+  if (!tg?.initData) return;
+  try {
+    const res = await fetch(`${API_URL}/api/weight`, { headers: authHeaders() });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    weightHistory = data.logs || [];
+    renderWeightCard(data.latest, weightHistory);
+  } catch (e) {
+    console.error('loadWeight', e);
+    renderWeightCard(null, []);
+  }
+}
+
+function renderWeightCard(latest, logs) {
+  if (!weightCurrentEl) return;
+
+  if (!latest) {
+    weightCurrentEl.textContent = '—';
+    if (weightDeltaEl) weightDeltaEl.textContent = '';
+    if (weightSparkEl) weightSparkEl.innerHTML = '';
+    return;
+  }
+
+  weightCurrentEl.textContent = `${latest.weight_kg} кг`;
+
+  // Дельта: сравним с предыдущей записью (не с самой собой)
+  if (logs.length >= 2) {
+    const prev = logs[1].weight_kg;
+    const delta = latest.weight_kg - prev;
+    const sign = delta > 0 ? '+' : '';
+    const cls = delta > 0 ? 'text-orange-400' : (delta < 0 ? 'text-green-400' : 'text-muted');
+    if (weightDeltaEl) {
+      weightDeltaEl.className = `text-xs font-medium ${cls} ml-2`;
+      weightDeltaEl.textContent = `${sign}${delta.toFixed(1)} кг`;
+    }
+  } else {
+    if (weightDeltaEl) {
+      weightDeltaEl.textContent = '';
+      weightDeltaEl.className = 'text-xs';
+    }
+  }
+
+  renderWeightSparkline(logs);
+}
+
+function renderWeightSparkline(logs) {
+  if (!weightSparkEl) return;
+  // Нужно минимум 2 точки
+  if (!logs || logs.length < 2) {
+    weightSparkEl.innerHTML = '';
+    return;
+  }
+
+  // Берём последние 30 записей, переворачиваем (старые → новые)
+  const last = logs.slice(0, 30).reverse();
+  const weights = last.map(l => l.weight_kg);
+  const minW = Math.min(...weights);
+  const maxW = Math.max(...weights);
+  const range = maxW - minW || 1;
+
+  const W = 280;
+  const H = 60;
+  const padding = 6;
+  const stepX = (W - padding * 2) / (weights.length - 1);
+
+  const points = weights.map((w, i) => {
+    const x = padding + stepX * i;
+    const y = H - padding - ((w - minW) / range) * (H - padding * 2);
+    return [x, y];
+  });
+
+  const linePath = points.map((p, i) => (i === 0 ? 'M' : 'L') + p[0].toFixed(1) + ' ' + p[1].toFixed(1)).join(' ');
+
+  // Заливка под линией
+  const fillPath = linePath
+    + ` L ${points[points.length - 1][0].toFixed(1)} ${H}`
+    + ` L ${points[0][0].toFixed(1)} ${H} Z`;
+
+  // Точки
+  const dots = points.map(p =>
+    `<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="2" fill="#7c6cff"/>`
+  ).join('');
+
+  weightSparkEl.innerHTML = `
+    <svg width="100%" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none" style="display:block">
+      <defs>
+        <linearGradient id="wgrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#7c6cff" stop-opacity="0.25"/>
+          <stop offset="100%" stop-color="#7c6cff" stop-opacity="0"/>
+        </linearGradient>
+      </defs>
+      <path d="${fillPath}" fill="url(#wgrad)"/>
+      <path d="${linePath}" fill="none" stroke="#7c6cff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+      ${dots}
+    </svg>
+  `;
+}
+
+function openWeightSheet() {
+  if (weightInput) weightInput.value = currentProfile?.weight_kg ?? '';
+  renderWeightHistory();
+  weightSheetBackdrop.classList.remove('hidden');
+  requestAnimationFrame(() => {
+    weightSheetBackdrop.classList.remove('opacity-0');
+    weightSheetPanel.classList.remove('translate-y-full');
+  });
+  tg?.HapticFeedback?.impactOccurred('light');
+}
+
+function closeWeightSheet() {
+  weightSheetBackdrop.classList.add('opacity-0');
+  weightSheetPanel.classList.add('translate-y-full');
+  setTimeout(() => weightSheetBackdrop.classList.add('hidden'), 250);
+  tg?.HapticFeedback?.impactOccurred('light');
+}
+
+function renderWeightHistory() {
+  if (!weightHistoryEl) return;
+  if (!weightHistory || weightHistory.length === 0) {
+    weightHistoryEl.innerHTML = '<p class="text-muted text-center text-sm py-3">Пока нет записей</p>';
+    return;
+  }
+  weightHistoryEl.innerHTML = weightHistory.slice(0, 12).map(l => {
+    const d = parseServerDate(l.recorded_at);
+    const dStr = d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: '2-digit' });
+    const tStr = d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+    return `
+      <div class="weight-row flex items-center gap-2 text-sm py-2 border-b border-white/5 last:border-0">
+        <div class="flex-1 min-w-0">
+          <p class="font-medium">${l.weight_kg} кг</p>
+          <p class="text-xs text-muted mt-0.5">${dStr} · ${tStr}</p>
+        </div>
+        <button class="delete-weight text-muted hover:text-red-400 p-1.5 -mr-1 shrink-0" data-id="${l.id}">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+    `;
+  }).join('');
+
+  weightHistoryEl.querySelectorAll('.delete-weight').forEach(btn => {
+    btn.addEventListener('click', () => deleteWeightLog(parseInt(btn.dataset.id)));
+  });
+}
+
+async function saveWeight() {
+  const w = parseFloat(weightInput?.value);
+  if (isNaN(w) || w < 20 || w > 400) { tg?.showAlert('Введи вес (20–400 кг)'); return; }
+
+  weightSaveBtn.style.opacity = '0.6';
+  try {
+    const res = await fetch(`${API_URL}/api/weight`, {
+      method: 'POST',
+      headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ weight_kg: w }),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    tg?.HapticFeedback?.notificationOccurred('success');
+    await loadWeight();
+    renderWeightHistory();
+    if (weightInput) weightInput.value = '';
+  } catch (e) {
+    console.error(e);
+    tg?.showAlert('Не удалось записать вес');
+  } finally {
+    weightSaveBtn.style.opacity = '1';
+  }
+}
+
+async function deleteWeightLog(logId) {
+  const ok = await new Promise(resolve => {
+    if (tg?.showConfirm) tg.showConfirm('Удалить запись?', (yes) => resolve(yes));
+    else resolve(confirm('Удалить запись?'));
+  });
+  if (!ok) return;
+
+  try {
+    const res = await fetch(`${API_URL}/api/weight/${logId}`, {
+      method: 'DELETE',
+      headers: authHeaders(),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    tg?.HapticFeedback?.notificationOccurred('success');
+    await loadWeight();
+    renderWeightHistory();
+  } catch (e) {
+    console.error(e);
+    tg?.showAlert('Не удалось удалить');
+  }
+}
+
 async function loadProfile() {
   if (!tg?.initData) return;
 
@@ -1481,6 +1811,8 @@ async function loadProfile() {
       currentProfile = await meRes.json();
       renderProfileMetrics(currentProfile);
     }
+
+    await loadWeight();
   } catch (e) {
     console.error(e);
     statStreakEl.textContent = '?';
@@ -1655,13 +1987,11 @@ startWorkoutBtn?.addEventListener('click', async () => {
   tg?.HapticFeedback?.impactOccurred('medium');
 
   if (currentWorkoutId) {
-    // Продолжаем активную
     showScreen('workout');
     renderWorkoutExercises();
     updateWorkoutUI();
     return;
   }
-  // Открываем шторку выбора программы
   openProgramsSheet();
 });
 
@@ -1680,6 +2010,15 @@ sheetCloseBtn?.addEventListener('click', closeSheet);
 sheetBackdrop?.addEventListener('click', (e) => {
   if (e.target === sheetBackdrop) closeSheet();
 });
+
+sheetCreateBtn?.addEventListener('click', openCreateExerciseSheet);
+
+// Create exercise sheet
+createExClose?.addEventListener('click', closeCreateExerciseSheet);
+createExBackdrop?.addEventListener('click', (e) => {
+  if (e.target === createExBackdrop) closeCreateExerciseSheet();
+});
+createExSave?.addEventListener('click', saveCustomExercise);
 
 // Program sheet
 progSheetClose?.addEventListener('click', closeProgramsSheet);
@@ -1706,7 +2045,7 @@ searchInput?.addEventListener('input', (e) => {
   renderExercisesPicker(filtered);
 });
 
-// Onboarding events
+// Onboarding
 obSaveBtn?.addEventListener('click', saveOnboarding);
 
 document.querySelectorAll('[data-ob-gender]').forEach(btn => {
@@ -1731,7 +2070,7 @@ document.querySelectorAll('[data-ob-exp]').forEach(btn => {
   });
 });
 
-// Profile edit events
+// Profile edit
 profileEditBtn?.addEventListener('click', openProfileEdit);
 profileEditClose?.addEventListener('click', closeProfileEdit);
 profileEditBackdrop?.addEventListener('click', (e) => {
@@ -1761,7 +2100,18 @@ document.querySelectorAll('[data-experience]').forEach(btn => {
   });
 });
 
-// Calendar navigation
+// Weight
+weightCardBtn?.addEventListener('click', openWeightSheet);
+weightSheetClose?.addEventListener('click', closeWeightSheet);
+weightSheetBackdrop?.addEventListener('click', (e) => {
+  if (e.target === weightSheetBackdrop) closeWeightSheet();
+});
+weightSaveBtn?.addEventListener('click', saveWeight);
+weightInput?.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') saveWeight();
+});
+
+// Calendar
 calendarPrevBtn?.addEventListener('click', () => {
   let y = calYear, m = calMonth - 1;
   if (m < 1) { m = 12; y -= 1; }
