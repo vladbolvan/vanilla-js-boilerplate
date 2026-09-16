@@ -35,6 +35,7 @@ const screenHistory = document.getElementById('screen-history');
 const screenWorkoutDetail = document.getElementById('screen-workout-detail');
 const screenProfile = document.getElementById('screen-profile');
 const screenRecords = document.getElementById('screen-records');
+const screenCalendar = document.getElementById('screen-calendar');
 
 const userNameEl = document.getElementById('user-name');
 const recentListEl = document.getElementById('recent-list');
@@ -88,6 +89,12 @@ const profileEditPanel = document.getElementById('profile-edit-panel');
 const profileEditClose = document.getElementById('profile-edit-close');
 const profileSaveBtn = document.getElementById('profile-save-btn');
 
+// Calendar
+const calendarTitleEl = document.getElementById('calendar-title');
+const calendarGridEl = document.getElementById('calendar-grid');
+const calendarPrevBtn = document.getElementById('calendar-prev');
+const calendarNextBtn = document.getElementById('calendar-next');
+
 // ============ STATE ============
 let allExercises = [];
 let currentWorkoutId = null;
@@ -96,9 +103,13 @@ let workoutExercises = [];
 let allWorkouts = [];
 let currentProfile = null;
 
-// Profile edit temp state (заполняется при открытии sheet)
 let editGender = null;
 let editGoal = null;
+
+// Calendar
+const calendarCache = new Map(); // "YYYY-MM" -> days[]
+let calYear = new Date().getFullYear();
+let calMonth = new Date().getMonth() + 1;
 
 // Таймеры
 let workoutTimerInterval = null;
@@ -118,6 +129,7 @@ function showScreen(name) {
   screenWorkoutDetail.classList.toggle('hidden-screen', name !== 'workout-detail');
   screenProfile.classList.toggle('hidden-screen', name !== 'profile');
   screenRecords.classList.toggle('hidden-screen', name !== 'records');
+  if (screenCalendar) screenCalendar.classList.toggle('hidden-screen', name !== 'calendar');
 
   document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
   document.getElementById('nav-' + name)?.classList.add('active');
@@ -149,6 +161,7 @@ async function loadRecentWorkouts() {
     const res = await fetch(`${API_URL}/api/workouts`, { headers: authHeaders() });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
+    allWorkouts = data.workouts;
     renderRecent(data.workouts);
   } catch (e) {
     console.error('loadRecentWorkouts', e);
@@ -449,6 +462,13 @@ async function fillLastSet(exerciseId) {
     const repsInput = card.querySelector('.set-reps');
     if (weightInput && data.weight != null) weightInput.value = data.weight;
     if (repsInput && data.reps != null) repsInput.value = data.reps;
+
+    // Показать подсказку о прошлом весе
+    const hint = card.querySelector('.last-set-hint');
+    if (hint && data.weight != null && data.reps != null) {
+      hint.textContent = `Прошлый раз: ${data.weight} кг × ${data.reps}`;
+      hint.classList.remove('hidden');
+    }
   } catch (e) {
     console.error('fillLastSet', e);
   }
@@ -476,11 +496,13 @@ function renderWorkoutExercises() {
 
   workoutExercisesEl.innerHTML = workoutExercises.map(ex => `
     <div class="bg-surface rounded-2xl p-4 overflow-hidden border border-white/5 card-shadow" data-ex-id="${ex.id}">
-      <div class="flex items-start justify-between gap-2 mb-3">
+      <div class="flex items-start justify-between gap-2 mb-2">
         <p class="font-semibold break-words min-w-0 flex-1">${ex.name}</p>
         <button class="remove-ex text-muted text-xs hover:text-red-400 shrink-0"
                 data-ex-id="${ex.id}">удалить</button>
       </div>
+
+      <p class="last-set-hint hidden text-xs text-muted mb-2"></p>
 
       <div class="sets-container space-y-1.5 mb-3" data-ex-id="${ex.id}"></div>
 
@@ -596,6 +618,8 @@ async function addSetInline(exerciseId) {
     renderSetsForExercise(exerciseId, we.sets);
 
     startRestTimer();
+    // Инвалидируем календарь текущего месяца, чтобы новые данные подтянулись
+    calendarCache.clear();
   } catch (e) {
     console.error(e);
     we.sets = we.sets.filter(s => s.id !== tempId);
@@ -624,6 +648,7 @@ async function finishWorkout() {
     stopWorkoutTimer();
     stopRestTimer();
     updateStartButton();
+    calendarCache.clear();
     await loadRecentWorkouts();
     showScreen('home');
   } catch (e) {
@@ -683,7 +708,10 @@ function renderHistory(workouts) {
 
 function openWorkoutDetail(workoutId) {
   const workout = allWorkouts.find(w => w.id === workoutId);
-  if (!workout) return;
+  if (!workout) {
+    tg?.showAlert('Тренировка не найдена');
+    return;
+  }
   tg?.HapticFeedback?.impactOccurred('light');
 
   const date = parseServerDate(workout.finished_at || workout.started_at);
@@ -712,6 +740,103 @@ function openWorkoutDetail(workoutId) {
   showScreen('workout-detail');
 }
 
+// ============ КАЛЕНДАРЬ ============
+const MONTH_NAMES = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+const WEEKDAYS = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'];
+
+async function loadCalendarMonth(year, month) {
+  const key = `${year}-${month}`;
+  if (calendarCache.has(key)) return calendarCache.get(key);
+
+  const res = await fetch(
+    `${API_URL}/api/workouts/calendar?year=${year}&month=${month}`,
+    { headers: authHeaders() }
+  );
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  const data = await res.json();
+  calendarCache.set(key, data.days || []);
+  return data.days || [];
+}
+
+async function renderCalendar(year, month) {
+  calYear = year;
+  calMonth = month;
+
+  if (calendarTitleEl) {
+    calendarTitleEl.textContent = `${MONTH_NAMES[month - 1]} ${year}`;
+  }
+
+  calendarGridEl.innerHTML = '<p class="col-span-7 text-muted text-center py-4 text-sm">Загрузка...</p>';
+
+  let days = [];
+  try {
+    days = await loadCalendarMonth(year, month);
+  } catch (e) {
+    console.error('calendar', e);
+    calendarGridEl.innerHTML = '<p class="col-span-7 text-red-400 text-center py-4 text-sm">Ошибка загрузки</p>';
+    return;
+  }
+
+  const dayMap = new Map();
+  days.forEach(d => dayMap.set(d.day, d));
+
+  const firstDay = new Date(year, month - 1, 1).getDay(); // 0=Sunday
+  const offset = (firstDay + 6) % 7; // Monday-start
+  const daysInMonth = new Date(year, month, 0).getDate();
+  const today = new Date();
+  const isCurrentMonth = today.getFullYear() === year && (today.getMonth() + 1) === month;
+  const todayDate = today.getDate();
+
+  let html = WEEKDAYS.map(w =>
+    `<div class="text-center text-[10px] uppercase tracking-wider text-muted py-2">${w}</div>`
+  ).join('');
+
+  for (let i = 0; i < offset; i++) html += '<div></div>';
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const info = dayMap.get(d);
+    const isToday = isCurrentMonth && d === todayDate;
+    const hasWorkout = !!info;
+
+    const baseCls = 'aspect-square rounded-xl flex items-center justify-center text-sm transition relative';
+    const stateCls = hasWorkout
+      ? 'bg-primary/15 text-white font-semibold active:scale-95 cursor-pointer'
+      : 'text-muted/70';
+    const ringCls = isToday ? 'ring-1 ring-primary/60' : '';
+    const dataAttr = hasWorkout ? `data-workout-id="${info.workout_id}"` : '';
+
+    html += `
+      <div class="${baseCls} ${stateCls} ${ringCls}" ${dataAttr}>
+        <span>${d}</span>
+        ${hasWorkout ? '<span class="absolute bottom-1.5 w-1 h-1 rounded-full bg-primary"></span>' : ''}
+      </div>
+    `;
+  }
+
+  calendarGridEl.innerHTML = html;
+
+  calendarGridEl.querySelectorAll('[data-workout-id]').forEach(el => {
+    el.addEventListener('click', async () => {
+      const wid = parseInt(el.dataset.workoutId);
+      tg?.HapticFeedback?.impactOccurred('light');
+      await ensureWorkoutsLoaded();
+      openWorkoutDetail(wid);
+    });
+  });
+}
+
+async function ensureWorkoutsLoaded() {
+  if (allWorkouts.length > 0) return;
+  try {
+    const res = await fetch(`${API_URL}/api/workouts`, { headers: authHeaders() });
+    if (!res.ok) return;
+    const data = await res.json();
+    allWorkouts = data.workouts;
+  } catch (e) {
+    console.error(e);
+  }
+}
+
 // ============ ПРОФИЛЬ ============
 function calcBMI(weight, height) {
   if (!weight || !height) return null;
@@ -726,7 +851,6 @@ function bmiLabel(bmi) {
   return { text: 'Ожирение', color: 'text-red-400' };
 }
 
-// Миффлин-Сан Жеор (BMR) × 1.375 (лёгкая активность 3-4 раза в неделю)
 function calcCalories(weight, height, age, gender, goal) {
   if (!weight || !height || !age || !gender) return null;
   const base = 10 * weight + 6.25 * height - 5 * age;
@@ -887,7 +1011,6 @@ async function saveProfile() {
   const h = parseInt(document.getElementById('input-height').value);
   const a = parseInt(document.getElementById('input-age').value);
 
-  // Валидация перед отправкой
   if (!isNaN(w) && (w < 20 || w > 400)) { tg?.showAlert('Вес должен быть 20–400 кг'); return; }
   if (!isNaN(h) && (h < 100 || h > 250)) { tg?.showAlert('Рост должен быть 100–250 см'); return; }
   if (!isNaN(a) && (a < 10 || a > 100)) { tg?.showAlert('Возраст 10–100 лет'); return; }
@@ -1030,7 +1153,6 @@ profileEditBackdrop?.addEventListener('click', (e) => {
 });
 profileSaveBtn?.addEventListener('click', saveProfile);
 
-// Gender / goal select
 document.querySelectorAll('[data-gender]').forEach(btn => {
   btn.addEventListener('click', () => {
     editGender = btn.dataset.gender;
@@ -1046,6 +1168,21 @@ document.querySelectorAll('[data-goal]').forEach(btn => {
   });
 });
 
+// Calendar navigation
+calendarPrevBtn?.addEventListener('click', () => {
+  let y = calYear, m = calMonth - 1;
+  if (m < 1) { m = 12; y -= 1; }
+  tg?.HapticFeedback?.impactOccurred('light');
+  renderCalendar(y, m);
+});
+
+calendarNextBtn?.addEventListener('click', () => {
+  let y = calYear, m = calMonth + 1;
+  if (m > 12) { m = 1; y += 1; }
+  tg?.HapticFeedback?.impactOccurred('light');
+  renderCalendar(y, m);
+});
+
 // Navigation
 document.getElementById('nav-home')?.addEventListener('click', () => {
   tg?.HapticFeedback?.impactOccurred('light');
@@ -1057,6 +1194,12 @@ document.getElementById('nav-history')?.addEventListener('click', () => {
   tg?.HapticFeedback?.impactOccurred('light');
   showScreen('history');
   loadHistory();
+});
+
+document.getElementById('nav-calendar')?.addEventListener('click', () => {
+  tg?.HapticFeedback?.impactOccurred('light');
+  showScreen('calendar');
+  renderCalendar(calYear, calMonth);
 });
 
 document.getElementById('nav-profile')?.addEventListener('click', () => {
