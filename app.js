@@ -28,17 +28,32 @@ const screenRecords = document.getElementById('screen-records');
 
 const userNameEl = document.getElementById('user-name');
 const recentListEl = document.getElementById('recent-list');
-const exercisesPickerEl = document.getElementById('exercises-picker');
 const workoutExercisesEl = document.getElementById('workout-exercises');
 const workoutHeaderEl = document.getElementById('workout-header');
 const workoutDividerEl = document.getElementById('workout-divider');
+const workoutEmptyEl = document.getElementById('workout-empty');
 const finishWorkoutBtn = document.getElementById('finish-workout');
-const searchInput = document.getElementById('exercise-search');
+const workoutTimerEl = document.getElementById('workout-timer');
+const addExerciseBtn = document.getElementById('add-exercise-btn');
 const historyListEl = document.getElementById('history-list');
 const detailContentEl = document.getElementById('detail-content');
 const detailTitleEl = document.getElementById('detail-title');
 const startWorkoutBtn = document.getElementById('start-workout');
 
+// Bottom sheet
+const sheetBackdrop = document.getElementById('sheet-backdrop');
+const sheetContent = document.getElementById('sheet-content');
+const sheetCloseBtn = document.getElementById('sheet-close');
+const exercisesPickerEl = document.getElementById('exercises-picker');
+const searchInput = document.getElementById('exercise-search');
+
+// Rest timer
+const restTimerEl = document.getElementById('rest-timer');
+const restProgressEl = document.getElementById('rest-progress');
+const restTimeEl = document.getElementById('rest-time');
+const restSkipBtn = document.getElementById('rest-skip');
+
+// Profile
 const profileNameEl = document.getElementById('profile-name');
 const profileUsernameEl = document.getElementById('profile-username');
 const statStreakEl = document.getElementById('stat-streak');
@@ -51,8 +66,14 @@ const recordsListEl = document.getElementById('records-list');
 // ============ STATE ============
 let allExercises = [];
 let currentWorkoutId = null;
+let currentWorkoutStartedAt = null;
 let workoutExercises = [];
 let allWorkouts = [];
+
+// Таймеры
+let workoutTimerInterval = null;
+let restTimerInterval = null;
+const REST_DURATION = 120; // секунд
 
 function authHeaders() {
   return { 'X-Init-Data': tg?.initData || '' };
@@ -196,8 +217,109 @@ function renderExercisesPicker(list) {
   exercisesPickerEl.innerHTML = html;
 
   exercisesPickerEl.querySelectorAll('.exercise-pick').forEach(btn => {
-    btn.addEventListener('click', () => addExerciseToWorkout(parseInt(btn.dataset.id), btn.dataset.name));
+    btn.addEventListener('click', () => {
+      addExerciseToWorkout(parseInt(btn.dataset.id), btn.dataset.name);
+      closeSheet();
+    });
   });
+}
+
+// ============ BOTTOM SHEET ============
+function openSheet() {
+  sheetBackdrop.classList.remove('hidden');
+  requestAnimationFrame(() => {
+    sheetBackdrop.classList.remove('opacity-0');
+    sheetContent.classList.remove('translate-y-full');
+  });
+  tg?.HapticFeedback?.impactOccurred('light');
+}
+
+function closeSheet() {
+  sheetBackdrop.classList.add('opacity-0');
+  sheetContent.classList.add('translate-y-full');
+  setTimeout(() => sheetBackdrop.classList.add('hidden'), 250);
+  tg?.HapticFeedback?.impactOccurred('light');
+}
+
+// ============ ТАЙМЕР ТРЕНИРОВКИ ============
+function startWorkoutTimer(startedAtISO) {
+  stopWorkoutTimer();
+  if (!startedAtISO) {
+    if (workoutTimerEl) workoutTimerEl.textContent = '';
+    return;
+  }
+  currentWorkoutStartedAt = new Date(startedAtISO);
+  tickWorkoutTimer();
+  workoutTimerInterval = setInterval(tickWorkoutTimer, 1000);
+}
+
+function stopWorkoutTimer() {
+  if (workoutTimerInterval) {
+    clearInterval(workoutTimerInterval);
+    workoutTimerInterval = null;
+  }
+  currentWorkoutStartedAt = null;
+  if (workoutTimerEl) workoutTimerEl.textContent = '';
+}
+
+function tickWorkoutTimer() {
+  if (!currentWorkoutStartedAt || !workoutTimerEl) return;
+  const elapsed = Math.floor((Date.now() - currentWorkoutStartedAt.getTime()) / 1000);
+  workoutTimerEl.textContent = formatDuration(elapsed);
+}
+
+function formatDuration(sec) {
+  const h = Math.floor(sec / 3600);
+  const m = Math.floor((sec % 3600) / 60);
+  const s = sec % 60;
+  if (h > 0) {
+    return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  }
+  return `${m}:${String(s).padStart(2, '0')}`;
+}
+
+// ============ ТАЙМЕР ОТДЫХА ============
+function startRestTimer() {
+  stopRestTimer();
+  let remaining = REST_DURATION;
+
+  restTimerEl.classList.remove('hidden');
+  requestAnimationFrame(() => {
+    restTimerEl.classList.remove('translate-y-full');
+  });
+
+  updateRestUI(remaining);
+
+  restTimerInterval = setInterval(() => {
+    remaining -= 1;
+    if (remaining <= 0) {
+      stopRestTimer(true);
+      return;
+    }
+    updateRestUI(remaining);
+  }, 1000);
+}
+
+function updateRestUI(remaining) {
+  if (restTimeEl) restTimeEl.textContent = formatDuration(remaining);
+  if (restProgressEl) {
+    const pct = (remaining / REST_DURATION) * 100;
+    restProgressEl.style.width = pct + '%';
+  }
+}
+
+function stopRestTimer(notify = false) {
+  if (restTimerInterval) {
+    clearInterval(restTimerInterval);
+    restTimerInterval = null;
+  }
+  if (restTimerEl) {
+    restTimerEl.classList.add('translate-y-full');
+    setTimeout(() => restTimerEl.classList.add('hidden'), 250);
+  }
+  if (notify) {
+    tg?.HapticFeedback?.notificationOccurred('success');
+  }
 }
 
 // ============ ТРЕНИРОВКА ============
@@ -210,6 +332,7 @@ async function startWorkout() {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     currentWorkoutId = data.workout_id;
+    startWorkoutTimer(data.started_at);
   } catch (e) {
     console.error(e);
     tg?.showAlert('Не удалось начать тренировку');
@@ -224,6 +347,8 @@ async function loadActiveWorkout() {
     const data = await res.json();
     if (data.active) {
       currentWorkoutId = data.active.id;
+      startWorkoutTimer(data.active.started_at);
+
       const map = {};
       for (const s of data.active.sets) {
         if (!map[s.exercise_id]) {
@@ -266,16 +391,40 @@ function updateStartButton() {
 function addExerciseToWorkout(id, name) {
   tg?.HapticFeedback?.impactOccurred('light');
   if (workoutExercises.some(e => e.id === id)) return;
-  workoutExercises.push({ id, name, sets: [] });
+  workoutExercises.push({ id, name, sets: [], lastWeight: null, lastReps: null });
   renderWorkoutExercises();
-  renderExercisesPicker(allExercises);
   updateWorkoutUI();
+  // Подтягиваем прошлые веса
+  fillLastSet(id);
+}
+
+async function fillLastSet(exerciseId) {
+  try {
+    const res = await fetch(`${API_URL}/api/exercises/${exerciseId}/last-set`, {
+      headers: authHeaders(),
+    });
+    if (!res.ok) return;
+    const data = await res.json();
+    const we = workoutExercises.find(e => e.id === exerciseId);
+    if (!we) return;
+    we.lastWeight = data.weight;
+    we.lastReps = data.reps;
+
+    // Найти карточку и заполнить inputs
+    const card = workoutExercisesEl.querySelector(`[data-ex-id="${exerciseId}"]`);
+    if (!card) return;
+    const weightInput = card.querySelector('.set-weight');
+    const repsInput = card.querySelector('.set-reps');
+    if (weightInput && data.weight != null) weightInput.value = data.weight;
+    if (repsInput && data.reps != null) repsInput.value = data.reps;
+  } catch (e) {
+    console.error('fillLastSet', e);
+  }
 }
 
 function removeExerciseFromWorkout(id) {
   workoutExercises = workoutExercises.filter(e => e.id !== id);
   renderWorkoutExercises();
-  renderExercisesPicker(allExercises);
   updateWorkoutUI();
 }
 
@@ -284,6 +433,7 @@ function updateWorkoutUI() {
   workoutHeaderEl.classList.toggle('hidden', !has);
   workoutDividerEl.classList.toggle('hidden', !has);
   finishWorkoutBtn.classList.toggle('hidden', !has);
+  if (workoutEmptyEl) workoutEmptyEl.classList.toggle('hidden', has);
 }
 
 function renderWorkoutExercises() {
@@ -383,9 +533,9 @@ async function addSetInline(exerciseId) {
 
   renderSetsForExercise(exerciseId, we.sets);
 
-  weightInput.value = '';
-  repsInput.value = '';
-  weightInput.focus();
+  // НЕ очищаем значения — оставляем для следующего подхода
+  // Но убираем фокус с reps (пользователь уже нажал +)
+  repsInput.blur();
   tg?.HapticFeedback?.notificationOccurred('success');
 
   if (!currentWorkoutId) {
@@ -415,9 +565,11 @@ async function addSetInline(exerciseId) {
     if (idx !== -1) we.sets[idx] = realSet;
     renderSetsForExercise(exerciseId, we.sets);
 
+    // Запускаем таймер отдыха
+    startRestTimer();
+
     if (realSet.record) {
       const r = realSet.record;
-      tg?.HapticFeedback?.notificationOccurred('success');
       setTimeout(() => {
         if (r.is_first) {
           tg?.showAlert(
@@ -428,7 +580,7 @@ async function addSetInline(exerciseId) {
             `🎉 Новый рекорд!\n\n${r.exercise_name}\n${r.weight} кг × ${r.reps}\n+${r.improvement} кг к 1RM`
           );
         }
-      }, 250);
+      }, 350);
     }
   } catch (e) {
     console.error(e);
@@ -455,6 +607,8 @@ async function finishWorkout() {
     tg?.HapticFeedback?.notificationOccurred('success');
     currentWorkoutId = null;
     workoutExercises = [];
+    stopWorkoutTimer();
+    stopRestTimer();
     updateStartButton();
     await loadRecentWorkouts();
     showScreen('home');
@@ -669,6 +823,20 @@ document.getElementById('workout-back')?.addEventListener('click', () => {
 });
 
 finishWorkoutBtn?.addEventListener('click', finishWorkout);
+
+addExerciseBtn?.addEventListener('click', () => {
+  renderExercisesPicker(allExercises);
+  openSheet();
+});
+
+sheetCloseBtn?.addEventListener('click', closeSheet);
+sheetBackdrop?.addEventListener('click', (e) => {
+  if (e.target === sheetBackdrop) closeSheet();
+});
+
+restSkipBtn?.addEventListener('click', () => {
+  stopRestTimer(true);
+});
 
 searchInput?.addEventListener('input', (e) => {
   const q = e.target.value.trim().toLowerCase();
