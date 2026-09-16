@@ -199,8 +199,7 @@
           <h1 class="text-2xl font-bold tracking-tight">Календарь</h1>
         </header>
 
-        <div class="bg-surface rounded-3xl p-5 border border-white/5 card-shadow mb-5">
-          <!-- Месяц + стрелки -->
+        <div class="bg-surface rounded-3xl p-5 border border-white/5 card-shadow mb-4">
           <div class="flex items-center justify-between mb-5">
             <button id="calendar-prev" class="text-muted p-2 -ml-2 active:opacity-60">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
@@ -211,9 +210,12 @@
             </button>
           </div>
 
-          <!-- Сетка -->
           <div id="calendar-grid" class="grid grid-cols-7 gap-1"></div>
         </div>
+
+        <!-- Список тренировок для выбранного дня (если их 2+) -->
+        <div id="calendar-day-list"
+             class="hidden bg-surface rounded-2xl p-4 border border-white/5 card-shadow mb-4"></div>
 
         <p class="text-xs text-muted/60 text-center">
           Дни с тренировками подсвечены
