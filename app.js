@@ -887,19 +887,44 @@ async function loadActiveWorkout() {
     if (data.active) {
       currentWorkoutId = data.active.id;
       startWorkoutTimer(data.active.started_at);
+
+      // Собираем подходы по упражнению
       const map = {};
       for (const s of data.active.sets) {
         if (!map[s.exercise_id]) map[s.exercise_id] = { id: s.exercise_id, name: '', sets: [] };
         map[s.exercise_id].sets.push(s);
       }
-      workoutExercises = Object.values(map);
-      for (const we of workoutExercises) {
-        const found = allExercises.find(ex => ex.id === we.id);
-        if (found) we.name = found.name;
+
+      // Добавляем упражнения из плана (даже пустые — без подходов)
+      const plan = data.active.plan || [];
+      for (const p of plan) {
+        if (!map[p.exercise_id]) {
+          map[p.exercise_id] = { id: p.exercise_id, name: p.exercise_name || '', sets: [] };
+        } else if (!map[p.exercise_id].name) {
+          map[p.exercise_id].name = p.exercise_name || '';
+        }
       }
+
+      workoutExercises = Object.values(map);
+
+      // Восстановим имена из локального справочника, если что-то пропущено
+      for (const we of workoutExercises) {
+        if (!we.name) {
+          const found = allExercises.find(ex => ex.id === we.id);
+          if (found) we.name = found.name;
+        }
+      }
+
       updateStartButton();
       renderWorkoutExercises();
       updateWorkoutUI();
+
+      // Подтянем прошлые веса для пустых упражнений из плана
+      for (const we of workoutExercises) {
+        if (we.sets.length === 0) {
+          fillLastSet(we.id);
+        }
+      }
     }
   } catch (e) { console.error(e); }
 }
@@ -928,6 +953,7 @@ function addExerciseToWorkout(id, name) {
   renderWorkoutExercises();
   updateWorkoutUI();
   fillLastSet(id);
+  syncWorkoutPlan();
 }
 
 async function fillLastSet(exerciseId) {
@@ -953,10 +979,25 @@ async function fillLastSet(exerciseId) {
   } catch (e) { console.error('fillLastSet', e); }
 }
 
+async function syncWorkoutPlan() {
+  if (!currentWorkoutId) return;
+  const ids = workoutExercises.map(e => e.id);
+  try {
+    await fetch(`${API_URL}/api/workouts/${currentWorkoutId}/plan`, {
+      method: 'PATCH',
+      headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({ exercise_ids: ids }),
+    });
+  } catch (e) {
+    console.error('syncWorkoutPlan', e);
+  }
+}
+
 function removeExerciseFromWorkout(id) {
   workoutExercises = workoutExercises.filter(e => e.id !== id);
   renderWorkoutExercises();
   updateWorkoutUI();
+  syncWorkoutPlan();
 }
 
 function updateWorkoutUI() {
@@ -1157,7 +1198,18 @@ async function loadHistory() {
 
 function renderHistory(workouts) {
   if (!workouts || workouts.length === 0) {
-    historyListEl.innerHTML = '<p class="text-muted text-center py-8">Пока нет тренировок</p>';
+    historyListEl.innerHTML = `
+      <div class="text-center py-16">
+        <div class="inline-flex items-center justify-center w-20 h-20 rounded-4xl bg-surface border border-white/5 mb-5 text-muted/40 empty-icon-ring">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 3v18h18"/>
+            <path d="M7 14l3-3 3 3 5-6"/>
+          </svg>
+        </div>
+        <p class="text-white/90 text-sm font-medium mb-1">Пока нет тренировок</p>
+        <p class="text-muted2 text-xs">Начни первую — и она появится здесь</p>
+      </div>
+    `;
     return;
   }
   historyListEl.innerHTML = workouts.map(w => {
