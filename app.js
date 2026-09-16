@@ -19,7 +19,6 @@ if (tg) {
 const API_URL = 'https://gymlyvlad.duckdns.org';
 
 // ============ UTIL ============
-// Сервер отдаёт naive ISO (UTC без Z). Браузер иначе посчитает как локальное время.
 function parseServerDate(iso) {
   if (!iso) return null;
   if (typeof iso !== 'string') return new Date(iso);
@@ -51,7 +50,7 @@ const detailContentEl = document.getElementById('detail-content');
 const detailTitleEl = document.getElementById('detail-title');
 const startWorkoutBtn = document.getElementById('start-workout');
 
-// Bottom sheet
+// Bottom sheet (exercises)
 const sheetBackdrop = document.getElementById('sheet-backdrop');
 const sheetContent = document.getElementById('sheet-content');
 const sheetCloseBtn = document.getElementById('sheet-close');
@@ -74,18 +73,38 @@ const statVolumeEl = document.getElementById('stat-volume');
 const streakHintEl = document.getElementById('streak-hint');
 const recordsListEl = document.getElementById('records-list');
 
+// Profile metrics & edit
+const profileEditBtn = document.getElementById('profile-edit-btn');
+const profileMetricsEl = document.getElementById('profile-metrics');
+const profileEmptyHintEl = document.getElementById('profile-empty-hint');
+const pmWeightEl = document.getElementById('pm-weight');
+const pmHeightEl = document.getElementById('pm-height');
+const pmAgeEl = document.getElementById('pm-age');
+const pmBmiEl = document.getElementById('pm-bmi');
+const pmBmiLabelEl = document.getElementById('pm-bmi-label');
+const pmCaloriesEl = document.getElementById('pm-calories');
+const profileEditBackdrop = document.getElementById('profile-edit-backdrop');
+const profileEditPanel = document.getElementById('profile-edit-panel');
+const profileEditClose = document.getElementById('profile-edit-close');
+const profileSaveBtn = document.getElementById('profile-save-btn');
+
 // ============ STATE ============
 let allExercises = [];
 let currentWorkoutId = null;
 let currentWorkoutStartedAt = null;
 let workoutExercises = [];
 let allWorkouts = [];
+let currentProfile = null;
+
+// Profile edit temp state (заполняется при открытии sheet)
+let editGender = null;
+let editGoal = null;
 
 // Таймеры
 let workoutTimerInterval = null;
 let restTimerInterval = null;
 let restHideTimeout = null;
-const REST_DURATION = 120; // секунд
+const REST_DURATION = 120;
 
 function authHeaders() {
   return { 'X-Init-Data': tg?.initData || '' };
@@ -236,7 +255,7 @@ function renderExercisesPicker(list) {
   });
 }
 
-// ============ BOTTOM SHEET ============
+// ============ BOTTOM SHEET (exercises) ============
 function openSheet() {
   sheetBackdrop.classList.remove('hidden');
   requestAnimationFrame(() => {
@@ -292,14 +311,12 @@ function formatDuration(sec) {
 
 // ============ ТАЙМЕР ОТДЫХА ============
 function startRestTimer() {
-  // Чистим всё старое
   if (restTimerInterval) { clearInterval(restTimerInterval); restTimerInterval = null; }
   if (restHideTimeout)   { clearTimeout(restHideTimeout);  restHideTimeout = null; }
 
   let remaining = REST_DURATION;
 
   restTimerEl.classList.remove('hidden');
-  // Форсируем reflow, чтобы transition сработал
   void restTimerEl.offsetHeight;
   restTimerEl.classList.remove('translate-y-full');
 
@@ -578,11 +595,7 @@ async function addSetInline(exerciseId) {
     if (idx !== -1) we.sets[idx] = realSet;
     renderSetsForExercise(exerciseId, we.sets);
 
-    // Запускаем таймер отдыха
     startRestTimer();
-
-    // Уведомление о рекорде убрано по запросу.
-    // Данные о рекорде всё равно обновляются на сервере и видны в профиле.
   } catch (e) {
     console.error(e);
     we.sets = we.sets.filter(s => s.id !== tempId);
@@ -700,6 +713,65 @@ function openWorkoutDetail(workoutId) {
 }
 
 // ============ ПРОФИЛЬ ============
+function calcBMI(weight, height) {
+  if (!weight || !height) return null;
+  const h = height / 100;
+  return weight / (h * h);
+}
+
+function bmiLabel(bmi) {
+  if (bmi < 18.5) return { text: 'Недовес', color: 'text-blue-400' };
+  if (bmi < 25)   return { text: 'Норма',   color: 'text-green-400' };
+  if (bmi < 30)   return { text: 'Избыток', color: 'text-yellow-400' };
+  return { text: 'Ожирение', color: 'text-red-400' };
+}
+
+// Миффлин-Сан Жеор (BMR) × 1.375 (лёгкая активность 3-4 раза в неделю)
+function calcCalories(weight, height, age, gender, goal) {
+  if (!weight || !height || !age || !gender) return null;
+  const base = 10 * weight + 6.25 * height - 5 * age;
+  const bmr = gender === 'male' ? base + 5 : base - 161;
+  const tdee = bmr * 1.375;
+  if (goal === 'lose') return Math.round(tdee * 0.8);
+  if (goal === 'gain') return Math.round(tdee * 1.15);
+  return Math.round(tdee);
+}
+
+function renderProfileMetrics(p) {
+  const hasAny = p.weight_kg || p.height_cm || p.age;
+  if (!hasAny) {
+    if (profileMetricsEl) profileMetricsEl.classList.add('hidden');
+    if (profileEmptyHintEl) profileEmptyHintEl.classList.remove('hidden');
+    return;
+  }
+  if (profileMetricsEl) profileMetricsEl.classList.remove('hidden');
+  if (profileEmptyHintEl) profileEmptyHintEl.classList.add('hidden');
+
+  const w = p.weight_kg, h = p.height_cm, a = p.age;
+  if (pmWeightEl)  pmWeightEl.textContent  = w ? `${w} кг`   : '—';
+  if (pmHeightEl)  pmHeightEl.textContent  = h ? `${h} см`   : '—';
+  if (pmAgeEl)     pmAgeEl.textContent     = a ? `${a}`      : '—';
+
+  const bmi = calcBMI(w, h);
+  if (bmi) {
+    if (pmBmiEl) pmBmiEl.textContent = bmi.toFixed(1);
+    const lbl = bmiLabel(bmi);
+    if (pmBmiLabelEl) {
+      pmBmiLabelEl.textContent = lbl.text;
+      pmBmiLabelEl.className = `text-xs font-medium ${lbl.color}`;
+    }
+  } else {
+    if (pmBmiEl) pmBmiEl.textContent = '—';
+    if (pmBmiLabelEl) {
+      pmBmiLabelEl.textContent = '';
+      pmBmiLabelEl.className = 'text-xs';
+    }
+  }
+
+  const cal = calcCalories(w, h, a, p.gender, p.goal);
+  if (pmCaloriesEl) pmCaloriesEl.textContent = cal ? `${cal} ккал` : '—';
+}
+
 async function loadProfile() {
   if (!tg?.initData) return;
 
@@ -716,29 +788,38 @@ async function loadProfile() {
   streakHintEl.textContent = '';
 
   try {
-    const res = await fetch(`${API_URL}/api/profile/stats`, { headers: authHeaders() });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const stats = await res.json();
+    const [statsRes, meRes] = await Promise.all([
+      fetch(`${API_URL}/api/profile/stats`, { headers: authHeaders() }),
+      fetch(`${API_URL}/api/me`, { headers: authHeaders() }),
+    ]);
 
-    statStreakEl.textContent = stats.streak;
-    statWorkoutsEl.textContent = stats.workouts_count;
-    statSetsEl.textContent = stats.sets_count;
+    if (statsRes.ok) {
+      const stats = await statsRes.json();
+      statStreakEl.textContent = stats.streak;
+      statWorkoutsEl.textContent = stats.workouts_count;
+      statSetsEl.textContent = stats.sets_count;
 
-    const kg = stats.total_volume_kg;
-    if (kg < 1000) {
-      statVolumeEl.textContent = `${Math.round(kg)} кг`;
-    } else {
-      statVolumeEl.textContent = `${(kg / 1000).toFixed(1)} т`;
+      const kg = stats.total_volume_kg;
+      if (kg < 1000) {
+        statVolumeEl.textContent = `${Math.round(kg)} кг`;
+      } else {
+        statVolumeEl.textContent = `${(kg / 1000).toFixed(1)} т`;
+      }
+
+      if (stats.streak === 0 && stats.workouts_count > 0) {
+        streakHintEl.textContent = 'Тренируйся, чтобы начать стрик!';
+      } else if (stats.streak === 0) {
+        streakHintEl.textContent = 'Сделай первую тренировку';
+      } else if (stats.streak === 1) {
+        streakHintEl.textContent = 'Начало положено. Продолжай завтра!';
+      } else {
+        streakHintEl.textContent = 'Не разрывай серию! Тренируйся и завтра';
+      }
     }
 
-    if (stats.streak === 0 && stats.workouts_count > 0) {
-      streakHintEl.textContent = 'Тренируйся, чтобы начать стрик!';
-    } else if (stats.streak === 0) {
-      streakHintEl.textContent = 'Сделай первую тренировку';
-    } else if (stats.streak === 1) {
-      streakHintEl.textContent = 'Начало положено. Продолжай завтра!';
-    } else {
-      streakHintEl.textContent = 'Не разрывай серию! Тренируйся и завтра';
+    if (meRes.ok) {
+      currentProfile = await meRes.json();
+      renderProfileMetrics(currentProfile);
     }
   } catch (e) {
     console.error(e);
@@ -746,6 +827,100 @@ async function loadProfile() {
     statWorkoutsEl.textContent = '?';
     statSetsEl.textContent = '?';
     statVolumeEl.textContent = '?';
+  }
+}
+
+// ============ ПРОФИЛЬ: РЕДАКТИРОВАНИЕ ============
+function openProfileEdit() {
+  if (!currentProfile) return;
+  editGender = currentProfile.gender || null;
+  editGoal = currentProfile.goal || null;
+
+  document.getElementById('input-weight').value = currentProfile.weight_kg ?? '';
+  document.getElementById('input-height').value = currentProfile.height_cm ?? '';
+  document.getElementById('input-age').value    = currentProfile.age ?? '';
+
+  updateGenderUI();
+  updateGoalUI();
+
+  profileEditBackdrop.classList.remove('hidden');
+  requestAnimationFrame(() => {
+    profileEditBackdrop.classList.remove('opacity-0');
+    profileEditPanel.classList.remove('translate-y-full');
+  });
+  tg?.HapticFeedback?.impactOccurred('light');
+}
+
+function closeProfileEdit() {
+  profileEditBackdrop.classList.add('opacity-0');
+  profileEditPanel.classList.add('translate-y-full');
+  setTimeout(() => profileEditBackdrop.classList.add('hidden'), 250);
+  tg?.HapticFeedback?.impactOccurred('light');
+}
+
+function updateGenderUI() {
+  document.querySelectorAll('[data-gender]').forEach(btn => {
+    const isActive = btn.dataset.gender === editGender;
+    btn.classList.toggle('bg-primary', isActive);
+    btn.classList.toggle('text-white', isActive);
+    btn.classList.toggle('border-primary', isActive);
+    btn.classList.toggle('bg-surface2', !isActive);
+    btn.classList.toggle('text-muted', !isActive);
+    btn.classList.toggle('border-white/5', !isActive);
+  });
+}
+
+function updateGoalUI() {
+  document.querySelectorAll('[data-goal]').forEach(btn => {
+    const isActive = btn.dataset.goal === editGoal;
+    btn.classList.toggle('bg-primary', isActive);
+    btn.classList.toggle('text-white', isActive);
+    btn.classList.toggle('border-primary', isActive);
+    btn.classList.toggle('bg-surface2', !isActive);
+    btn.classList.toggle('text-muted', !isActive);
+    btn.classList.toggle('border-white/5', !isActive);
+  });
+}
+
+async function saveProfile() {
+  const w = parseFloat(document.getElementById('input-weight').value);
+  const h = parseInt(document.getElementById('input-height').value);
+  const a = parseInt(document.getElementById('input-age').value);
+
+  // Валидация перед отправкой
+  if (!isNaN(w) && (w < 20 || w > 400)) { tg?.showAlert('Вес должен быть 20–400 кг'); return; }
+  if (!isNaN(h) && (h < 100 || h > 250)) { tg?.showAlert('Рост должен быть 100–250 см'); return; }
+  if (!isNaN(a) && (a < 10 || a > 100)) { tg?.showAlert('Возраст 10–100 лет'); return; }
+
+  const payload = {};
+  if (!isNaN(w)) payload.weight_kg = w;
+  if (!isNaN(h)) payload.height_cm = h;
+  if (!isNaN(a)) payload.age = a;
+  if (editGender) payload.gender = editGender;
+  if (editGoal) payload.goal = editGoal;
+
+  if (Object.keys(payload).length === 0) {
+    tg?.showAlert('Заполни хотя бы одно поле');
+    return;
+  }
+
+  profileSaveBtn.style.opacity = '0.6';
+  try {
+    const res = await fetch(`${API_URL}/api/me`, {
+      method: 'PATCH',
+      headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    currentProfile = await res.json();
+    renderProfileMetrics(currentProfile);
+    closeProfileEdit();
+    tg?.HapticFeedback?.notificationOccurred('success');
+  } catch (e) {
+    console.error(e);
+    tg?.showAlert('Не удалось сохранить');
+  } finally {
+    profileSaveBtn.style.opacity = '1';
   }
 }
 
@@ -847,6 +1022,31 @@ searchInput?.addEventListener('input', (e) => {
   renderExercisesPicker(filtered);
 });
 
+// Profile edit
+profileEditBtn?.addEventListener('click', openProfileEdit);
+profileEditClose?.addEventListener('click', closeProfileEdit);
+profileEditBackdrop?.addEventListener('click', (e) => {
+  if (e.target === profileEditBackdrop) closeProfileEdit();
+});
+profileSaveBtn?.addEventListener('click', saveProfile);
+
+// Gender / goal select
+document.querySelectorAll('[data-gender]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    editGender = btn.dataset.gender;
+    updateGenderUI();
+    tg?.HapticFeedback?.selectionChanged?.();
+  });
+});
+document.querySelectorAll('[data-goal]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    editGoal = btn.dataset.goal;
+    updateGoalUI();
+    tg?.HapticFeedback?.selectionChanged?.();
+  });
+});
+
+// Navigation
 document.getElementById('nav-home')?.addEventListener('click', () => {
   tg?.HapticFeedback?.impactOccurred('light');
   showScreen('home');
