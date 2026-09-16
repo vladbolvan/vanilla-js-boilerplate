@@ -28,7 +28,6 @@ function parseServerDate(iso) {
   return new Date(iso);
 }
 
-// Парсим ввод веса: поддерживаем "75.5" и "75,5"
 function parseWeightInput(str) {
   if (str == null) return NaN;
   let s = String(str).trim().replace(',', '.').replace(/[^\d.\-]/g, '');
@@ -38,8 +37,6 @@ function parseWeightInput(str) {
 }
 
 // ============ УМНЫЙ BLUR ============
-// Скрываем клавиатуру только при тапе по области ВНЕ модалок.
-// Внутри модалок (шторок) — не трогаем, чтобы не «выкидывало».
 const MODAL_IDS = [
   'sheet-backdrop',
   'create-ex-backdrop',
@@ -55,13 +52,8 @@ document.addEventListener('pointerdown', (e) => {
   const tag = active.tagName;
   if (tag !== 'INPUT' && tag !== 'TEXTAREA') return;
   if (e.target === active) return;
-
-  // Не blur-им если тап внутри модалки
   if (MODAL_IDS.some(id => e.target.closest && e.target.closest('#' + id))) return;
-
-  // Не blur-им если тап по интерактивному элементу
   if (e.target.closest && e.target.closest('button, a, label, input, textarea, select, [role="button"]')) return;
-
   active.blur();
 }, true);
 
@@ -88,6 +80,7 @@ const addExerciseBtn = document.getElementById('add-exercise-btn');
 const historyListEl = document.getElementById('history-list');
 const detailContentEl = document.getElementById('detail-content');
 const detailTitleEl = document.getElementById('detail-title');
+const detailDeleteBtn = document.getElementById('detail-delete-btn');
 const startWorkoutBtn = document.getElementById('start-workout');
 
 const sheetBackdrop = document.getElementById('sheet-backdrop');
@@ -179,6 +172,7 @@ const obSaveBtn = document.getElementById('ob-save-btn');
 let allExercises = [];
 let allPrograms = [];
 let currentWorkoutId = null;
+let currentDetailWorkoutId = null;
 let currentWorkoutStartedAt = null;
 let workoutExercises = [];
 let allWorkouts = [];
@@ -380,7 +374,7 @@ function renderRecent(workouts) {
     const exNames = (w.exercises || []).map(e => e.exercise_name).join(', ');
     const preview = w.total_sets ? `${w.total_sets} подх. · ${exNames || 'без упражнений'}` : 'Без подходов';
     return `
-      <div class="bg-surface rounded-2xl p-4 border border-white/5 card-shadow flex items-center justify-between gap-2">
+      <div class="bg-surface rounded-3xl p-4 border border-white/5 card-shadow flex items-center justify-between gap-2">
         <div class="min-w-0 flex-1">
           <p class="font-medium truncate">${exNames || 'Тренировка'}</p>
           <p class="text-sm text-muted truncate mt-0.5">${preview}</p>
@@ -437,7 +431,7 @@ function renderExercisesPicker(list) {
   }
   let html = '';
   for (const [group, items] of Object.entries(groups)) {
-    html += `<p class="text-xs uppercase tracking-wider text-muted mt-3 mb-2">${group}</p>`;
+    html += `<p class="text-[10px] uppercase tracking-wider text-muted2 mt-3 mb-2">${group}</p>`;
     for (const ex of items) {
       const badge = ex.is_custom
         ? '<span class="text-[9px] uppercase tracking-wider text-primary2/70 bg-primary/10 rounded-full px-1.5 py-0.5 ml-1.5 shrink-0">моё</span>'
@@ -607,7 +601,7 @@ function renderProgramsList() {
   let html = '';
 
   if (templates.length > 0) {
-    html += '<p class="text-[10px] uppercase tracking-wider text-muted mb-2">Программы для тебя</p>';
+    html += '<p class="text-[10px] uppercase tracking-wider text-muted2 mb-2">Программы для тебя</p>';
     for (const p of templates) {
       const cnt = (p.exercises || []).length;
       html += `
@@ -627,7 +621,7 @@ function renderProgramsList() {
   }
 
   if (mine.length > 0) {
-    html += '<p class="text-[10px] uppercase tracking-wider text-muted mt-4 mb-2">Мои программы</p>';
+    html += '<p class="text-[10px] uppercase tracking-wider text-muted2 mt-4 mb-2">Мои программы</p>';
     for (const p of mine) {
       const cnt = (p.exercises || []).length;
       html += `
@@ -983,25 +977,25 @@ function renderWorkoutExercises() {
       ? `<p class="plan-hint text-xs text-primary2/80 mb-2">План: ${ex.target_sets} × ${ex.target_reps}</p>`
       : '';
     return `
-      <div class="bg-surface rounded-2xl p-4 overflow-hidden border border-white/5 card-shadow" data-ex-id="${ex.id}">
+      <div class="bg-surface rounded-3xl p-4 overflow-hidden border border-white/5 card-shadow" data-ex-id="${ex.id}">
         <div class="flex items-start justify-between gap-2 mb-2">
           <p class="font-semibold break-words min-w-0 flex-1">${ex.name}</p>
-          <button class="remove-ex text-muted text-xs hover:text-red-400 shrink-0" data-ex-id="${ex.id}">удалить</button>
+          <button class="remove-ex text-muted2 text-xs hover:text-red-400 shrink-0" data-ex-id="${ex.id}">удалить</button>
         </div>
         <p class="last-set-hint hidden text-xs text-muted mb-1"></p>
         ${planHint}
         <div class="sets-container space-y-1.5 mb-3" data-ex-id="${ex.id}"></div>
         <div class="flex gap-2 items-stretch">
           <input type="text" inputmode="decimal" placeholder="Вес"
-                 class="set-weight flex-1 min-w-0 bg-surface2 rounded-xl px-3 py-3 text-white text-center
+                 class="set-weight flex-1 min-w-0 bg-surface2 rounded-2xl px-3 py-3 text-white text-center
                         focus:outline-none focus:ring-2 focus:ring-primary/40 transition"
                  data-ex-id="${ex.id}">
           <input type="text" inputmode="numeric" placeholder="Повт"
-                 class="set-reps flex-1 min-w-0 bg-surface2 rounded-xl px-3 py-3 text-white text-center
+                 class="set-reps flex-1 min-w-0 bg-surface2 rounded-2xl px-3 py-3 text-white text-center
                         focus:outline-none focus:ring-2 focus:ring-primary/40 transition"
                  data-ex-id="${ex.id}">
           <button class="add-set-btn bg-accent hover:bg-green-500 active:scale-95 transition
-                         rounded-xl w-12 shrink-0 font-bold text-black/80"
+                         rounded-2xl w-12 shrink-0 font-bold text-black/80"
                   data-ex-id="${ex.id}">+</button>
         </div>
       </div>
@@ -1031,9 +1025,9 @@ function renderSetsForExercise(exerciseId, sets) {
     const isLast = i === sets.length - 1;
     return `
       <div class="set-row flex items-center gap-2 text-sm py-1" data-set-id="${s.id}">
-        <span class="text-muted text-xs w-6 shrink-0">#${i + 1}</span>
+        <span class="text-muted2 text-xs w-6 shrink-0">#${i + 1}</span>
         <span class="flex-1"><b>${s.weight}</b> кг × <b>${s.reps}</b></span>
-        ${isLast ? `<button class="delete-set text-muted hover:text-red-400 transition p-1 -mr-1 shrink-0" data-set-id="${s.id}" data-ex-id="${exerciseId}">
+        ${isLast ? `<button class="delete-set text-muted2 hover:text-red-400 transition p-1 -mr-1 shrink-0" data-set-id="${s.id}" data-ex-id="${exerciseId}">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
         </button>` : ''}
       </div>
@@ -1173,7 +1167,7 @@ function renderHistory(workouts) {
     const exNames = (w.exercises || []).map(e => e.exercise_name).join(', ');
     return `
       <button class="workout-item w-full bg-surface hover:bg-surface2 active:scale-[0.98]
-                     transition rounded-2xl p-4 text-left overflow-hidden border border-white/5 card-shadow"
+                     transition rounded-3xl p-4 text-left overflow-hidden border border-white/5 card-shadow"
               data-id="${w.id}">
         <div class="flex items-start justify-between gap-2 mb-2">
           <div class="min-w-0">
@@ -1194,6 +1188,7 @@ function renderHistory(workouts) {
 function openWorkoutDetail(workoutId) {
   const workout = allWorkouts.find(w => w.id === workoutId);
   if (!workout) { tg?.showAlert('Тренировка не найдена'); return; }
+  currentDetailWorkoutId = workoutId;
   tg?.HapticFeedback?.impactOccurred('light');
   const date = parseServerDate(workout.finished_at || workout.started_at);
   detailTitleEl.textContent = date.toLocaleDateString('ru-RU', {
@@ -1203,12 +1198,12 @@ function openWorkoutDetail(workoutId) {
     detailContentEl.innerHTML = '<p class="text-muted text-center py-8">В тренировке не было подходов</p>';
   } else {
     detailContentEl.innerHTML = workout.exercises.map(ex => `
-      <div class="bg-surface rounded-2xl p-4 overflow-hidden border border-white/5 card-shadow">
+      <div class="bg-surface rounded-3xl p-4 overflow-hidden border border-white/5 card-shadow">
         <p class="font-semibold mb-3 break-words">${ex.exercise_name}</p>
         <div class="space-y-1.5">
           ${ex.sets.map((s, i) => `
             <div class="flex items-center justify-between text-sm">
-              <span class="text-muted text-xs">#${i + 1}</span>
+              <span class="text-muted2 text-xs">#${i + 1}</span>
               <span><b>${s.weight}</b> кг × <b>${s.reps}</b></span>
             </div>
           `).join('')}
@@ -1217,6 +1212,41 @@ function openWorkoutDetail(workoutId) {
     `).join('');
   }
   showScreen('workout-detail');
+}
+
+async function deleteWorkout() {
+  if (!currentDetailWorkoutId) return;
+
+  const ok = await new Promise(resolve => {
+    if (tg?.showConfirm) tg.showConfirm('Удалить тренировку? Действие необратимо.', (yes) => resolve(yes));
+    else resolve(confirm('Удалить тренировку?'));
+  });
+  if (!ok) return;
+
+  detailDeleteBtn.style.opacity = '0.5';
+  const deletedId = currentDetailWorkoutId;
+  try {
+    const res = await fetch(`${API_URL}/api/workouts/${deletedId}`, {
+      method: 'DELETE',
+      headers: authHeaders(),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+    tg?.HapticFeedback?.notificationOccurred('success');
+
+    calendarCache.clear();
+    allWorkouts = allWorkouts.filter(w => w.id !== deletedId);
+    currentDetailWorkoutId = null;
+
+    showScreen('history');
+    renderHistory(allWorkouts);
+    loadRecentWorkouts();
+  } catch (e) {
+    console.error(e);
+    tg?.showAlert('Не удалось удалить тренировку');
+  } finally {
+    detailDeleteBtn.style.opacity = '1';
+  }
 }
 
 // ============ КАЛЕНДАРЬ ============
@@ -1258,7 +1288,7 @@ async function renderCalendar(year, month) {
   const todayDate = today.getDate();
 
   let html = WEEKDAYS.map(w =>
-    `<div class="text-center text-[10px] uppercase tracking-wider text-muted py-2">${w}</div>`
+    `<div class="text-center text-[10px] uppercase tracking-wider text-muted2 py-2">${w}</div>`
   ).join('');
   for (let i = 0; i < offset; i++) html += '<div></div>';
 
@@ -1306,13 +1336,13 @@ async function renderCalendar(year, month) {
 function renderCalendarDayList(day, workouts) {
   if (!calendarDayListEl) return;
   const monthName = MONTH_NAMES[calMonth - 1].toLowerCase();
-  let html = `<p class="text-xs uppercase tracking-wider text-muted mb-2">${day} ${monthName} · ${workouts.length} тренировки</p>`;
+  let html = `<p class="text-[10px] uppercase tracking-wider text-muted2 mb-2">${day} ${monthName} · ${workouts.length} тренировки</p>`;
   html += '<div class="space-y-2">';
   for (const w of workouts) {
     const date = parseServerDate(w.finished_at);
     const time = date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
     html += `
-      <button class="calendar-day-workout w-full bg-surface2 hover:bg-surface rounded-xl p-3 text-left
+      <button class="calendar-day-workout w-full bg-surface2 hover:bg-surface rounded-2xl p-3 text-left
                      border border-white/5 flex items-center justify-between gap-2 active:scale-[0.98] transition"
               data-workout-id="${w.workout_id}">
         <div class="min-w-0">
@@ -1476,7 +1506,6 @@ function renderWeightSparkline(logs) {
 }
 
 function openWeightSheet() {
-  // Поле ВСЕГДА пустое, прошлый вес в placeholder.
   let placeholder = '75.5';
   if (weightHistory && weightHistory.length > 0) {
     placeholder = weightHistory[0].weight_kg;
@@ -1519,7 +1548,7 @@ function renderWeightHistory() {
           <p class="font-medium">${l.weight_kg} кг</p>
           <p class="text-xs text-muted mt-0.5">${dStr} · ${tStr}</p>
         </div>
-        <button class="delete-weight text-muted hover:text-red-400 p-1.5 -mr-1 shrink-0" data-id="${l.id}">
+        <button class="delete-weight text-muted2 hover:text-red-400 p-1.5 -mr-1 shrink-0" data-id="${l.id}">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
         </button>
       </div>
@@ -1531,14 +1560,12 @@ function renderWeightHistory() {
 }
 
 async function saveWeight() {
-  // Читаем значение из input, нормализуем строку
   const raw = weightInput?.value || '';
   const w = parseWeightInput(raw);
   if (isNaN(w) || w < 20 || w > 400) {
     tg?.showAlert(`Введи вес (20–400 кг). Сейчас: "${raw}"`);
     return;
   }
-
   weightSaveBtn.style.opacity = '0.6';
   try {
     const res = await fetch(`${API_URL}/api/weight`, {
@@ -1546,20 +1573,16 @@ async function saveWeight() {
       headers: { ...authHeaders(), 'Content-Type': 'application/json' },
       body: JSON.stringify({ weight_kg: w }),
     });
-    if (!res.ok) {
-      const errText = await res.text().catch(() => '');
-      throw new Error(`HTTP ${res.status} ${errText}`);
-    }
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     tg?.HapticFeedback?.notificationOccurred('success');
     if (currentProfile) currentProfile.weight_kg = w;
     renderProfileMetrics(currentProfile);
     await loadWeight();
     renderWeightHistory();
-    // Очищаем поле — пользователь может сразу вводить новое
     if (weightInput) weightInput.value = '';
   } catch (e) {
     console.error(e);
-    tg?.showAlert('Не удалось записать вес: ' + e.message);
+    tg?.showAlert('Не удалось записать вес');
   } finally {
     weightSaveBtn.style.opacity = '1';
   }
@@ -1877,12 +1900,12 @@ function renderRecords(records) {
   }
   let html = '';
   for (const [group, items] of Object.entries(groups)) {
-    html += `<p class="text-xs uppercase tracking-wider text-muted mt-4 mb-2">${group}</p>`;
+    html += `<p class="text-[10px] uppercase tracking-wider text-muted2 mt-4 mb-2">${group}</p>`;
     for (const r of items) {
       const date = parseServerDate(r.achieved_at);
       const dateStr = date.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: '2-digit' });
       html += `
-        <div class="bg-surface rounded-2xl p-4 border border-white/5 card-shadow mb-2">
+        <div class="bg-surface rounded-3xl p-4 border border-white/5 card-shadow mb-2">
           <div class="flex items-start justify-between gap-2 mb-2">
             <p class="font-semibold break-words min-w-0 flex-1">${r.exercise_name}</p>
             <span class="text-xs text-muted shrink-0">${dateStr}</span>
@@ -1928,7 +1951,6 @@ sheetBackdrop?.addEventListener('click', (e) => {
 sheetCreateBtn?.addEventListener('click', openCreateExerciseSheet);
 
 createExClose?.addEventListener('click', closeCreateExerciseSheet);
-// НЕ закрываем шторку по клику на backdrop — избегаем случайных закрытий при тапе по чипам
 createExSave?.addEventListener('click', saveCustomExercise);
 
 progSheetClose?.addEventListener('click', closeProgramsSheet);
@@ -2075,6 +2097,8 @@ document.getElementById('nav-profile')?.addEventListener('click', () => {
 document.getElementById('back-to-history')?.addEventListener('click', () => {
   showScreen('history');
 });
+
+detailDeleteBtn?.addEventListener('click', deleteWorkout);
 
 document.getElementById('open-records')?.addEventListener('click', () => {
   tg?.HapticFeedback?.impactOccurred('light');
