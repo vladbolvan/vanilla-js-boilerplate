@@ -54,7 +54,6 @@
       margin: 0;
     }
 
-    /* Time input — стилизация под общий вид */
     input[type="time"] {
       -webkit-appearance: none;
       appearance: none;
@@ -122,7 +121,6 @@
       -webkit-overflow-scrolling: touch;
     }
 
-    /* Toggle switch */
     .toggle-switch {
       position: relative;
       width: 44px;
@@ -378,7 +376,6 @@
           <p id="profile-username" class="text-sm text-muted mt-1"></p>
         </header>
 
-        <!-- Стрик -->
         <div class="rounded-3xl p-6 mb-4 card-shadow relative overflow-hidden"
              style="background: linear-gradient(135deg, rgba(249,115,22,.08) 0%, rgba(239,68,68,.06) 100%); border: 1px solid rgba(249,115,22,.12);">
           <div class="flex items-center justify-between relative z-10">
@@ -444,7 +441,6 @@
           </button>
         </div>
 
-        <!-- Профиль (edit) -->
         <button id="profile-edit-btn"
                 class="w-full bg-surface rounded-3xl p-4 border border-white/5 card-shadow
                        flex items-center justify-between active:scale-[0.98] transition mb-4">
@@ -463,7 +459,6 @@
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5e5e72" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
         </button>
 
-        <!-- Метрики (ИМТ / норма) -->
         <div id="profile-metrics" class="hidden space-y-3 mb-4">
           <div class="grid grid-cols-3 gap-3">
             <div class="bg-surface rounded-3xl p-4 border border-white/5 card-shadow text-center">
@@ -501,7 +496,6 @@
           <p class="text-sm text-muted">Заполни профиль — рассчитаем ИМТ и норму калорий</p>
         </div>
 
-        <!-- Общая статистика -->
         <div class="grid grid-cols-2 gap-3 mb-5">
           <div class="bg-surface rounded-3xl p-5 border border-white/5 card-shadow">
             <p class="text-[10px] uppercase tracking-wider text-muted">Тренировок</p>
@@ -703,15 +697,6 @@
           <div id="create-ex-group-chips" class="grid grid-cols-3 gap-2"></div>
         </div>
 
-        <label class="flex items-center gap-3 bg-surface2 rounded-2xl p-4 cursor-pointer border border-white/5">
-          <input id="create-ex-compound" type="checkbox"
-                 class="w-5 h-5 rounded accent-primary shrink-0">
-          <div>
-            <p class="text-sm font-medium">Составное упражнение</p>
-            <p class="text-xs text-muted mt-0.5">Работает несколько мышц и суставов</p>
-          </div>
-        </label>
-
       </div>
 
       <div class="px-5 pb-5 pt-3 border-t border-white/5">
@@ -806,7 +791,7 @@
         <div>
           <label class="text-[10px] uppercase tracking-wider text-muted block mb-1.5">Вес сегодня, кг</label>
           <div class="flex gap-2">
-            <input id="weight-input" type="number" step="0.1" min="20" max="400" inputmode="decimal"
+            <input id="weight-input" type="text" inputmode="decimal"
                    placeholder="75.5"
                    class="flex-1 min-w-0 bg-surface2 rounded-3xl px-4 py-3.5 text-white text-center text-lg font-semibold
                           placeholder-muted2 focus:outline-none focus:ring-2 focus:ring-primary/40 transition">
@@ -929,22 +914,19 @@
         <div class="grid grid-cols-3 gap-3">
           <div>
             <label class="text-[10px] uppercase tracking-wider text-muted block mb-1.5">Вес, кг</label>
-            <input id="input-weight" type="number" step="0.1" min="20" max="400" inputmode="decimal"
-                   placeholder="75"
+            <input id="input-weight" type="text" inputmode="decimal" placeholder="75"
                    class="w-full bg-surface2 rounded-2xl px-3 py-3 text-white text-center
                           focus:outline-none focus:ring-2 focus:ring-primary/40 transition">
           </div>
           <div>
             <label class="text-[10px] uppercase tracking-wider text-muted block mb-1.5">Рост, см</label>
-            <input id="input-height" type="number" min="100" max="250" inputmode="numeric"
-                   placeholder="180"
+            <input id="input-height" type="text" inputmode="numeric" placeholder="180"
                    class="w-full bg-surface2 rounded-2xl px-3 py-3 text-white text-center
                           focus:outline-none focus:ring-2 focus:ring-primary/40 transition">
           </div>
           <div>
             <label class="text-[10px] uppercase tracking-wider text-muted block mb-1.5">Возраст</label>
-            <input id="input-age" type="number" min="10" max="100" inputmode="numeric"
-                   placeholder="28"
+            <input id="input-age" type="text" inputmode="numeric" placeholder="28"
                    class="w-full bg-surface2 rounded-2xl px-3 py-3 text-white text-center
                           focus:outline-none focus:ring-2 focus:ring-primary/40 transition">
           </div>
@@ -1048,19 +1030,19 @@
           <p class="text-[10px] uppercase tracking-wider text-muted mb-2">Основное</p>
           <div class="grid grid-cols-3 gap-3">
             <div>
-              <input id="ob-input-weight" type="number" step="0.1" min="20" max="400" inputmode="decimal"
+              <input id="ob-input-weight" type="text" inputmode="decimal"
                      placeholder="Вес, кг"
                      class="w-full bg-surface2 rounded-2xl px-3 py-3 text-white text-center
                             placeholder-muted2 focus:outline-none focus:ring-2 focus:ring-primary/40 transition">
             </div>
             <div>
-              <input id="ob-input-height" type="number" min="100" max="250" inputmode="numeric"
+              <input id="ob-input-height" type="text" inputmode="numeric"
                      placeholder="Рост, см"
                      class="w-full bg-surface2 rounded-2xl px-3 py-3 text-white text-center
                             placeholder-muted2 focus:outline-none focus:ring-2 focus:ring-primary/40 transition">
             </div>
             <div>
-              <input id="ob-input-age" type="number" min="10" max="100" inputmode="numeric"
+              <input id="ob-input-age" type="text" inputmode="numeric"
                      placeholder="Возраст"
                      class="w-full bg-surface2 rounded-2xl px-3 py-3 text-white text-center
                             placeholder-muted2 focus:outline-none focus:ring-2 focus:ring-primary/40 transition">
