@@ -144,7 +144,6 @@
                 class="text-sm font-mono text-muted tabular-nums transition-opacity"></span>
         </header>
 
-        <!-- Пустое состояние -->
         <div id="workout-empty" class="text-center py-16">
           <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-surface border border-white/5 mb-5 text-muted/50">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -167,7 +166,6 @@
 
         <div id="workout-divider" class="hidden border-t border-white/5 my-6"></div>
 
-        <!-- Кнопка "Добавить упражнение" — крупнее и светлее -->
         <button id="add-exercise-btn"
                 class="w-full mt-4 bg-surface2 hover:bg-surface2/80 active:scale-[0.98]
                        transition rounded-2xl py-4 font-semibold text-base
@@ -177,7 +175,6 @@
           Добавить упражнение
         </button>
 
-        <!-- Завершить — крупнее и светлее -->
         <button id="finish-workout"
                 class="hidden w-full mt-3 bg-red-500/15 hover:bg-red-500/20 active:scale-[0.98]
                        transition rounded-2xl py-4 font-semibold text-base text-red-200
@@ -207,7 +204,7 @@
         <div id="detail-content" class="space-y-3"></div>
       </div>
 
-      <!-- ЭКРАН 6: РЕКОРДЫ (без эмодзи 🏆) -->
+      <!-- ЭКРАН 6: РЕКОРДЫ -->
       <div id="screen-records" class="hidden-screen">
         <header class="flex items-center gap-3 mb-6">
           <button id="back-to-profile" class="text-muted p-2 -ml-2 active:opacity-60">
@@ -230,7 +227,7 @@
         </div>
       </div>
 
-      <!-- ЭКРАН 5: ПРОФИЛЬ (без эмодзи) -->
+      <!-- ЭКРАН 5: ПРОФИЛЬ -->
       <div id="screen-profile" class="hidden-screen">
         <header class="mb-8">
           <p class="text-muted text-sm mb-1">Профиль</p>
@@ -238,8 +235,8 @@
           <p id="profile-username" class="text-sm text-muted mt-1"></p>
         </header>
 
-        <!-- Стрик — SVG иконка пламени вместо 🔥 -->
-        <div class="rounded-3xl p-6 mb-5 card-shadow relative overflow-hidden"
+        <!-- Стрик -->
+        <div class="rounded-3xl p-6 mb-4 card-shadow relative overflow-hidden"
              style="background: linear-gradient(135deg, rgba(249,115,22,.10) 0%, rgba(239,68,68,.08) 100%); border: 1px solid rgba(249,115,22,.15);">
           <div class="flex items-center justify-between relative z-10">
             <div>
@@ -251,6 +248,64 @@
             </svg>
           </div>
           <p id="streak-hint" class="text-xs text-orange-200/50 mt-3 relative z-10"></p>
+        </div>
+
+        <!-- Кнопка редактирования профиля -->
+        <button id="profile-edit-btn"
+                class="w-full bg-surface rounded-2xl p-4 border border-white/5 card-shadow
+                       flex items-center justify-between active:scale-[0.98] transition mb-4">
+          <div class="flex items-center gap-3">
+            <span class="inline-flex items-center justify-center w-9 h-9 rounded-xl bg-primary/10 text-primary2">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+                <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+              </svg>
+            </span>
+            <div class="text-left">
+              <p class="font-semibold">Профиль</p>
+              <p class="text-xs text-muted mt-0.5">Вес, рост, возраст, цель</p>
+            </div>
+          </div>
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8b8b9e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
+
+        <!-- Метрики профиля (показываются если заполнено) -->
+        <div id="profile-metrics" class="hidden space-y-3 mb-4">
+          <div class="grid grid-cols-3 gap-3">
+            <div class="bg-surface rounded-2xl p-4 border border-white/5 card-shadow text-center">
+              <p class="text-[10px] uppercase tracking-wider text-muted">Вес</p>
+              <p id="pm-weight" class="text-lg font-bold mt-1.5 tracking-tight">—</p>
+            </div>
+            <div class="bg-surface rounded-2xl p-4 border border-white/5 card-shadow text-center">
+              <p class="text-[10px] uppercase tracking-wider text-muted">Рост</p>
+              <p id="pm-height" class="text-lg font-bold mt-1.5 tracking-tight">—</p>
+            </div>
+            <div class="bg-surface rounded-2xl p-4 border border-white/5 card-shadow text-center">
+              <p class="text-[10px] uppercase tracking-wider text-muted">Возраст</p>
+              <p id="pm-age" class="text-lg font-bold mt-1.5 tracking-tight">—</p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div class="bg-surface rounded-2xl p-4 border border-white/5 card-shadow">
+              <p class="text-[10px] uppercase tracking-wider text-muted">ИМТ</p>
+              <div class="flex items-baseline gap-2 mt-1.5">
+                <p id="pm-bmi" class="text-2xl font-bold tracking-tight">—</p>
+                <p id="pm-bmi-label" class="text-xs font-medium"></p>
+              </div>
+            </div>
+            <div class="bg-surface rounded-2xl p-4 border border-white/5 card-shadow">
+              <p class="text-[10px] uppercase tracking-wider text-muted">Норма</p>
+              <p id="pm-calories" class="text-2xl font-bold mt-1.5 tracking-tight">—</p>
+              <p class="text-[10px] text-muted mt-0.5">ккал / день</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Пустое состояние метрик -->
+        <div id="profile-empty-hint"
+             class="hidden bg-surface rounded-2xl p-4 border border-dashed border-white/10 text-center mb-4">
+          <p class="text-sm text-muted">Заполни профиль — рассчитаем ИМТ и норму калорий</p>
         </div>
 
         <div class="grid grid-cols-2 gap-3 mb-5">
@@ -270,7 +325,6 @@
           <p class="text-xs text-muted mt-2">Сумма вес × повторы за всё время</p>
         </div>
 
-        <!-- Кнопка рекордов — SVG трофей вместо 🏆 -->
         <button id="open-records"
                 class="w-full mt-4 bg-surface rounded-2xl p-5 border border-white/5 card-shadow
                        flex items-center justify-between active:scale-[0.98] transition">
@@ -363,7 +417,7 @@
     </div>
   </div>
 
-  <!-- BOTTOM SHEET -->
+  <!-- BOTTOM SHEET: упражнения -->
   <div id="sheet-backdrop"
        class="hidden fixed inset-0 z-[60] opacity-0 transition-opacity duration-250"
        style="background: rgba(0,0,0,.6); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);">
@@ -395,6 +449,105 @@
       <div id="exercises-picker" class="flex-1 overflow-y-auto px-5 pb-6 space-y-1.5"
            style="-webkit-overflow-scrolling: touch;">
         <p class="text-muted text-center py-4 text-sm">Загрузка...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- BOTTOM SHEET: редактирование профиля -->
+  <div id="profile-edit-backdrop"
+       class="hidden fixed inset-0 z-[70] opacity-0 transition-opacity duration-250"
+       style="background: rgba(0,0,0,.6); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);">
+    <div id="profile-edit-panel"
+         class="absolute left-0 right-0 bottom-0 max-w-md mx-auto
+                bg-surface rounded-t-3xl translate-y-full transition-transform duration-300
+                max-h-[90vh] flex flex-col border-t border-white/8"
+         style="box-shadow: 0 -20px 60px rgba(0,0,0,.5);">
+      <div class="sheet-handle"></div>
+
+      <div class="px-5 pt-4 pb-3 flex items-center justify-between">
+        <h2 class="text-base font-semibold">Редактировать профиль</h2>
+        <button id="profile-edit-close" class="text-muted p-1 -mr-1 active:opacity-60">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 6L6 18M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+
+      <div class="flex-1 overflow-y-auto px-5 pb-6 space-y-5"
+           style="-webkit-overflow-scrolling: touch;">
+
+        <!-- Вес / Рост / Возраст -->
+        <div class="grid grid-cols-3 gap-3">
+          <div>
+            <label class="text-[10px] uppercase tracking-wider text-muted block mb-1.5">Вес, кг</label>
+            <input id="input-weight" type="number" step="0.1" min="20" max="400" inputmode="decimal"
+                   placeholder="75"
+                   class="w-full bg-surface2 rounded-xl px-3 py-3 text-white text-center
+                          focus:outline-none focus:ring-2 focus:ring-primary/40 transition">
+          </div>
+          <div>
+            <label class="text-[10px] uppercase tracking-wider text-muted block mb-1.5">Рост, см</label>
+            <input id="input-height" type="number" min="100" max="250" inputmode="numeric"
+                   placeholder="180"
+                   class="w-full bg-surface2 rounded-xl px-3 py-3 text-white text-center
+                          focus:outline-none focus:ring-2 focus:ring-primary/40 transition">
+          </div>
+          <div>
+            <label class="text-[10px] uppercase tracking-wider text-muted block mb-1.5">Возраст</label>
+            <input id="input-age" type="number" min="10" max="100" inputmode="numeric"
+                   placeholder="28"
+                   class="w-full bg-surface2 rounded-xl px-3 py-3 text-white text-center
+                          focus:outline-none focus:ring-2 focus:ring-primary/40 transition">
+          </div>
+        </div>
+
+        <!-- Пол -->
+        <div>
+          <p class="text-[10px] uppercase tracking-wider text-muted mb-2">Пол</p>
+          <div class="grid grid-cols-2 gap-2">
+            <button data-gender="male"
+                    class="gender-btn py-3 rounded-xl text-sm font-medium transition
+                           border bg-surface2 text-muted border-white/5">
+              Мужской
+            </button>
+            <button data-gender="female"
+                    class="gender-btn py-3 rounded-xl text-sm font-medium transition
+                           border bg-surface2 text-muted border-white/5">
+              Женский
+            </button>
+          </div>
+        </div>
+
+        <!-- Цель -->
+        <div>
+          <p class="text-[10px] uppercase tracking-wider text-muted mb-2">Цель</p>
+          <div class="grid grid-cols-3 gap-2">
+            <button data-goal="lose"
+                    class="goal-btn py-3 rounded-xl text-xs font-medium transition
+                           border bg-surface2 text-muted border-white/5">
+              Похудеть
+            </button>
+            <button data-goal="maintain"
+                    class="goal-btn py-3 rounded-xl text-xs font-medium transition
+                           border bg-surface2 text-muted border-white/5">
+              Держать
+            </button>
+            <button data-goal="gain"
+                    class="goal-btn py-3 rounded-xl text-xs font-medium transition
+                           border bg-surface2 text-muted border-white/5">
+              Набрать
+            </button>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="px-5 pb-5 pt-3 border-t border-white/5">
+        <button id="profile-save-btn"
+                class="w-full bg-primary hover:bg-primary/90 active:scale-[0.98]
+                       transition rounded-2xl py-4 font-semibold text-base text-white">
+          Сохранить
+        </button>
       </div>
     </div>
   </div>
