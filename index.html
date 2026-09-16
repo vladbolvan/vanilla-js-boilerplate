@@ -87,17 +87,14 @@
     }
     #wrap > div > div { animation: fadeIn .2s ease; }
 
-    /* Bottom sheet */
     .sheet-handle {
       width: 36px; height: 4px; border-radius: 9999px;
       background: rgba(255,255,255,0.15);
       margin: 8px auto 0;
     }
 
-    /* Rest timer progress */
     #rest-progress { transition: width 1s linear; }
 
-    /* Focused input glow */
     input:focus { background: rgba(124,108,255,0.06); }
   </style>
 </head>
@@ -122,7 +119,7 @@
             <p class="start-subtitle text-xs uppercase tracking-wider text-white/70 mb-1">Новая сессия</p>
             <p class="start-title text-xl font-semibold">Начать тренировку</p>
           </div>
-          <span class="start-icon text-3xl relative z-10">🏋️</span>
+          <span class="start-icon relative z-10 inline-flex items-center justify-center"></span>
           <div class="absolute -right-8 -top-8 w-32 h-32 rounded-full bg-white/10 blur-2xl"></div>
         </button>
 
@@ -148,37 +145,43 @@
         </header>
 
         <!-- Пустое состояние -->
-        <div id="workout-empty" class="text-center py-12">
-          <div class="text-5xl mb-4 opacity-30">🏋️</div>
+        <div id="workout-empty" class="text-center py-16">
+          <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-surface border border-white/5 mb-5 text-muted/50">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M6.5 6.5v11"/>
+              <path d="M17.5 6.5v11"/>
+              <path d="M3 9v6"/>
+              <path d="M21 9v6"/>
+              <path d="M6.5 12h11"/>
+            </svg>
+          </div>
           <p class="text-muted text-sm mb-1">Ещё нет упражнений</p>
-          <p class="text-muted/60 text-xs">Добавь первое — начнём!</p>
+          <p class="text-muted/50 text-xs">Добавь первое — начнём!</p>
         </div>
 
-        <!-- Заголовок "В тренировке" -->
         <h2 id="workout-header" class="hidden text-xs uppercase tracking-wider text-muted mb-3">
           В тренировке
         </h2>
 
-        <!-- Карточки упражнений -->
         <div id="workout-exercises" class="space-y-4"></div>
 
         <div id="workout-divider" class="hidden border-t border-white/5 my-6"></div>
 
-        <!-- Кнопка "Добавить упражнение" -->
+        <!-- Кнопка "Добавить упражнение" — крупнее и светлее -->
         <button id="add-exercise-btn"
-                class="w-full mt-4 bg-surface hover:bg-surface2 active:scale-[0.98]
-                       transition rounded-2xl py-3.5 font-medium text-sm
-                       flex items-center justify-center gap-2
-                       border border-dashed border-white/10 text-muted hover:text-white hover:border-primary/40">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+                class="w-full mt-4 bg-surface2 hover:bg-surface2/80 active:scale-[0.98]
+                       transition rounded-2xl py-4 font-semibold text-base
+                       flex items-center justify-center gap-2.5
+                       border border-white/10 text-white/95">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
           Добавить упражнение
         </button>
 
-        <!-- Завершить -->
+        <!-- Завершить — крупнее и светлее -->
         <button id="finish-workout"
-                class="hidden w-full mt-3 bg-red-500/8 hover:bg-red-500/12 active:scale-[0.98]
-                       transition rounded-2xl py-3.5 font-semibold text-sm text-red-300/80
-                       border border-red-500/15">
+                class="hidden w-full mt-3 bg-red-500/15 hover:bg-red-500/20 active:scale-[0.98]
+                       transition rounded-2xl py-4 font-semibold text-base text-red-200
+                       border border-red-500/25">
           Завершить тренировку
         </button>
       </div>
@@ -204,20 +207,30 @@
         <div id="detail-content" class="space-y-3"></div>
       </div>
 
-      <!-- ЭКРАН 6: РЕКОРДЫ -->
+      <!-- ЭКРАН 6: РЕКОРДЫ (без эмодзи 🏆) -->
       <div id="screen-records" class="hidden-screen">
         <header class="flex items-center gap-3 mb-6">
           <button id="back-to-profile" class="text-muted p-2 -ml-2 active:opacity-60">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
           </button>
-          <h1 class="text-2xl font-bold tracking-tight">🏆 Рекорды</h1>
+          <div class="flex items-center gap-2.5">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-primary2">
+              <path d="M6 9H4.5a2.5 2.5 0 010-5H6"/>
+              <path d="M18 9h1.5a2.5 2.5 0 000-5H18"/>
+              <path d="M4 22h16"/>
+              <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/>
+              <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/>
+              <path d="M18 2H6v7a6 6 0 0012 0V2z"/>
+            </svg>
+            <h1 class="text-2xl font-bold tracking-tight">Рекорды</h1>
+          </div>
         </header>
         <div id="records-list" class="space-y-3">
           <p class="text-muted text-center py-8">Загрузка...</p>
         </div>
       </div>
 
-      <!-- ЭКРАН 5: ПРОФИЛЬ -->
+      <!-- ЭКРАН 5: ПРОФИЛЬ (без эмодзи) -->
       <div id="screen-profile" class="hidden-screen">
         <header class="mb-8">
           <p class="text-muted text-sm mb-1">Профиль</p>
@@ -225,6 +238,7 @@
           <p id="profile-username" class="text-sm text-muted mt-1"></p>
         </header>
 
+        <!-- Стрик — SVG иконка пламени вместо 🔥 -->
         <div class="rounded-3xl p-6 mb-5 card-shadow relative overflow-hidden"
              style="background: linear-gradient(135deg, rgba(249,115,22,.10) 0%, rgba(239,68,68,.08) 100%); border: 1px solid rgba(249,115,22,.15);">
           <div class="flex items-center justify-between relative z-10">
@@ -232,7 +246,9 @@
               <p class="text-xs uppercase tracking-wider text-orange-300/70">Дней подряд</p>
               <p id="stat-streak" class="text-5xl font-bold mt-2 tracking-tight">0</p>
             </div>
-            <span class="text-6xl opacity-90">🔥</span>
+            <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" class="text-orange-400/70">
+              <path d="M8.5 14.5A2.5 2.5 0 0011 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 11-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 002.5 2.5z"/>
+            </svg>
           </div>
           <p id="streak-hint" class="text-xs text-orange-200/50 mt-3 relative z-10"></p>
         </div>
@@ -254,11 +270,21 @@
           <p class="text-xs text-muted mt-2">Сумма вес × повторы за всё время</p>
         </div>
 
+        <!-- Кнопка рекордов — SVG трофей вместо 🏆 -->
         <button id="open-records"
                 class="w-full mt-4 bg-surface rounded-2xl p-5 border border-white/5 card-shadow
                        flex items-center justify-between active:scale-[0.98] transition">
           <div class="flex items-center gap-3">
-            <span class="text-2xl">🏆</span>
+            <span class="inline-flex items-center justify-center w-9 h-9 rounded-xl bg-primary/10 text-primary2">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M6 9H4.5a2.5 2.5 0 010-5H6"/>
+                <path d="M18 9h1.5a2.5 2.5 0 000-5H18"/>
+                <path d="M4 22h16"/>
+                <path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/>
+                <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/>
+                <path d="M18 2H6v7a6 6 0 0012 0V2z"/>
+              </svg>
+            </span>
             <div class="text-left">
               <p class="font-semibold">Личные рекорды</p>
               <p class="text-xs text-muted mt-0.5">Лучшие подходы по упражнениям</p>
@@ -267,7 +293,7 @@
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#8b8b9e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
         </button>
 
-        <p class="text-xs text-muted/60 text-center mt-10">Gymly · v0.1</p>
+        <p class="text-xs text-muted/60 text-center mt-10">Gymly · v0.2</p>
       </div>
 
     </div>
@@ -306,23 +332,28 @@
     </button>
   </nav>
 
-  <!-- REST TIMER (плавающая плашка снизу) -->
+  <!-- REST TIMER -->
   <div id="rest-timer"
        class="hidden fixed bottom-[78px] left-0 right-0 z-50 max-w-md mx-auto px-4
               transition-transform duration-300 translate-y-full">
     <div class="bg-surface2/95 backdrop-blur-md rounded-2xl overflow-hidden
-                border border-white/8 card-shadow">
+                border border-white/10 card-shadow">
       <div class="flex items-center justify-between gap-3 px-4 py-3">
         <div class="flex items-center gap-3 min-w-0">
-          <span class="text-lg">⏸</span>
+          <span class="inline-flex items-center justify-center w-9 h-9 rounded-xl bg-primary/15 text-primary2 shrink-0">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="9"/>
+              <path d="M12 7v5l3 2"/>
+            </svg>
+          </span>
           <div class="min-w-0">
-            <p class="text-xs uppercase tracking-wider text-muted">Отдых</p>
+            <p class="text-[10px] uppercase tracking-wider text-muted">Отдых</p>
             <p id="rest-time" class="text-xl font-semibold tabular-nums font-mono">2:00</p>
           </div>
         </div>
         <button id="rest-skip"
-                class="text-xs text-muted hover:text-white transition shrink-0
-                       px-3 py-1.5 rounded-lg border border-white/10">
+                class="text-sm text-white/80 hover:text-white transition shrink-0
+                       px-4 py-2 rounded-xl border border-white/12 bg-white/5 active:scale-95">
           Пропустить
         </button>
       </div>
@@ -332,7 +363,7 @@
     </div>
   </div>
 
-  <!-- BOTTOM SHEET (выбор упражнения) -->
+  <!-- BOTTOM SHEET -->
   <div id="sheet-backdrop"
        class="hidden fixed inset-0 z-[60] opacity-0 transition-opacity duration-250"
        style="background: rgba(0,0,0,.6); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);">
