@@ -16,7 +16,7 @@ if (tg) {
   if (isMobile) document.body.classList.add('mobile-body');
 }
 
-const API_URL = 'https://dowdily-jocular-stint.cloudpub.ru';
+const API_URL = 'https://gymlyvlad.duckdns.org';
 
 // ============ DOM ============
 const screenHome = document.getElementById('screen-home');
@@ -415,7 +415,6 @@ async function addSetInline(exerciseId) {
     if (idx !== -1) we.sets[idx] = realSet;
     renderSetsForExercise(exerciseId, we.sets);
 
-    // 🏆 Проверяем — не побит ли рекорд
     if (realSet.record) {
       const r = realSet.record;
       tg?.HapticFeedback?.notificationOccurred('success');
