@@ -18,6 +18,17 @@ if (tg) {
 
 const API_URL = 'https://gymlyvlad.duckdns.org';
 
+// ============ UTIL ============
+// Сервер отдаёт naive ISO (UTC без Z). Браузер иначе посчитает как локальное время.
+function parseServerDate(iso) {
+  if (!iso) return null;
+  if (typeof iso !== 'string') return new Date(iso);
+  if (!/[Zz]|[+-]\d{2}:?\d{2}$/.test(iso)) {
+    return new Date(iso + 'Z');
+  }
+  return new Date(iso);
+}
+
 // ============ DOM ============
 const screenHome = document.getElementById('screen-home');
 const screenWorkout = document.getElementById('screen-workout');
@@ -73,6 +84,7 @@ let allWorkouts = [];
 // Таймеры
 let workoutTimerInterval = null;
 let restTimerInterval = null;
+let restHideTimeout = null;
 const REST_DURATION = 120; // секунд
 
 function authHeaders() {
@@ -136,7 +148,7 @@ function renderRecent(workouts) {
     return;
   }
   recentListEl.innerHTML = workouts.slice(0, 3).map(w => {
-    const date = new Date(w.finished_at || w.started_at);
+    const date = parseServerDate(w.finished_at || w.started_at);
     const dateStr = date.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit' });
     const exNames = (w.exercises || []).map(e => e.exercise_name).join(', ');
     const preview = w.total_sets
@@ -204,7 +216,7 @@ function renderExercisesPicker(list) {
     html += `<p class="text-xs uppercase tracking-wider text-muted mt-3 mb-2">${group}</p>`;
     for (const ex of items) {
       html += `
-        <button class="exercise-pick w-full bg-surface hover:bg-surface2 active:scale-[0.98]
+        <button class="exercise-pick w-full bg-surface2 hover:bg-surface active:scale-[0.98]
                        transition rounded-2xl px-4 py-3.5 text-left flex items-center justify-between gap-2
                        border border-white/5"
                 data-id="${ex.id}" data-name="${ex.name}">
@@ -248,7 +260,7 @@ function startWorkoutTimer(startedAtISO) {
     if (workoutTimerEl) workoutTimerEl.textContent = '';
     return;
   }
-  currentWorkoutStartedAt = new Date(startedAtISO);
+  currentWorkoutStartedAt = parseServerDate(startedAtISO);
   tickWorkoutTimer();
   workoutTimerInterval = setInterval(tickWorkoutTimer, 1000);
 }
@@ -280,13 +292,16 @@ function formatDuration(sec) {
 
 // ============ ТАЙМЕР ОТДЫХА ============
 function startRestTimer() {
-  stopRestTimer();
+  // Чистим всё старое
+  if (restTimerInterval) { clearInterval(restTimerInterval); restTimerInterval = null; }
+  if (restHideTimeout)   { clearTimeout(restHideTimeout);  restHideTimeout = null; }
+
   let remaining = REST_DURATION;
 
   restTimerEl.classList.remove('hidden');
-  requestAnimationFrame(() => {
-    restTimerEl.classList.remove('translate-y-full');
-  });
+  // Форсируем reflow, чтобы transition сработал
+  void restTimerEl.offsetHeight;
+  restTimerEl.classList.remove('translate-y-full');
 
   updateRestUI(remaining);
 
@@ -309,13 +324,15 @@ function updateRestUI(remaining) {
 }
 
 function stopRestTimer(notify = false) {
-  if (restTimerInterval) {
-    clearInterval(restTimerInterval);
-    restTimerInterval = null;
-  }
+  if (restTimerInterval) { clearInterval(restTimerInterval); restTimerInterval = null; }
+  if (restHideTimeout)   { clearTimeout(restHideTimeout);  restHideTimeout = null; }
+
   if (restTimerEl) {
     restTimerEl.classList.add('translate-y-full');
-    setTimeout(() => restTimerEl.classList.add('hidden'), 250);
+    restHideTimeout = setTimeout(() => {
+      restTimerEl.classList.add('hidden');
+      restHideTimeout = null;
+    }, 300);
   }
   if (notify) {
     tg?.HapticFeedback?.notificationOccurred('success');
@@ -380,11 +397,11 @@ function updateStartButton() {
   if (currentWorkoutId) {
     if (subtitleEl) subtitleEl.textContent = 'Продолжить';
     if (titleEl) titleEl.textContent = 'Тренировка идёт';
-    if (iconEl) iconEl.textContent = '⏵';
+    if (iconEl) iconEl.innerHTML = `<svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" class="text-white/90"><path d="M8 5v14l11-7z"/></svg>`;
   } else {
     if (subtitleEl) subtitleEl.textContent = 'Новая сессия';
     if (titleEl) titleEl.textContent = 'Начать тренировку';
-    if (iconEl) iconEl.textContent = '🏋️';
+    if (iconEl) iconEl.innerHTML = `<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="text-white/90"><path d="M5 12h14M13 6l6 6-6 6"/></svg>`;
   }
 }
 
@@ -394,7 +411,6 @@ function addExerciseToWorkout(id, name) {
   workoutExercises.push({ id, name, sets: [], lastWeight: null, lastReps: null });
   renderWorkoutExercises();
   updateWorkoutUI();
-  // Подтягиваем прошлые веса
   fillLastSet(id);
 }
 
@@ -410,7 +426,6 @@ async function fillLastSet(exerciseId) {
     we.lastWeight = data.weight;
     we.lastReps = data.reps;
 
-    // Найти карточку и заполнить inputs
     const card = workoutExercisesEl.querySelector(`[data-ex-id="${exerciseId}"]`);
     if (!card) return;
     const weightInput = card.querySelector('.set-weight');
@@ -455,12 +470,12 @@ function renderWorkoutExercises() {
       <div class="flex gap-2 items-stretch">
         <input type="number" step="0.5" min="0" inputmode="decimal"
                placeholder="Вес"
-               class="set-weight flex-1 min-w-0 bg-surface2 rounded-xl px-3 py-2.5 text-white text-center
+               class="set-weight flex-1 min-w-0 bg-surface2 rounded-xl px-3 py-3 text-white text-center
                       focus:outline-none focus:ring-2 focus:ring-primary/40 transition"
                data-ex-id="${ex.id}">
         <input type="number" min="1" inputmode="numeric"
                placeholder="Повт"
-               class="set-reps flex-1 min-w-0 bg-surface2 rounded-xl px-3 py-2.5 text-white text-center
+               class="set-reps flex-1 min-w-0 bg-surface2 rounded-xl px-3 py-3 text-white text-center
                       focus:outline-none focus:ring-2 focus:ring-primary/40 transition"
                data-ex-id="${ex.id}">
         <button class="add-set-btn bg-accent hover:bg-green-500 active:scale-95 transition
@@ -533,8 +548,6 @@ async function addSetInline(exerciseId) {
 
   renderSetsForExercise(exerciseId, we.sets);
 
-  // НЕ очищаем значения — оставляем для следующего подхода
-  // Но убираем фокус с reps (пользователь уже нажал +)
   repsInput.blur();
   tg?.HapticFeedback?.notificationOccurred('success');
 
@@ -568,20 +581,8 @@ async function addSetInline(exerciseId) {
     // Запускаем таймер отдыха
     startRestTimer();
 
-    if (realSet.record) {
-      const r = realSet.record;
-      setTimeout(() => {
-        if (r.is_first) {
-          tg?.showAlert(
-            `🏆 Первый рекорд!\n\n${r.exercise_name}\n${r.weight} кг × ${r.reps}\nРасчётный 1RM: ${r.estimated_1rm} кг`
-          );
-        } else {
-          tg?.showAlert(
-            `🎉 Новый рекорд!\n\n${r.exercise_name}\n${r.weight} кг × ${r.reps}\n+${r.improvement} кг к 1RM`
-          );
-        }
-      }, 350);
-    }
+    // Уведомление о рекорде убрано по запросу.
+    // Данные о рекорде всё равно обновляются на сервере и видны в профиле.
   } catch (e) {
     console.error(e);
     we.sets = we.sets.filter(s => s.id !== tempId);
@@ -640,7 +641,7 @@ function renderHistory(workouts) {
     return;
   }
   historyListEl.innerHTML = workouts.map(w => {
-    const date = new Date(w.finished_at || w.started_at);
+    const date = parseServerDate(w.finished_at || w.started_at);
     const dateStr = date.toLocaleDateString('ru-RU', { day: '2-digit', month: 'long' });
     const timeStr = date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
     const exNames = (w.exercises || []).map(e => e.exercise_name).join(', ');
@@ -672,7 +673,7 @@ function openWorkoutDetail(workoutId) {
   if (!workout) return;
   tg?.HapticFeedback?.impactOccurred('light');
 
-  const date = new Date(workout.finished_at || workout.started_at);
+  const date = parseServerDate(workout.finished_at || workout.started_at);
   detailTitleEl.textContent = date.toLocaleDateString('ru-RU', {
     day: '2-digit', month: 'long', hour: '2-digit', minute: '2-digit',
   });
@@ -780,7 +781,7 @@ function renderRecords(records) {
   for (const [group, items] of Object.entries(groups)) {
     html += `<p class="text-xs uppercase tracking-wider text-muted mt-4 mb-2">${group}</p>`;
     for (const r of items) {
-      const date = new Date(r.achieved_at);
+      const date = parseServerDate(r.achieved_at);
       const dateStr = date.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: '2-digit' });
       html += `
         <div class="bg-surface rounded-2xl p-4 border border-white/5 card-shadow mb-2">
