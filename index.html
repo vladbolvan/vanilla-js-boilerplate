@@ -28,6 +28,10 @@
             '3xl': '22px',
             '4xl': '28px',
           },
+          boxShadow: {
+            'glow': '0 12px 32px -8px rgba(124,108,255,0.45), 0 0 0 1px rgba(255,255,255,0.06) inset',
+            'soft': '0 6px 20px -8px rgba(0,0,0,0.5)',
+          },
         },
       },
     };
@@ -81,17 +85,17 @@
       height: calc(100% + 1px);
     }
 
-    .nav-btn { transition: color .15s ease; color: #55556a; }
+    .nav-btn { transition: color .2s ease; color: #55556a; }
     .nav-btn.active { color: #7c6cff; }
     .nav-btn.active .nav-icon-bg {
-      background: radial-gradient(circle, rgba(124,108,255,.16) 0%, rgba(124,108,255,0) 70%);
+      background: radial-gradient(circle, rgba(124,108,255,.18) 0%, rgba(124,108,255,0) 70%);
     }
     .nav-icon-bg {
       width: 36px; height: 36px;
       display: flex; align-items: center; justify-content: center;
       border-radius: 9999px;
       margin: 0 auto 2px;
-      transition: background .2s ease;
+      transition: background .25s ease;
     }
 
     .card-shadow { box-shadow: 0 1px 0 rgba(255,255,255,0.02) inset, 0 6px 20px rgba(0,0,0,0.22); }
@@ -100,7 +104,7 @@
       from { opacity: 0; transform: translateY(4px); }
       to { opacity: 1; transform: translateY(0); }
     }
-    #wrap > div > div { animation: fadeIn .18s ease; }
+    #wrap > div > div { animation: fadeIn .2s ease; }
 
     .sheet-handle {
       width: 32px; height: 3px; border-radius: 9999px;
@@ -154,6 +158,10 @@
     .toggle-switch:has(input:checked)::after {
       transform: translateX(18px);
     }
+
+    .empty-icon-ring {
+      background: radial-gradient(circle at center, rgba(124,108,255,0.08) 0%, rgba(124,108,255,0) 70%);
+    }
   </style>
 </head>
 <body class="bg-bg text-white font-sans min-h-screen">
@@ -171,19 +179,21 @@
         <button id="start-workout"
                 class="w-full active:scale-[0.98] transition-transform
                        rounded-3xl p-6 mb-8 text-left flex items-center justify-between
-                       card-shadow relative overflow-hidden"
-                style="background: linear-gradient(135deg, #7c6cff 0%, #5b4dd6 100%);">
+                       relative overflow-hidden
+                       shadow-[0_14px_38px_-12px_rgba(124,108,255,0.55)]"
+                style="background: linear-gradient(135deg, #7c6cff 0%, #5b4dd6 60%, #4b3fc4 100%);">
           <div class="relative z-10">
             <p class="start-subtitle text-xs uppercase tracking-wider text-white/70 mb-1">Новая сессия</p>
             <p class="start-title text-xl font-semibold">Начать тренировку</p>
           </div>
           <span class="start-icon relative z-10 inline-flex items-center justify-center"></span>
           <div class="absolute -right-8 -top-8 w-32 h-32 rounded-full bg-white/10 blur-2xl"></div>
+          <div class="absolute -left-6 -bottom-10 w-24 h-24 rounded-full bg-white/5 blur-2xl"></div>
         </button>
 
         <section>
           <div class="flex items-center justify-between mb-4">
-            <h2 class="text-base font-semibold">Последние тренировки</h2>
+            <h2 class="text-sm font-semibold text-white/95">Последние тренировки</h2>
           </div>
           <div id="recent-list" class="space-y-3">
             <p class="text-muted text-sm py-4 text-center">Загрузка...</p>
@@ -193,7 +203,7 @@
 
       <!-- ЭКРАН 2: ТРЕНИРОВКА -->
       <div id="screen-workout" class="hidden-screen">
-        <header class="flex items-center gap-3 mb-6">
+        <header class="flex items-center gap-3 mb-6 h-9">
           <button id="workout-back" class="text-muted p-2 -ml-2 active:opacity-60">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
           </button>
@@ -203,8 +213,8 @@
         </header>
 
         <div id="workout-empty" class="text-center py-16">
-          <div class="inline-flex items-center justify-center w-16 h-16 rounded-3xl bg-surface border border-white/5 mb-5 text-muted/40">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <div class="inline-flex items-center justify-center w-20 h-20 rounded-4xl bg-surface border border-white/5 mb-5 text-muted/40 empty-icon-ring">
+            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
               <path d="M6.5 6.5v11"/>
               <path d="M17.5 6.5v11"/>
               <path d="M3 9v6"/>
@@ -212,11 +222,11 @@
               <path d="M6.5 12h11"/>
             </svg>
           </div>
-          <p class="text-muted text-sm mb-1">Ещё нет упражнений</p>
+          <p class="text-white/90 text-sm font-medium mb-1">Ещё нет упражнений</p>
           <p class="text-muted2 text-xs">Добавь первое — начнём!</p>
         </div>
 
-        <h2 id="workout-header" class="hidden text-xs uppercase tracking-wider text-muted mb-3">
+        <h2 id="workout-header" class="hidden text-[10px] uppercase tracking-wider text-muted2 mb-3">
           В тренировке
         </h2>
 
@@ -243,7 +253,7 @@
 
       <!-- ЭКРАН 3: ИСТОРИЯ -->
       <div id="screen-history" class="hidden-screen">
-        <header class="mb-6">
+        <header class="mb-6 h-9 flex items-center">
           <h1 class="text-2xl font-bold tracking-tight">История</h1>
         </header>
         <div id="history-list" class="space-y-3">
@@ -253,7 +263,7 @@
 
       <!-- ЭКРАН 7: КАЛЕНДАРЬ -->
       <div id="screen-calendar" class="hidden-screen">
-        <header class="mb-6">
+        <header class="mb-6 h-9 flex items-center">
           <h1 class="text-2xl font-bold tracking-tight">Календарь</h1>
         </header>
 
@@ -274,25 +284,33 @@
         <div id="calendar-day-list"
              class="hidden bg-surface rounded-3xl p-4 border border-white/5 card-shadow mb-4"></div>
 
-        <p class="text-xs text-muted2 text-center">
+        <p class="text-[10px] text-muted2 text-center uppercase tracking-wider">
           Дни с тренировками подсвечены
         </p>
       </div>
 
       <!-- ЭКРАН 4: ДЕТАЛИ ТРЕНИРОВКИ -->
       <div id="screen-workout-detail" class="hidden-screen">
-        <header class="flex items-center gap-3 mb-6">
+        <header class="flex items-center gap-3 mb-6 h-9">
           <button id="back-to-history" class="text-muted p-2 -ml-2 active:opacity-60">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
           </button>
-          <h1 id="detail-title" class="text-xl font-bold tracking-tight">Тренировка</h1>
+          <h1 id="detail-title" class="text-base font-semibold tracking-tight flex-1 truncate">Тренировка</h1>
+          <button id="detail-delete-btn" class="text-muted hover:text-red-400 transition p-2 -mr-2 active:opacity-60" title="Удалить">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 6h18"/>
+              <path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
+              <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>
+              <path d="M10 11v6M14 11v6"/>
+            </svg>
+          </button>
         </header>
         <div id="detail-content" class="space-y-3"></div>
       </div>
 
       <!-- ЭКРАН: РЕДАКТОР ПРОГРАММЫ -->
       <div id="screen-program-editor" class="hidden-screen">
-        <header class="flex items-center gap-3 mb-6">
+        <header class="flex items-center gap-3 mb-6 h-9">
           <button id="program-editor-back" class="text-muted p-2 -ml-2 active:opacity-60">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
           </button>
@@ -300,18 +318,18 @@
         </header>
 
         <div class="mb-5">
-          <label class="text-[10px] uppercase tracking-wider text-muted block mb-1.5">Название</label>
+          <label class="text-[10px] uppercase tracking-wider text-muted2 block mb-1.5">Название</label>
           <input id="program-name-input" type="text" maxlength="128" placeholder="Например: День груди"
                  class="w-full bg-surface2 rounded-2xl px-4 py-3.5 text-white placeholder-muted2
                         focus:outline-none focus:ring-2 focus:ring-primary/40 transition">
         </div>
 
-        <p class="text-xs uppercase tracking-wider text-muted mb-3">Упражнения</p>
+        <p class="text-[10px] uppercase tracking-wider text-muted2 mb-3">Упражнения</p>
 
         <div id="program-exercises-list" class="space-y-2"></div>
 
         <div id="program-editor-empty" class="text-center py-8">
-          <div class="inline-flex items-center justify-center w-12 h-12 rounded-3xl bg-surface border border-white/5 mb-3 text-muted/40">
+          <div class="inline-flex items-center justify-center w-14 h-14 rounded-3xl bg-surface border border-white/5 mb-3 text-muted/40 empty-icon-ring">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
               <path d="M6.5 6.5v11"/>
               <path d="M17.5 6.5v11"/>
@@ -335,14 +353,14 @@
         <button id="program-save-btn"
                 class="w-full mt-3 bg-primary hover:bg-primary/90 active:scale-[0.98]
                        transition rounded-3xl py-4 font-semibold text-base text-white
-                       shadow-lg shadow-primary/20">
+                       shadow-[0_10px_30px_-10px_rgba(124,108,255,0.55)]">
           Сохранить
         </button>
       </div>
 
       <!-- ЭКРАН 6: РЕКОРДЫ -->
       <div id="screen-records" class="hidden-screen">
-        <header class="flex items-center gap-3 mb-6">
+        <header class="flex items-center gap-3 mb-6 h-9">
           <button id="back-to-profile" class="text-muted p-2 -ml-2 active:opacity-60">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
           </button>
@@ -380,7 +398,7 @@
              style="background: linear-gradient(135deg, rgba(249,115,22,.08) 0%, rgba(239,68,68,.06) 100%); border: 1px solid rgba(249,115,22,.12);">
           <div class="flex items-center justify-between relative z-10">
             <div>
-              <p class="text-xs uppercase tracking-wider text-orange-300/70">Дней подряд</p>
+              <p class="text-[10px] uppercase tracking-wider text-orange-300/70">Дней подряд</p>
               <p id="stat-streak" class="text-5xl font-bold mt-2 tracking-tight">0</p>
             </div>
             <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-orange-400/70">
@@ -685,14 +703,14 @@
            style="-webkit-overflow-scrolling: touch;">
 
         <div>
-          <label class="text-[10px] uppercase tracking-wider text-muted block mb-1.5">Название</label>
+          <label class="text-[10px] uppercase tracking-wider text-muted2 block mb-1.5">Название</label>
           <input id="create-ex-name" type="text" maxlength="128" placeholder="Например: Тяга Т-грифа"
                  class="w-full bg-surface2 rounded-2xl px-4 py-3.5 text-white placeholder-muted2
                         focus:outline-none focus:ring-2 focus:ring-primary/40 transition">
         </div>
 
         <div>
-          <label class="text-[10px] uppercase tracking-wider text-muted block mb-2">Группа мышц</label>
+          <label class="text-[10px] uppercase tracking-wider text-muted2 block mb-2">Группа мышц</label>
           <input id="create-ex-group" type="text" hidden>
           <div id="create-ex-group-chips" class="grid grid-cols-3 gap-2"></div>
         </div>
@@ -703,7 +721,7 @@
         <button id="create-ex-save"
                 class="w-full bg-primary hover:bg-primary/90 active:scale-[0.98]
                        transition rounded-3xl py-4 font-semibold text-base text-white
-                       shadow-lg shadow-primary/20">
+                       shadow-[0_10px_30px_-10px_rgba(124,108,255,0.55)]">
           Создать упражнение
         </button>
       </div>
@@ -789,7 +807,7 @@
            style="-webkit-overflow-scrolling: touch;">
 
         <div>
-          <label class="text-[10px] uppercase tracking-wider text-muted block mb-1.5">Вес сегодня, кг</label>
+          <label class="text-[10px] uppercase tracking-wider text-muted2 block mb-1.5">Вес сегодня, кг</label>
           <div class="flex gap-2">
             <input id="weight-input" type="text" inputmode="decimal"
                    placeholder="75.5"
@@ -798,14 +816,14 @@
             <button id="weight-save-btn"
                     class="bg-primary hover:bg-primary/90 active:scale-95 transition
                            rounded-3xl px-6 font-semibold text-white shrink-0
-                           shadow-lg shadow-primary/20">
+                           shadow-[0_10px_30px_-10px_rgba(124,108,255,0.55)]">
               OK
             </button>
           </div>
         </div>
 
         <div>
-          <p class="text-[10px] uppercase tracking-wider text-muted mb-2">История</p>
+          <p class="text-[10px] uppercase tracking-wider text-muted2 mb-2">История</p>
           <div id="weight-history" class="bg-surface2/50 rounded-3xl p-3 border border-white/5">
             <p class="text-muted text-center text-sm py-3">Загрузка...</p>
           </div>
@@ -839,14 +857,14 @@
            style="-webkit-overflow-scrolling: touch;">
 
         <div>
-          <label class="text-[10px] uppercase tracking-wider text-muted block mb-1.5">Время</label>
+          <label class="text-[10px] uppercase tracking-wider text-muted2 block mb-1.5">Время</label>
           <input id="reminder-time-input" type="time" value="18:00"
                  class="w-full bg-surface2 rounded-3xl px-4 py-3.5 text-white text-center text-xl font-semibold
                         focus:outline-none focus:ring-2 focus:ring-primary/40 transition">
         </div>
 
         <div>
-          <p class="text-[10px] uppercase tracking-wider text-muted mb-2">Быстрый выбор</p>
+          <p class="text-[10px] uppercase tracking-wider text-muted2 mb-2">Быстрый выбор</p>
           <div class="grid grid-cols-4 gap-2">
             <button data-reminder-preset="08:00"
                     class="py-2.5 rounded-2xl text-sm font-medium transition
@@ -881,7 +899,7 @@
         <button id="reminder-save-btn"
                 class="w-full bg-primary hover:bg-primary/90 active:scale-[0.98]
                        transition rounded-3xl py-4 font-semibold text-base text-white
-                       shadow-lg shadow-primary/20">
+                       shadow-[0_10px_30px_-10px_rgba(124,108,255,0.55)]">
           Сохранить
         </button>
       </div>
@@ -913,19 +931,19 @@
 
         <div class="grid grid-cols-3 gap-3">
           <div>
-            <label class="text-[10px] uppercase tracking-wider text-muted block mb-1.5">Вес, кг</label>
+            <label class="text-[10px] uppercase tracking-wider text-muted2 block mb-1.5">Вес, кг</label>
             <input id="input-weight" type="text" inputmode="decimal" placeholder="75"
                    class="w-full bg-surface2 rounded-2xl px-3 py-3 text-white text-center
                           focus:outline-none focus:ring-2 focus:ring-primary/40 transition">
           </div>
           <div>
-            <label class="text-[10px] uppercase tracking-wider text-muted block mb-1.5">Рост, см</label>
+            <label class="text-[10px] uppercase tracking-wider text-muted2 block mb-1.5">Рост, см</label>
             <input id="input-height" type="text" inputmode="numeric" placeholder="180"
                    class="w-full bg-surface2 rounded-2xl px-3 py-3 text-white text-center
                           focus:outline-none focus:ring-2 focus:ring-primary/40 transition">
           </div>
           <div>
-            <label class="text-[10px] uppercase tracking-wider text-muted block mb-1.5">Возраст</label>
+            <label class="text-[10px] uppercase tracking-wider text-muted2 block mb-1.5">Возраст</label>
             <input id="input-age" type="text" inputmode="numeric" placeholder="28"
                    class="w-full bg-surface2 rounded-2xl px-3 py-3 text-white text-center
                           focus:outline-none focus:ring-2 focus:ring-primary/40 transition">
@@ -933,7 +951,7 @@
         </div>
 
         <div>
-          <p class="text-[10px] uppercase tracking-wider text-muted mb-2">Пол</p>
+          <p class="text-[10px] uppercase tracking-wider text-muted2 mb-2">Пол</p>
           <div class="grid grid-cols-2 gap-2">
             <button data-gender="male"
                     class="py-3 rounded-2xl text-sm font-medium transition
@@ -949,7 +967,7 @@
         </div>
 
         <div>
-          <p class="text-[10px] uppercase tracking-wider text-muted mb-2">Цель</p>
+          <p class="text-[10px] uppercase tracking-wider text-muted2 mb-2">Цель</p>
           <div class="grid grid-cols-3 gap-2">
             <button data-goal="lose"
                     class="py-3 rounded-2xl text-xs font-medium transition
@@ -970,7 +988,7 @@
         </div>
 
         <div>
-          <p class="text-[10px] uppercase tracking-wider text-muted mb-2">Опыт тренировок</p>
+          <p class="text-[10px] uppercase tracking-wider text-muted2 mb-2">Опыт тренировок</p>
           <div class="grid grid-cols-3 gap-2">
             <button data-experience="beginner"
                     class="py-3 rounded-2xl text-xs font-medium transition
@@ -996,7 +1014,7 @@
         <button id="profile-save-btn"
                 class="w-full bg-primary hover:bg-primary/90 active:scale-[0.98]
                        transition rounded-3xl py-4 font-semibold text-base text-white
-                       shadow-lg shadow-primary/20">
+                       shadow-[0_10px_30px_-10px_rgba(124,108,255,0.55)]">
           Сохранить
         </button>
       </div>
@@ -1008,7 +1026,8 @@
     <div class="max-w-md mx-auto px-5" style="padding-top: calc(env(safe-area-inset-top, 0) + 40px); padding-bottom: 40px;">
 
       <header class="mb-8">
-        <div class="inline-flex items-center justify-center w-14 h-14 rounded-3xl mb-5"
+        <div class="inline-flex items-center justify-center w-14 h-14 rounded-3xl mb-5
+                    shadow-[0_12px_32px_-8px_rgba(124,108,255,0.55)]"
              style="background: linear-gradient(135deg, #7c6cff 0%, #5b4dd6 100%);">
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
             <path d="M6.5 6.5v11"/>
@@ -1027,7 +1046,7 @@
       <div class="space-y-5">
 
         <div>
-          <p class="text-[10px] uppercase tracking-wider text-muted mb-2">Основное</p>
+          <p class="text-[10px] uppercase tracking-wider text-muted2 mb-2">Основное</p>
           <div class="grid grid-cols-3 gap-3">
             <div>
               <input id="ob-input-weight" type="text" inputmode="decimal"
@@ -1051,7 +1070,7 @@
         </div>
 
         <div>
-          <p class="text-[10px] uppercase tracking-wider text-muted mb-2">Пол</p>
+          <p class="text-[10px] uppercase tracking-wider text-muted2 mb-2">Пол</p>
           <div class="grid grid-cols-2 gap-2">
             <button data-ob-gender="male"
                     class="py-3.5 rounded-2xl text-sm font-medium transition
@@ -1067,7 +1086,7 @@
         </div>
 
         <div>
-          <p class="text-[10px] uppercase tracking-wider text-muted mb-2">Цель</p>
+          <p class="text-[10px] uppercase tracking-wider text-muted2 mb-2">Цель</p>
           <div class="grid grid-cols-3 gap-2">
             <button data-ob-goal="lose"
                     class="py-3.5 rounded-2xl text-xs font-medium transition
@@ -1088,7 +1107,7 @@
         </div>
 
         <div>
-          <p class="text-[10px] uppercase tracking-wider text-muted mb-2">Опыт тренировок</p>
+          <p class="text-[10px] uppercase tracking-wider text-muted2 mb-2">Опыт тренировок</p>
           <div class="grid grid-cols-3 gap-2">
             <button data-ob-exp="beginner"
                     class="px-2 py-3 rounded-2xl font-medium transition border bg-surface2 text-muted border-white/5
@@ -1116,7 +1135,7 @@
       <button id="ob-save-btn"
               class="w-full mt-8 bg-primary hover:bg-primary/90 active:scale-[0.98]
                      transition rounded-3xl py-4 font-semibold text-base text-white
-                     shadow-lg shadow-primary/20">
+                     shadow-[0_10px_30px_-10px_rgba(124,108,255,0.55)]">
         Поехали
       </button>
 
