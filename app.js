@@ -37,6 +37,7 @@ const screenProfile = document.getElementById('screen-profile');
 const screenRecords = document.getElementById('screen-records');
 const screenCalendar = document.getElementById('screen-calendar');
 const screenOnboarding = document.getElementById('screen-onboarding');
+const screenProgramEditor = document.getElementById('screen-program-editor');
 
 const userNameEl = document.getElementById('user-name');
 const recentListEl = document.getElementById('recent-list');
@@ -58,6 +59,22 @@ const sheetContent = document.getElementById('sheet-content');
 const sheetCloseBtn = document.getElementById('sheet-close');
 const exercisesPickerEl = document.getElementById('exercises-picker');
 const searchInput = document.getElementById('exercise-search');
+
+// Bottom sheet (programs)
+const progSheetBackdrop = document.getElementById('programs-sheet-backdrop');
+const progSheetContent = document.getElementById('programs-sheet-content');
+const progSheetClose = document.getElementById('programs-sheet-close');
+const progListEl = document.getElementById('programs-list');
+const progEmptyWorkoutBtn = document.getElementById('programs-empty-workout');
+const progCreateBtn = document.getElementById('programs-create-btn');
+
+// Program editor
+const programEditorName = document.getElementById('program-name-input');
+const programEditorList = document.getElementById('program-exercises-list');
+const programEditorAddBtn = document.getElementById('program-add-exercise');
+const programSaveBtn = document.getElementById('program-save-btn');
+const programEditorBack = document.getElementById('program-editor-back');
+const programEditorEmpty = document.getElementById('program-editor-empty');
 
 // Rest timer
 const restTimerEl = document.getElementById('rest-timer');
@@ -102,17 +119,25 @@ const obSaveBtn = document.getElementById('ob-save-btn');
 
 // ============ STATE ============
 let allExercises = [];
+let allPrograms = [];
 let currentWorkoutId = null;
 let currentWorkoutStartedAt = null;
 let workoutExercises = [];
 let allWorkouts = [];
 let currentProfile = null;
 
+// Редактор программы
+let editingProgram = { name: '', exercises: [] };
+
+// Sheet mode: 'workout' | 'program'
+let sheetMode = 'workout';
+
+// Profile edit
 let editGender = null;
 let editGoal = null;
 let editExperience = null;
 
-// Onboarding temp state
+// Onboarding
 let obGender = null;
 let obGoal = null;
 let obExperience = null;
@@ -149,6 +174,7 @@ function showScreen(name) {
   screenRecords.classList.toggle('hidden-screen', name !== 'records');
   if (screenCalendar) screenCalendar.classList.toggle('hidden-screen', name !== 'calendar');
   if (screenOnboarding) screenOnboarding.classList.toggle('hidden-screen', name !== 'onboarding');
+  if (screenProgramEditor) screenProgramEditor.classList.toggle('hidden-screen', name !== 'program-editor');
 
   document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
   document.getElementById('nav-' + name)?.classList.add('active');
@@ -170,7 +196,6 @@ async function loadMe() {
 
     currentProfile = me;
 
-    // Если онбординг не пройден — показываем его
     if (!me.onboarded_at) {
       openOnboarding();
     }
@@ -355,7 +380,9 @@ function renderExercisesPicker(list) {
     return;
   }
   const inWorkoutIds = new Set(workoutExercises.map(e => e.id));
-  const available = list.filter(ex => !inWorkoutIds.has(ex.id));
+  const inProgramIds = new Set(editingProgram.exercises.map(e => e.id));
+  const usedIds = sheetMode === 'program' ? inProgramIds : inWorkoutIds;
+  const available = list.filter(ex => !usedIds.has(ex.id));
 
   if (available.length === 0) {
     exercisesPickerEl.innerHTML =
@@ -387,14 +414,20 @@ function renderExercisesPicker(list) {
 
   exercisesPickerEl.querySelectorAll('.exercise-pick').forEach(btn => {
     btn.addEventListener('click', () => {
-      addExerciseToWorkout(parseInt(btn.dataset.id), btn.dataset.name);
+      if (sheetMode === 'program') {
+        addExerciseToProgram(parseInt(btn.dataset.id), btn.dataset.name);
+      } else {
+        addExerciseToWorkout(parseInt(btn.dataset.id), btn.dataset.name);
+      }
       closeSheet();
     });
   });
 }
 
 // ============ BOTTOM SHEET (exercises) ============
-function openSheet() {
+function openSheet(mode = 'workout') {
+  sheetMode = mode;
+  renderExercisesPicker(allExercises);
   sheetBackdrop.classList.remove('hidden');
   requestAnimationFrame(() => {
     sheetBackdrop.classList.remove('opacity-0');
@@ -408,6 +441,256 @@ function closeSheet() {
   sheetContent.classList.add('translate-y-full');
   setTimeout(() => sheetBackdrop.classList.add('hidden'), 250);
   tg?.HapticFeedback?.impactOccurred('light');
+}
+
+// ============ BOTTOM SHEET (programs) ============
+async function openProgramsSheet() {
+  // Если есть активная тренировка — просто открываем её
+  if (currentWorkoutId) {
+    showScreen('workout');
+    return;
+  }
+
+  progSheetBackdrop.classList.remove('hidden');
+  requestAnimationFrame(() => {
+    progSheetBackdrop.classList.remove('opacity-0');
+    progSheetContent.classList.remove('translate-y-full');
+  });
+  tg?.HapticFeedback?.impactOccurred('light');
+
+  // Загружаем программы
+  progListEl.innerHTML = '<p class="text-muted text-center py-4 text-sm">Загрузка...</p>';
+  await loadPrograms();
+  renderProgramsList();
+}
+
+function closeProgramsSheet() {
+  progSheetBackdrop.classList.add('opacity-0');
+  progSheetContent.classList.add('translate-y-full');
+  setTimeout(() => progSheetBackdrop.classList.add('hidden'), 250);
+  tg?.HapticFeedback?.impactOccurred('light');
+}
+
+async function loadPrograms() {
+  try {
+    const res = await fetch(`${API_URL}/api/programs`, { headers: authHeaders() });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    allPrograms = data.programs || [];
+  } catch (e) {
+    console.error('loadPrograms', e);
+    allPrograms = [];
+  }
+}
+
+function renderProgramsList() {
+  const templates = allPrograms.filter(p => p.is_template);
+  const mine = allPrograms.filter(p => !p.is_template);
+
+  let html = '';
+
+  // Шаблоны
+  if (templates.length > 0) {
+    html += '<p class="text-[10px] uppercase tracking-wider text-muted mb-2">Программы для тебя</p>';
+    for (const p of templates) {
+      const cnt = (p.exercises || []).length;
+      html += `
+        <button class="program-item w-full bg-surface2 hover:bg-surface active:scale-[0.98]
+                       transition rounded-2xl p-4 text-left border border-white/5 mb-2"
+                data-program-id="${p.id}">
+          <div class="flex items-center justify-between gap-2">
+            <div class="min-w-0">
+              <p class="font-semibold">${p.name}</p>
+              <p class="text-xs text-muted mt-0.5">${cnt} упражнений</p>
+            </div>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8b8b9e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+          </div>
+        </button>
+      `;
+    }
+  }
+
+  // Свои
+  if (mine.length > 0) {
+    html += '<p class="text-[10px] uppercase tracking-wider text-muted mt-4 mb-2">Мои программы</p>';
+    for (const p of mine) {
+      const cnt = (p.exercises || []).length;
+      html += `
+        <div class="program-row flex items-center gap-2 mb-2">
+          <button class="program-item flex-1 bg-surface2 hover:bg-surface active:scale-[0.98]
+                         transition rounded-2xl p-4 text-left border border-white/5"
+                  data-program-id="${p.id}">
+            <div class="flex items-center justify-between gap-2">
+              <div class="min-w-0">
+                <p class="font-semibold">${p.name}</p>
+                <p class="text-xs text-muted mt-0.5">${cnt} упражнений</p>
+              </div>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8b8b9e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+            </div>
+          </button>
+          <button class="delete-program text-muted hover:text-red-400 p-2 rounded-xl border border-white/5 bg-surface2"
+                  data-program-id="${p.id}" title="Удалить">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          </button>
+        </div>
+      `;
+    }
+  }
+
+  if (templates.length === 0 && mine.length === 0) {
+    html = '<p class="text-muted text-center py-4 text-sm">Программ пока нет</p>';
+  }
+
+  progListEl.innerHTML = html;
+
+  progListEl.querySelectorAll('.program-item').forEach(btn => {
+    btn.addEventListener('click', () => {
+      startWorkoutFromProgram(parseInt(btn.dataset.programId));
+    });
+  });
+
+  progListEl.querySelectorAll('.delete-program').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      deleteProgram(parseInt(btn.dataset.programId));
+    });
+  });
+}
+
+async function startWorkoutFromProgram(programId) {
+  tg?.HapticFeedback?.impactOccurred('medium');
+  try {
+    const res = await fetch(`${API_URL}/api/workouts/from-program/${programId}`, {
+      method: 'POST',
+      headers: authHeaders(),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+
+    currentWorkoutId = data.workout_id;
+    startWorkoutTimer(data.started_at);
+
+    workoutExercises = (data.exercises || []).map(e => ({
+      id: e.id,
+      name: e.name,
+      sets: [],
+      target_sets: e.target_sets,
+      target_reps: e.target_reps,
+    }));
+
+    closeProgramsSheet();
+    updateStartButton();
+    renderWorkoutExercises();
+    updateWorkoutUI();
+    showScreen('workout');
+
+    // Подтянем прошлые веса для каждого упражнения
+    for (const we of workoutExercises) {
+      fillLastSet(we.id);
+    }
+  } catch (e) {
+    console.error(e);
+    tg?.showAlert('Не удалось начать тренировку');
+  }
+}
+
+async function deleteProgram(programId) {
+  const ok = await new Promise(resolve => {
+    if (tg?.showConfirm) tg.showConfirm('Удалить программу?', (yes) => resolve(yes));
+    else resolve(confirm('Удалить программу?'));
+  });
+  if (!ok) return;
+
+  try {
+    const res = await fetch(`${API_URL}/api/programs/${programId}`, {
+      method: 'DELETE',
+      headers: authHeaders(),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    tg?.HapticFeedback?.notificationOccurred('success');
+    await loadPrograms();
+    renderProgramsList();
+  } catch (e) {
+    console.error(e);
+    tg?.showAlert('Не удалось удалить');
+  }
+}
+
+// ============ РЕДАКТОР ПРОГРАММЫ ============
+function openProgramEditor() {
+  editingProgram = { name: '', exercises: [] };
+  if (programEditorName) programEditorName.value = '';
+  renderProgramEditorExercises();
+  closeProgramsSheet();
+  showScreen('program-editor');
+}
+
+function closeProgramEditor() {
+  showScreen('home');
+}
+
+function addExerciseToProgram(id, name) {
+  tg?.HapticFeedback?.impactOccurred('light');
+  if (editingProgram.exercises.some(e => e.id === id)) return;
+  editingProgram.exercises.push({ id, name });
+  renderProgramEditorExercises();
+}
+
+function removeExerciseFromProgram(id) {
+  editingProgram.exercises = editingProgram.exercises.filter(e => e.id !== id);
+  renderProgramEditorExercises();
+}
+
+function renderProgramEditorExercises() {
+  if (!programEditorList) return;
+  if (editingProgram.exercises.length === 0) {
+    programEditorList.innerHTML = '';
+    if (programEditorEmpty) programEditorEmpty.classList.remove('hidden');
+    return;
+  }
+  if (programEditorEmpty) programEditorEmpty.classList.add('hidden');
+
+  programEditorList.innerHTML = editingProgram.exercises.map((ex, idx) => `
+    <div class="bg-surface rounded-2xl p-3.5 border border-white/5 card-shadow flex items-center gap-3">
+      <span class="text-muted text-xs w-6 shrink-0 text-center">${idx + 1}</span>
+      <p class="flex-1 font-medium text-sm min-w-0 break-words">${ex.name}</p>
+      <button class="remove-prog-ex text-muted hover:text-red-400 p-1.5 -mr-1 shrink-0" data-id="${ex.id}">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+  `).join('');
+
+  programEditorList.querySelectorAll('.remove-prog-ex').forEach(btn => {
+    btn.addEventListener('click', () => removeExerciseFromProgram(parseInt(btn.dataset.id)));
+  });
+}
+
+async function saveProgram() {
+  const name = (programEditorName?.value || '').trim();
+  if (!name) { tg?.showAlert('Введи название программы'); return; }
+  if (name.length > 128) { tg?.showAlert('Название слишком длинное'); return; }
+  if (editingProgram.exercises.length === 0) { tg?.showAlert('Добавь хотя бы одно упражнение'); return; }
+
+  programSaveBtn.style.opacity = '0.6';
+  try {
+    const res = await fetch(`${API_URL}/api/programs`, {
+      method: 'POST',
+      headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        name,
+        exercise_ids: editingProgram.exercises.map(e => e.id),
+      }),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    tg?.HapticFeedback?.notificationOccurred('success');
+    await loadPrograms();
+    showScreen('home');
+  } catch (e) {
+    console.error(e);
+    tg?.showAlert('Не удалось сохранить программу');
+  } finally {
+    programSaveBtn.style.opacity = '1';
+  }
 }
 
 // ============ ТАЙМЕР ТРЕНИРОВКИ ============
@@ -495,7 +778,7 @@ function stopRestTimer(notify = false) {
 }
 
 // ============ ТРЕНИРОВКА ============
-async function startWorkout() {
+async function startEmptyWorkout() {
   try {
     const res = await fetch(`${API_URL}/api/workouts`, {
       method: 'POST',
@@ -505,6 +788,11 @@ async function startWorkout() {
     const data = await res.json();
     currentWorkoutId = data.workout_id;
     startWorkoutTimer(data.started_at);
+    closeProgramsSheet();
+    updateStartButton();
+    renderWorkoutExercises();
+    updateWorkoutUI();
+    showScreen('workout');
   } catch (e) {
     console.error(e);
     tg?.showAlert('Не удалось начать тренировку');
@@ -618,35 +906,41 @@ function renderWorkoutExercises() {
     return;
   }
 
-  workoutExercisesEl.innerHTML = workoutExercises.map(ex => `
-    <div class="bg-surface rounded-2xl p-4 overflow-hidden border border-white/5 card-shadow" data-ex-id="${ex.id}">
-      <div class="flex items-start justify-between gap-2 mb-2">
-        <p class="font-semibold break-words min-w-0 flex-1">${ex.name}</p>
-        <button class="remove-ex text-muted text-xs hover:text-red-400 shrink-0"
-                data-ex-id="${ex.id}">удалить</button>
+  workoutExercisesEl.innerHTML = workoutExercises.map(ex => {
+    const planHint = (ex.target_sets && ex.target_reps)
+      ? `<p class="plan-hint text-xs text-primary2/80 mb-2">План: ${ex.target_sets} × ${ex.target_reps}</p>`
+      : '';
+    return `
+      <div class="bg-surface rounded-2xl p-4 overflow-hidden border border-white/5 card-shadow" data-ex-id="${ex.id}">
+        <div class="flex items-start justify-between gap-2 mb-2">
+          <p class="font-semibold break-words min-w-0 flex-1">${ex.name}</p>
+          <button class="remove-ex text-muted text-xs hover:text-red-400 shrink-0"
+                  data-ex-id="${ex.id}">удалить</button>
+        </div>
+
+        <p class="last-set-hint hidden text-xs text-muted mb-1"></p>
+        ${planHint}
+
+        <div class="sets-container space-y-1.5 mb-3" data-ex-id="${ex.id}"></div>
+
+        <div class="flex gap-2 items-stretch">
+          <input type="number" step="0.5" min="0" inputmode="decimal"
+                 placeholder="Вес"
+                 class="set-weight flex-1 min-w-0 bg-surface2 rounded-xl px-3 py-3 text-white text-center
+                        focus:outline-none focus:ring-2 focus:ring-primary/40 transition"
+                 data-ex-id="${ex.id}">
+          <input type="number" min="1" inputmode="numeric"
+                 placeholder="Повт"
+                 class="set-reps flex-1 min-w-0 bg-surface2 rounded-xl px-3 py-3 text-white text-center
+                        focus:outline-none focus:ring-2 focus:ring-primary/40 transition"
+                 data-ex-id="${ex.id}">
+          <button class="add-set-btn bg-accent hover:bg-green-500 active:scale-95 transition
+                         rounded-xl w-12 shrink-0 font-bold text-black/80"
+                  data-ex-id="${ex.id}">+</button>
+        </div>
       </div>
-
-      <p class="last-set-hint hidden text-xs text-muted mb-2"></p>
-
-      <div class="sets-container space-y-1.5 mb-3" data-ex-id="${ex.id}"></div>
-
-      <div class="flex gap-2 items-stretch">
-        <input type="number" step="0.5" min="0" inputmode="decimal"
-               placeholder="Вес"
-               class="set-weight flex-1 min-w-0 bg-surface2 rounded-xl px-3 py-3 text-white text-center
-                      focus:outline-none focus:ring-2 focus:ring-primary/40 transition"
-               data-ex-id="${ex.id}">
-        <input type="number" min="1" inputmode="numeric"
-               placeholder="Повт"
-               class="set-reps flex-1 min-w-0 bg-surface2 rounded-xl px-3 py-3 text-white text-center
-                      focus:outline-none focus:ring-2 focus:ring-primary/40 transition"
-               data-ex-id="${ex.id}">
-        <button class="add-set-btn bg-accent hover:bg-green-500 active:scale-95 transition
-                       rounded-xl w-12 shrink-0 font-bold text-black/80"
-                data-ex-id="${ex.id}">+</button>
-      </div>
-    </div>
-  `).join('');
+    `;
+  }).join('');
 
   workoutExercises.forEach(ex => {
     renderSetsForExercise(ex.id, ex.sets);
@@ -757,7 +1051,7 @@ async function addSetInline(exerciseId) {
   tg?.HapticFeedback?.notificationOccurred('success');
 
   if (!currentWorkoutId) {
-    await startWorkout();
+    await startEmptyWorkout();
     if (!currentWorkoutId) {
       we.sets = we.sets.filter(s => s.id !== tempId);
       renderSetsForExercise(exerciseId, we.sets);
@@ -1095,7 +1389,6 @@ function calcCalories(weight, height, age, gender, goal) {
 }
 
 function renderProfileMetrics(p) {
-  // Чип опыта
   if (profileExpChipEl) {
     if (p.experience && EXPERIENCE_LABELS[p.experience]) {
       profileExpChipEl.textContent = EXPERIENCE_LABELS[p.experience];
@@ -1361,16 +1654,15 @@ function renderRecords(records) {
 startWorkoutBtn?.addEventListener('click', async () => {
   tg?.HapticFeedback?.impactOccurred('medium');
 
-  if (!currentWorkoutId) {
-    startWorkoutBtn.style.opacity = '0.6';
-    await startWorkout();
-    startWorkoutBtn.style.opacity = '1';
+  if (currentWorkoutId) {
+    // Продолжаем активную
+    showScreen('workout');
+    renderWorkoutExercises();
+    updateWorkoutUI();
+    return;
   }
-  updateStartButton();
-  updateWorkoutUI();
-  renderWorkoutExercises();
-  showScreen('workout');
-  if (allExercises.length === 0) await loadExercises();
+  // Открываем шторку выбора программы
+  openProgramsSheet();
 });
 
 document.getElementById('workout-back')?.addEventListener('click', () => {
@@ -1381,14 +1673,26 @@ document.getElementById('workout-back')?.addEventListener('click', () => {
 finishWorkoutBtn?.addEventListener('click', finishWorkout);
 
 addExerciseBtn?.addEventListener('click', () => {
-  renderExercisesPicker(allExercises);
-  openSheet();
+  openSheet('workout');
 });
 
 sheetCloseBtn?.addEventListener('click', closeSheet);
 sheetBackdrop?.addEventListener('click', (e) => {
   if (e.target === sheetBackdrop) closeSheet();
 });
+
+// Program sheet
+progSheetClose?.addEventListener('click', closeProgramsSheet);
+progSheetBackdrop?.addEventListener('click', (e) => {
+  if (e.target === progSheetBackdrop) closeProgramsSheet();
+});
+progEmptyWorkoutBtn?.addEventListener('click', startEmptyWorkout);
+progCreateBtn?.addEventListener('click', openProgramEditor);
+
+// Program editor
+programEditorAddBtn?.addEventListener('click', () => openSheet('program'));
+programSaveBtn?.addEventListener('click', saveProgram);
+programEditorBack?.addEventListener('click', closeProgramEditor);
 
 restSkipBtn?.addEventListener('click', () => {
   stopRestTimer(true);
