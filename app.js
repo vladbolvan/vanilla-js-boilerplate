@@ -36,6 +36,7 @@ const screenWorkoutDetail = document.getElementById('screen-workout-detail');
 const screenProfile = document.getElementById('screen-profile');
 const screenRecords = document.getElementById('screen-records');
 const screenCalendar = document.getElementById('screen-calendar');
+const screenOnboarding = document.getElementById('screen-onboarding');
 
 const userNameEl = document.getElementById('user-name');
 const recentListEl = document.getElementById('recent-list');
@@ -67,6 +68,7 @@ const restSkipBtn = document.getElementById('rest-skip');
 // Profile
 const profileNameEl = document.getElementById('profile-name');
 const profileUsernameEl = document.getElementById('profile-username');
+const profileExpChipEl = document.getElementById('profile-experience-chip');
 const statStreakEl = document.getElementById('stat-streak');
 const statWorkoutsEl = document.getElementById('stat-workouts');
 const statSetsEl = document.getElementById('stat-sets');
@@ -95,6 +97,9 @@ const calendarPrevBtn = document.getElementById('calendar-prev');
 const calendarNextBtn = document.getElementById('calendar-next');
 const calendarDayListEl = document.getElementById('calendar-day-list');
 
+// Onboarding
+const obSaveBtn = document.getElementById('ob-save-btn');
+
 // ============ STATE ============
 let allExercises = [];
 let currentWorkoutId = null;
@@ -105,6 +110,12 @@ let currentProfile = null;
 
 let editGender = null;
 let editGoal = null;
+let editExperience = null;
+
+// Onboarding temp state
+let obGender = null;
+let obGoal = null;
+let obExperience = null;
 
 // Calendar
 const calendarCache = new Map();
@@ -117,6 +128,12 @@ let workoutTimerInterval = null;
 let restTimerInterval = null;
 let restHideTimeout = null;
 const REST_DURATION = 120;
+
+const EXPERIENCE_LABELS = {
+  beginner: 'Новичок',
+  intermediate: 'Средний',
+  advanced: 'Опытный',
+};
 
 function authHeaders() {
   return { 'X-Init-Data': tg?.initData || '' };
@@ -131,6 +148,7 @@ function showScreen(name) {
   screenProfile.classList.toggle('hidden-screen', name !== 'profile');
   screenRecords.classList.toggle('hidden-screen', name !== 'records');
   if (screenCalendar) screenCalendar.classList.toggle('hidden-screen', name !== 'calendar');
+  if (screenOnboarding) screenOnboarding.classList.toggle('hidden-screen', name !== 'onboarding');
 
   document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
   document.getElementById('nav-' + name)?.classList.add('active');
@@ -138,7 +156,7 @@ function showScreen(name) {
   document.getElementById('wrap')?.scrollTo(0, 0);
 }
 
-// ============ ИМЯ В ШАПКЕ ============
+// ============ ИМЯ В ШАПКЕ + ОНБОРДИНГ ============
 async function loadMe() {
   if (!tg?.initData) {
     if (userNameEl) userNameEl.textContent = 'Гость';
@@ -149,9 +167,115 @@ async function loadMe() {
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const me = await res.json();
     if (userNameEl) userNameEl.textContent = me.first_name || me.username || 'Гость';
+
+    currentProfile = me;
+
+    // Если онбординг не пройден — показываем его
+    if (!me.onboarded_at) {
+      openOnboarding();
+    }
   } catch (e) {
     console.error(e);
     if (userNameEl) userNameEl.textContent = 'Ошибка загрузки';
+  }
+}
+
+// ============ ОНБОРДИНГ ============
+function openOnboarding() {
+  obGender = currentProfile?.gender || null;
+  obGoal = currentProfile?.goal || null;
+  obExperience = currentProfile?.experience || null;
+
+  document.getElementById('ob-input-weight').value = currentProfile?.weight_kg ?? '';
+  document.getElementById('ob-input-height').value = currentProfile?.height_cm ?? '';
+  document.getElementById('ob-input-age').value = currentProfile?.age ?? '';
+
+  updateObGenderUI();
+  updateObGoalUI();
+  updateObExperienceUI();
+
+  showScreen('onboarding');
+}
+
+function updateObGenderUI() {
+  document.querySelectorAll('[data-ob-gender]').forEach(btn => {
+    const isActive = btn.dataset.obGender === obGender;
+    btn.classList.toggle('bg-primary', isActive);
+    btn.classList.toggle('text-white', isActive);
+    btn.classList.toggle('border-primary', isActive);
+    btn.classList.toggle('bg-surface2', !isActive);
+    btn.classList.toggle('text-muted', !isActive);
+    btn.classList.toggle('border-white/5', !isActive);
+  });
+}
+
+function updateObGoalUI() {
+  document.querySelectorAll('[data-ob-goal]').forEach(btn => {
+    const isActive = btn.dataset.obGoal === obGoal;
+    btn.classList.toggle('bg-primary', isActive);
+    btn.classList.toggle('text-white', isActive);
+    btn.classList.toggle('border-primary', isActive);
+    btn.classList.toggle('bg-surface2', !isActive);
+    btn.classList.toggle('text-muted', !isActive);
+    btn.classList.toggle('border-white/5', !isActive);
+  });
+}
+
+function updateObExperienceUI() {
+  document.querySelectorAll('[data-ob-exp]').forEach(btn => {
+    const isActive = btn.dataset.obExp === obExperience;
+    btn.classList.toggle('bg-primary', isActive);
+    btn.classList.toggle('text-white', isActive);
+    btn.classList.toggle('border-primary', isActive);
+    btn.classList.toggle('bg-surface2', !isActive);
+    btn.classList.toggle('text-muted', !isActive);
+    btn.classList.toggle('border-white/5', !isActive);
+    const sub = btn.querySelector('.exp-sub');
+    if (sub) {
+      sub.classList.toggle('text-white/70', isActive);
+      sub.classList.toggle('text-muted', !isActive);
+    }
+  });
+}
+
+async function saveOnboarding() {
+  const w = parseFloat(document.getElementById('ob-input-weight').value);
+  const h = parseInt(document.getElementById('ob-input-height').value);
+  const a = parseInt(document.getElementById('ob-input-age').value);
+
+  if (isNaN(w) || w < 20 || w > 400) { tg?.showAlert('Введи вес (20–400 кг)'); return; }
+  if (isNaN(h) || h < 100 || h > 250) { tg?.showAlert('Введи рост (100–250 см)'); return; }
+  if (isNaN(a) || a < 10 || a > 100) { tg?.showAlert('Введи возраст (10–100 лет)'); return; }
+  if (!obGender) { tg?.showAlert('Выбери пол'); return; }
+  if (!obGoal) { tg?.showAlert('Выбери цель'); return; }
+  if (!obExperience) { tg?.showAlert('Выбери опыт'); return; }
+
+  obSaveBtn.style.opacity = '0.6';
+  try {
+    const res = await fetch(`${API_URL}/api/me`, {
+      method: 'PATCH',
+      headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        weight_kg: w,
+        height_cm: h,
+        age: a,
+        gender: obGender,
+        goal: obGoal,
+        experience: obExperience,
+        mark_onboarded: true,
+      }),
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    currentProfile = await res.json();
+    renderProfileMetrics(currentProfile);
+    tg?.HapticFeedback?.notificationOccurred('success');
+    showScreen('home');
+    updateStartButton();
+  } catch (e) {
+    console.error(e);
+    tg?.showAlert('Не удалось сохранить');
+  } finally {
+    obSaveBtn.style.opacity = '1';
   }
 }
 
@@ -584,9 +708,7 @@ async function deleteSetInline(exerciseId, setId) {
   renderSetsForExercise(exerciseId, we.sets);
   tg?.HapticFeedback?.impactOccurred('medium');
 
-  // Если это оптимистичный подход (temp_), на сервере его нет — просто убрали визуально
   if (String(setId).startsWith('temp_')) return;
-
   if (!currentWorkoutId) return;
 
   try {
@@ -877,7 +999,6 @@ async function renderCalendar(year, month) {
       const info = dayMap.get(d);
 
       if (!info || !info.workouts || info.workouts.length === 0) {
-        // Пустой день — скрываем список
         if (calendarDayListEl) {
           calendarDayListEl.classList.add('hidden');
           calendarDayListEl.innerHTML = '';
@@ -974,6 +1095,16 @@ function calcCalories(weight, height, age, gender, goal) {
 }
 
 function renderProfileMetrics(p) {
+  // Чип опыта
+  if (profileExpChipEl) {
+    if (p.experience && EXPERIENCE_LABELS[p.experience]) {
+      profileExpChipEl.textContent = EXPERIENCE_LABELS[p.experience];
+      profileExpChipEl.classList.remove('hidden');
+    } else {
+      profileExpChipEl.classList.add('hidden');
+    }
+  }
+
   const hasAny = p.weight_kg || p.height_cm || p.age;
   if (!hasAny) {
     if (profileMetricsEl) profileMetricsEl.classList.add('hidden');
@@ -1070,6 +1201,7 @@ function openProfileEdit() {
   if (!currentProfile) return;
   editGender = currentProfile.gender || null;
   editGoal = currentProfile.goal || null;
+  editExperience = currentProfile.experience || null;
 
   document.getElementById('input-weight').value = currentProfile.weight_kg ?? '';
   document.getElementById('input-height').value = currentProfile.height_cm ?? '';
@@ -1077,6 +1209,7 @@ function openProfileEdit() {
 
   updateGenderUI();
   updateGoalUI();
+  updateExperienceUI();
 
   profileEditBackdrop.classList.remove('hidden');
   requestAnimationFrame(() => {
@@ -1117,6 +1250,18 @@ function updateGoalUI() {
   });
 }
 
+function updateExperienceUI() {
+  document.querySelectorAll('[data-experience]').forEach(btn => {
+    const isActive = btn.dataset.experience === editExperience;
+    btn.classList.toggle('bg-primary', isActive);
+    btn.classList.toggle('text-white', isActive);
+    btn.classList.toggle('border-primary', isActive);
+    btn.classList.toggle('bg-surface2', !isActive);
+    btn.classList.toggle('text-muted', !isActive);
+    btn.classList.toggle('border-white/5', !isActive);
+  });
+}
+
 async function saveProfile() {
   const w = parseFloat(document.getElementById('input-weight').value);
   const h = parseInt(document.getElementById('input-height').value);
@@ -1132,6 +1277,7 @@ async function saveProfile() {
   if (!isNaN(a)) payload.age = a;
   if (editGender) payload.gender = editGender;
   if (editGoal) payload.goal = editGoal;
+  if (editExperience) payload.experience = editExperience;
 
   if (Object.keys(payload).length === 0) {
     tg?.showAlert('Заполни хотя бы одно поле');
@@ -1256,6 +1402,32 @@ searchInput?.addEventListener('input', (e) => {
   renderExercisesPicker(filtered);
 });
 
+// Onboarding events
+obSaveBtn?.addEventListener('click', saveOnboarding);
+
+document.querySelectorAll('[data-ob-gender]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    obGender = btn.dataset.obGender;
+    updateObGenderUI();
+    tg?.HapticFeedback?.selectionChanged?.();
+  });
+});
+document.querySelectorAll('[data-ob-goal]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    obGoal = btn.dataset.obGoal;
+    updateObGoalUI();
+    tg?.HapticFeedback?.selectionChanged?.();
+  });
+});
+document.querySelectorAll('[data-ob-exp]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    obExperience = btn.dataset.obExp;
+    updateObExperienceUI();
+    tg?.HapticFeedback?.selectionChanged?.();
+  });
+});
+
+// Profile edit events
 profileEditBtn?.addEventListener('click', openProfileEdit);
 profileEditClose?.addEventListener('click', closeProfileEdit);
 profileEditBackdrop?.addEventListener('click', (e) => {
@@ -1277,7 +1449,15 @@ document.querySelectorAll('[data-goal]').forEach(btn => {
     tg?.HapticFeedback?.selectionChanged?.();
   });
 });
+document.querySelectorAll('[data-experience]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    editExperience = btn.dataset.experience;
+    updateExperienceUI();
+    tg?.HapticFeedback?.selectionChanged?.();
+  });
+});
 
+// Calendar navigation
 calendarPrevBtn?.addEventListener('click', () => {
   let y = calYear, m = calMonth - 1;
   if (m < 1) { m = 12; y -= 1; }
@@ -1292,6 +1472,7 @@ calendarNextBtn?.addEventListener('click', () => {
   renderCalendar(y, m);
 });
 
+// Navigation
 document.getElementById('nav-home')?.addEventListener('click', () => {
   tg?.HapticFeedback?.impactOccurred('light');
   showScreen('home');
