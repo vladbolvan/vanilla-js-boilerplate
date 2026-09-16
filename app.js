@@ -140,6 +140,19 @@ const weightInput = document.getElementById('weight-input');
 const weightSaveBtn = document.getElementById('weight-save-btn');
 const weightHistoryEl = document.getElementById('weight-history');
 
+// Авто-выделение содержимого number-полей при фокусе.
+// Иначе после pre-fill (прошлый вес) курсор встаёт в конец, и цифры склеиваются: 90 + 91 = 9091.
+document.addEventListener('focusin', (e) => {
+  const t = e.target;
+  if (!t || !t.matches) return;
+  if (t.matches('input[type="number"]')) {
+    // Небольшая задержка — на iOS/Android клавиатура открывается и сбивает выделение
+    setTimeout(() => {
+      try { t.select(); } catch (err) {}
+    }, 30);
+  }
+});
+
 // Reminders
 const reminderToggle = document.getElementById('reminder-toggle');
 const reminderStatusEl = document.getElementById('reminder-status');
