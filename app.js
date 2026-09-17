@@ -251,6 +251,9 @@ async function loadMe() {
     if (userNameEl) userNameEl.textContent = me.first_name || me.username || 'Гость';
     currentProfile = me;
     if (!me.onboarded_at) openOnboarding();
+    if (typeof window.onGymlyUserLoaded === 'function') {
+      try { window.onGymlyUserLoaded(me); } catch (e) { console.error(e); }
+    }
   } catch (e) {
     console.error(e);
     if (userNameEl) userNameEl.textContent = 'Ошибка загрузки';
@@ -642,6 +645,15 @@ function renderProgramsList() {
               </div>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8b8b9e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
             </div>
+          </button>
+          <button class="share-program-btn text-primary2/80 hover:text-primary2 p-2 rounded-xl border border-primary/15 bg-primary/5 active:scale-95 transition"
+                  data-program-id="${p.id}" data-program-name="${String(p.name).replace(/"/g, '&quot;')}" title="Поделиться">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="18" cy="5" r="3"/>
+              <circle cx="6" cy="12" r="3"/>
+              <circle cx="18" cy="19" r="3"/>
+              <path d="M8.6 13.5l6.8 4M15.4 6.5l-6.8 4"/>
+            </svg>
           </button>
           <button class="delete-program text-muted hover:text-red-400 p-2 rounded-xl border border-white/5 bg-surface2"
                   data-program-id="${p.id}" title="Удалить">
