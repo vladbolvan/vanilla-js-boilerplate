@@ -27,25 +27,31 @@
       const data = await res.json();
       const url = data.share_url;
       const text = 'Попробуй мою программу «' + programName + '» в Gymly 💪';
+      const shareUrl = 'https://t.me/share/url?url=' + encodeURIComponent(url) + '&text=' + encodeURIComponent(text);
 
-      // 1) Нативный share sheet (iOS/Android)
+      // 1) Родной для Telegram способ (работает в WebApp iframe)
+      if (tg?.openTelegramLink) {
+        tg.openTelegramLink(shareUrl);
+        return;
+      }
+
+      // 2) Нативный share sheet (iOS/Android Safari/Chrome)
       if (navigator.share) {
         try {
           await navigator.share({ title: 'Gymly', text: text, url: url });
           return;
         } catch (e) {
-          if (e && e.name === 'AbortError') return;
-          // иначе падаем в fallback
+          if (e && (e.name === 'AbortError' || e.name === 'NotAllowedError')) return;
         }
       }
 
-      // 2) Fallback: открываем диалог Telegram
-      if (tg?.openTelegramLink) {
-        tg.openTelegramLink('https://t.me/share/url?url=' + encodeURIComponent(url) + '&text=' + encodeURIComponent(text));
+      // 3) Fallback: открываем диалог через window.open
+      try {
+        window.open(shareUrl, '_blank');
         return;
-      }
+      } catch (e) { /* fallthrough */ }
 
-      // 3) Fallback: копируем в буфер
+      // 4) Крайний случай: копируем в буфер
       await copyToClipboard(url);
       tg?.showAlert('Ссылка скопирована: ' + url);
     } catch (e) {
