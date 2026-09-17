@@ -214,6 +214,12 @@ function authHeaders() {
   return { 'X-Init-Data': tg?.initData || '' };
 }
 
+function getTzOffset() {
+  // JS возвращает минуты со ЗНАКОМ НАОБОРОТ (Москва = -180).
+  // На бэке ждём «положительное = восточнее UTC», инвертируем знак.
+  return -new Date().getTimezoneOffset();
+}
+
 // ============ ЭКРАНЫ ============
 function showScreen(name) {
   screenHome.classList.toggle('hidden-screen', name !== 'home');
@@ -349,7 +355,7 @@ async function saveOnboarding() {
 async function loadRecentWorkouts() {
   if (!tg?.initData) return;
   try {
-    const res = await fetch(`${API_URL}/api/workouts`, { headers: authHeaders() });
+    const res = await fetch(`${API_URL}/api/workouts?tz_offset=${getTzOffset()}`, { headers: authHeaders() });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     allWorkouts = data.workouts;
@@ -665,7 +671,7 @@ function renderProgramsList() {
 async function startWorkoutFromProgram(programId) {
   tg?.HapticFeedback?.impactOccurred('medium');
   try {
-    const res = await fetch(`${API_URL}/api/workouts/from-program/${programId}`, {
+    const res = await fetch(`${API_URL}/api/workouts/from-program/${programId}?tz_offset=${getTzOffset()}`, {
       method: 'POST',
       headers: authHeaders(),
     });
