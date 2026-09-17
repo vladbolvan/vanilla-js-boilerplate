@@ -35,6 +35,14 @@
 
   if (!card) return; // старая версия index.html — не работаем
 
+  // SVG-иконки в общем стиле приложения (stroke 1.8, round)
+  const ICONS = {
+    training: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5v11"/><path d="M17.5 6.5v11"/><path d="M3 9v6"/><path d="M21 9v6"/><path d="M6.5 12h11"/></svg>',
+    water: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c0 0-6 6.7-6 11a6 6 0 1 0 12 0c0-4.3-6-11-6-11z"/></svg>',
+    sleep: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 14.5A8.5 8.5 0 1 1 11.5 3.5a6.5 6.5 0 0 0 9 11z"/></svg>',
+    food: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 7.5c-1.5-1.2-3-2-4.5-2C4.5 5.5 2.5 8 2.5 11c0 4.5 3 9 6.5 9 1 0 2-.4 3-.4s2 .4 3 .4c3.5 0 6.5-4.5 6.5-9 0-3-2-5.5-5-5.5-1.5 0-3 .8-4.5 2z"/><path d="M12 7.5v-3.2"/><path d="M12 4.3c.5-1 1.5-1.8 2.8-1.8"/></svg>',
+  };
+
   let localProfile = null;
 
   // --- UTC ↔ local HH:MM через функции из app.js ---
@@ -56,13 +64,13 @@
 
     const items = [
       {
-        icon: '🏋️',
+        icon: ICONS.training,
         label: 'Тренировка',
         enabled: !!p?.reminder_enabled,
         detail: p?.reminder_time ? toLocal(p.reminder_time) : null,
       },
       {
-        icon: '💧',
+        icon: ICONS.water,
         label: 'Вода',
         enabled: !!p?.water_enabled,
         detail: (p?.water_start_time && p?.water_end_time)
@@ -70,13 +78,13 @@
           : null,
       },
       {
-        icon: '😴',
+        icon: ICONS.sleep,
         label: 'Сон',
         enabled: !!p?.sleep_enabled,
         detail: p?.sleep_time ? toLocal(p.sleep_time) : null,
       },
       {
-        icon: '🍎',
+        icon: ICONS.food,
         label: 'Еда',
         enabled: !!p?.food_enabled,
         detail: p?.food_enabled
@@ -88,16 +96,20 @@
     ];
 
     list.innerHTML = items.map(function (r) {
+      const iconCls = r.enabled ? 'text-primary2' : 'text-muted2';
+      const statusCls = r.enabled
+        ? 'text-primary2/90 bg-primary/[0.08] border border-primary/15'
+        : 'text-muted2/70 bg-white/[0.02] border border-white/[0.06]';
       return ''
-        + '<div class="flex items-center justify-between gap-3 py-2.5">'
-        +   '<div class="flex items-center gap-2.5 min-w-0 flex-1">'
-        +     '<span class="text-base shrink-0">' + r.icon + '</span>'
-        +     '<span class="text-sm font-medium truncate">' + r.label + '</span>'
-        +     (r.detail ? '<span class="text-xs text-muted2 ml-2 shrink-0">' + r.detail + '</span>' : '')
+        + '<div class="flex items-center justify-between gap-3 py-3">'
+        +   '<div class="flex items-center gap-3 min-w-0 flex-1">'
+        +     '<span class="inline-flex items-center justify-center w-8 h-8 rounded-xl bg-white/[0.03] border border-white/[0.05] shrink-0 ' + iconCls + '">' + r.icon + '</span>'
+        +     '<div class="min-w-0 flex-1">'
+        +       '<p class="text-sm font-medium truncate text-white/90">' + r.label + '</p>'
+        +       (r.detail ? '<p class="text-[11px] text-muted2 mt-0.5 truncate">' + r.detail + '</p>' : '')
+        +     '</div>'
         +   '</div>'
-        +   '<span class="text-[10px] uppercase tracking-wider '
-        +     (r.enabled ? 'text-primary2 bg-primary/15' : 'text-muted2 bg-surface2')
-        +   ' rounded-full px-2 py-0.5 shrink-0">'
+        +   '<span class="text-[10px] uppercase tracking-wider ' + statusCls + ' rounded-full px-2.5 py-1 shrink-0 font-medium">'
         +     (r.enabled ? 'вкл' : 'выкл')
         +   '</span>'
         + '</div>';
