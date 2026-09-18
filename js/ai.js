@@ -208,11 +208,17 @@
     tg?.HapticFeedback?.impactOccurred('medium');
 
     try {
-      const res = await fetch(API_URL + '/api/nutrition', {
+      // Отправляем УЖЕ готовые данные — LLM второй раз НЕ вызываем
+      const res = await fetch(API_URL + '/api/nutrition/save', {
         method: 'POST',
         headers: Object.assign({}, authHeaders(), { 'Content-Type': 'application/json' }),
         body: JSON.stringify({
-          text: msg.rawText,
+          raw_text: msg.rawText,
+          calories: msg.calories,
+          protein: msg.protein,
+          fat: msg.fat,
+          carbs: msg.carbs,
+          items: msg.items || [],
           tz_offset: getTzOffset(),
         }),
       });
