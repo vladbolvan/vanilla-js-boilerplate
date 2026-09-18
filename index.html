@@ -48,6 +48,19 @@
     .content-bottom { padding-bottom: calc(env(safe-area-inset-bottom, 0) + 100px); }
     .hidden-screen { display: none !important; }
 
+    /* Скрываем нижнюю навигацию, когда открыта клавиатура */
+    body.keyboard-open #bottom-nav {
+      transform: translateY(120%);
+      transition: transform 0.2s ease;
+      pointer-events: none;
+    }
+    body.keyboard-open #rest-timer {
+      transform: translateY(120%) !important;
+    }
+    #bottom-nav {
+      transition: transform 0.25s ease;
+    }
+
     input[type="number"]::-webkit-outer-spin-button,
     input[type="number"]::-webkit-inner-spin-button {
       -webkit-appearance: none;
@@ -1431,6 +1444,44 @@
       document.write('<script src="js/sharing.js?v=' + v + '"><\/script>');
       document.write('<script src="js/ai.js?v=' + v + '"><\/script>');
       document.write('<script src="js/nutrition.js?v=' + v + '"><\/script>');
+    })();
+  </script>
+
+  <script>
+    // Скрываем нижнюю навигацию при открытии клавиатуры
+    (function () {
+      var isKeyboardOpen = false;
+      function setKeyboard(open) {
+        if (open === isKeyboardOpen) return;
+        isKeyboardOpen = open;
+        document.body.classList.toggle('keyboard-open', open);
+      }
+      document.addEventListener('focusin', function (e) {
+        var t = e.target;
+        if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA')) {
+          setKeyboard(true);
+        }
+      });
+      document.addEventListener('focusout', function (e) {
+        var t = e.target;
+        if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA')) {
+          // Небольшая задержка — на случай перехода фокуса на другой input
+          setTimeout(function () {
+            var ae = document.activeElement;
+            if (!ae || (ae.tagName !== 'INPUT' && ae.tagName !== 'TEXTAREA')) {
+              setKeyboard(false);
+            }
+          }, 50);
+        }
+      });
+      // Дополнительно — Telegram viewport change (для iOS)
+      if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.onEvent) {
+        window.Telegram.WebApp.onEvent('viewportChanged', function () {
+          var tg = window.Telegram.WebApp;
+          var keyboardOpen = tg.viewportStableHeight && (tg.viewportStableHeight < window.innerHeight - 100);
+          setKeyboard(!!keyboardOpen);
+        });
+      }
     })();
   </script>
 </body>
