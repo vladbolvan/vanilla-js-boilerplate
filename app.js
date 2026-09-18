@@ -331,14 +331,16 @@ function updateObExperienceUI() {
 }
 
 async function saveOnboarding() {
- const w = parseWeightInput(document.getElementById('ob-input-weight').value);
- const h = parseInt(document.getElementById('ob-input-height').value);
- const a = parseInt(document.getElementById('ob-input-age').value);
-
- if (isNaN(w) || w < 20 || w > 400) { tg?.showAlert('Введи вес (20–400 кг)'); return; }
- if (isNaN(h) || h < 100 || h > 250) { tg?.showAlert('Введи рост (100–250 см)'); return; }
- if (isNaN(a) || a < 10 || a > 100) { tg?.showAlert('Введи возраст (10–100 лет)'); return; }
- if (!obGender) { tg?.showAlert('Выбери пол'); return; }
+ const wRaw = document.getElementById('ob-input-weight').value;
+  const hRaw = document.getElementById('ob-input-height').value;
+  const aRaw = document.getElementById('ob-input-age').value;
+  const w = parseWeightInput(wRaw);
+  const h = parseInt(hRaw);
+  const a = parseInt(aRaw);
+  // Валидация только если поле заполнено
+  if (wRaw && (isNaN(w) || w < 20 || w > 400)) { tg?.showAlert('Вес должен быть 20-400 кг'); return; }
+  if (hRaw && (isNaN(h) || h < 100 || h > 250)) { tg?.showAlert('Рост должен быть 100-250 см'); return; }
+  if (aRaw && (isNaN(a) || a < 10 || a > 100)) { tg?.showAlert('Возраст должен быть 10-100 лет'); return; }
  if (!obGoal) { tg?.showAlert('Выбери цель'); return; }
  if (!obExperience) { tg?.showAlert('Выбери опыт'); return; }
 
@@ -347,18 +349,23 @@ async function saveOnboarding() {
  const res = await fetch(`${API_URL}/api/me`, {
  method: 'PATCH',
  headers: { ...authHeaders(), 'Content-Type': 'application/json' },
- body: JSON.stringify({
- weight_kg: w, height_cm: h, age: a,
- gender: obGender, goal: obGoal, experience: obExperience,
- mark_onboarded: true,
- }),
+ body: JSON.stringify((function(){
+        const p = { goal: obGoal, experience: obExperience, mark_onboarded: true };
+        if (wRaw && !isNaN(w)) p.weight_kg = w;
+        if (hRaw && !isNaN(h)) p.height_cm = h;
+        if (aRaw && !isNaN(a)) p.age = a;
+        if (obGender) p.gender = obGender;
+        return p;
+      })()),
  });
  if (!res.ok) throw new Error(`HTTP ${res.status}`);
  currentProfile = await res.json();
  renderProfileMetrics(currentProfile);
  tg?.HapticFeedback?.notificationOccurred('success');
  showScreen('home');
- updateStartButton();
+  updateStartButton();
+  // Сразу ведём в тренировку
+  setTimeout(function(){ try { openProgramsSheet(); } catch(e) {} }, 400);
  } catch (e) {
  console.error(e);
  tg?.showAlert('Не удалось сохранить');
