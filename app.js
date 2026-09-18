@@ -1907,17 +1907,15 @@ async function loadProfile() {
  const stats = await statsRes.json();
  statStreakEl.textContent = stats.streak;
 
-      const glowEl = document.getElementById('streak-glow');
       const flameSvg = document.querySelector('.streak-flame-svg');
-      if (glowEl && flameSvg) {
+      const glowLayer = document.getElementById('flame-glow-layer');
+      if (flameSvg && glowLayer) {
         if (stats.streak >= 1) {
-          glowEl.style.opacity = '1';
-          flameSvg.style.filter = 'drop-shadow(0 0 6px rgba(251,191,36,.5))';
+          glowLayer.style.opacity = '0.85';
           flameSvg.style.opacity = '1';
         } else {
-          glowEl.style.opacity = '0';
-          flameSvg.style.filter = 'none';
-          flameSvg.style.opacity = '0.35';
+          glowLayer.style.opacity = '0';
+          flameSvg.style.opacity = '0.3';
         }
       }
  statWorkoutsEl.textContent = stats.workouts_count;
