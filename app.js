@@ -1365,19 +1365,33 @@ async function renderCalendar(year, month) {
   for (let i = 0; i < offset; i++) html += '<div></div>';
 
   for (let d = 1; d <= daysInMonth; d++) {
-    const info = dayMap.get(d);
+    const info = dayMap.get(d) || { workouts: [], nutrition: null };
+    const hasWorkout = (info.workouts || []).length > 0;
+    const hasFood = !!info.nutrition;
+    const hasAny = hasWorkout || hasFood;
     const isToday = isCurrentMonth && d === todayDate;
-    const hasWorkout = !!info;
-    const baseCls = 'aspect-square rounded-xl flex items-center justify-center text-sm transition relative';
-    const stateCls = hasWorkout ? 'bg-primary/15 text-white font-semibold active:scale-95 cursor-pointer' : 'text-muted/70';
+
+    const baseCls = 'aspect-square rounded-xl flex flex-col items-center justify-center text-sm transition relative';
+    const stateCls = hasAny
+      ? (hasWorkout ? 'bg-primary/15 text-white font-semibold active:scale-95 cursor-pointer' : 'bg-amber-400/10 text-amber-100/90 font-semibold active:scale-95 cursor-pointer')
+      : 'text-muted/70';
     const ringCls = isToday ? 'ring-1 ring-primary/60' : '';
     const countBadge = hasWorkout && info.workouts.length > 1
       ? `<span class="absolute top-1 right-1 min-w-[16px] h-4 px-1 rounded-full bg-primary text-[9px] font-bold text-white flex items-center justify-center leading-none">${info.workouts.length}</span>`
       : '';
+
+    let dots = '';
+    if (hasWorkout || hasFood) {
+      dots = '<span class="absolute bottom-1.5 flex gap-0.5">'
+        + (hasWorkout ? '<span class="w-1 h-1 rounded-full bg-primary"></span>' : '')
+        + (hasFood ? '<span class="w-1 h-1 rounded-full bg-orange-400"></span>' : '')
+        + '</span>';
+    }
+
     html += `
       <div class="${baseCls} ${stateCls} ${ringCls}" data-day="${d}">
         <span>${d}</span>
-        ${hasWorkout ? '<span class="absolute bottom-1.5 w-1 h-1 rounded-full bg-primary"></span>' : ''}
+        ${dots}
         ${countBadge}
       </div>
     `;
@@ -1388,44 +1402,105 @@ async function renderCalendar(year, month) {
     el.addEventListener('click', async () => {
       const d = parseInt(el.dataset.day);
       const info = dayMap.get(d);
-      if (!info || !info.workouts || info.workouts.length === 0) {
+      if (!info || ((!info.workouts || info.workouts.length === 0) && !info.nutrition)) {
         if (calendarDayListEl) { calendarDayListEl.classList.add('hidden'); calendarDayListEl.innerHTML = ''; }
         calSelectedDay = null;
         return;
       }
       tg?.HapticFeedback?.impactOccurred('light');
-      await ensureWorkoutsLoaded();
-      if (info.workouts.length === 1) {
+      if ((info.workouts || []).length === 1 && !info.nutrition) {
+        await ensureWorkoutsLoaded();
         openWorkoutDetail(info.workouts[0].workout_id);
-      } else {
-        calSelectedDay = d;
-        renderCalendarDayList(d, info.workouts);
+        return;
       }
+      calSelectedDay = d;
+      if ((info.workouts || []).length > 0) await ensureWorkoutsLoaded();
+      renderCalendarDayList(d, info);
     });
   });
 }
 
-function renderCalendarDayList(day, workouts) {
+function renderCalendarDayList(day, info) {
   if (!calendarDayListEl) return;
+  const workouts = info.workouts || [];
+  const nut = info.nutrition || null;
   const monthName = MONTH_NAMES[calMonth - 1].toLowerCase();
-  let html = `<p class="text-[10px] uppercase tracking-wider text-muted2 mb-2">${day} ${monthName} · ${workouts.length} тренировки</p>`;
-  html += '<div class="space-y-2">';
-  for (const w of workouts) {
-    const date = parseServerDate(w.finished_at);
-    const time = date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+
+  let html = `<p class="text-[10px] uppercase tracking-wider text-muted2 mb-3">${day} ${monthName}</p>`;
+
+  if (nut) {
+    const target = (typeof calcCalories === 'function' && currentProfile)
+      ? calcCalories(currentProfile.weight_kg, currentProfile.height_cm, currentProfile.age, currentProfile.gender, currentProfile.goal)
+      : null;
+    const cal = Math.round(nut.calories || 0);
+    const targetLine = target ? `<span class="text-muted2 text-xs ml-1">/ ${target} ккал</span>` : '';
+
     html += `
-      <button class="calendar-day-workout w-full bg-surface2 hover:bg-surface rounded-2xl p-3 text-left
-                     border border-white/5 flex items-center justify-between gap-2 active:scale-[0.98] transition"
-              data-workout-id="${w.workout_id}">
-        <div class="min-w-0">
-          <p class="text-sm font-medium">${time}</p>
-          <p class="text-xs text-muted mt-0.5">${w.total_sets || 0} подходов</p>
+      <div class="bg-surface2 rounded-2xl p-4 border border-white/5 mb-3">
+        <div class="flex items-center gap-2 mb-3">
+          <span class="inline-flex items-center justify-center w-7 h-7 rounded-xl bg-amber-400/10 border border-amber-400/20 text-amber-300/80 shrink-0">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 7.5c-1.5-1.2-3-2-4.5-2C4.5 5.5 2.5 8 2.5 11c0 4.5 3 9 6.5 9 1 0 2-.4 3-.4s2 .4 3 .4c3.5 0 6.5-4.5 6.5-9 0-3-2-5.5-5-5.5-1.5 0-3 .8-4.5 2z"/>
+              <path d="M12 7.5v-3.2"/>
+            </svg>
+          </span>
+          <p class="text-xs font-semibold text-white/90">Питание</p>
         </div>
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8b8b9e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
-      </button>
+        <div class="flex items-baseline mb-2">
+          <span class="text-2xl font-bold tracking-tight">${cal}</span>
+          ${targetLine}
+        </div>
+        <div class="grid grid-cols-3 gap-2">
+          <div class="bg-bg rounded-xl py-2 text-center border border-white/5">
+            <p class="text-[9px] uppercase text-muted2">Б</p>
+            <p class="text-sm font-semibold mt-0.5 text-sky-300/80">${Math.round(nut.protein || 0)}г</p>
+          </div>
+          <div class="bg-bg rounded-xl py-2 text-center border border-white/5">
+            <p class="text-[9px] uppercase text-muted2">Ж</p>
+            <p class="text-sm font-semibold mt-0.5 text-amber-300/80">${Math.round(nut.fat || 0)}г</p>
+          </div>
+          <div class="bg-bg rounded-xl py-2 text-center border border-white/5">
+            <p class="text-[9px] uppercase text-muted2">У</p>
+            <p class="text-sm font-semibold mt-0.5 text-emerald-300/80">${Math.round(nut.carbs || 0)}г</p>
+          </div>
+        </div>
+        <p class="text-[10px] text-muted2 mt-2">Записей: ${nut.entries_count || 0}</p>
+      </div>
     `;
   }
-  html += '</div>';
+
+  if (workouts.length > 0) {
+    html += `<p class="text-[10px] uppercase tracking-wider text-muted2 mb-2">Тренировки · ${workouts.length}</p>`;
+    html += '<div class="space-y-2">';
+    for (const w of workouts) {
+      const date = parseServerDate(w.finished_at);
+      const time = date.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+      html += `
+        <button class="calendar-day-workout w-full bg-surface2 hover:bg-surface rounded-2xl p-3 text-left
+                       border border-white/5 flex items-center justify-between gap-2 active:scale-[0.98] transition"
+                data-workout-id="${w.workout_id}">
+          <div class="min-w-0 flex items-center gap-2.5">
+            <span class="inline-flex items-center justify-center w-7 h-7 rounded-xl bg-primary/10 border border-primary/15 text-primary2 shrink-0">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M6.5 6.5v11"/><path d="M17.5 6.5v11"/><path d="M3 9v6"/><path d="M21 9v6"/><path d="M6.5 12h11"/>
+              </svg>
+            </span>
+            <div class="min-w-0">
+              <p class="text-sm font-medium">${time}</p>
+              <p class="text-xs text-muted mt-0.5">${w.total_sets || 0} подходов</p>
+            </div>
+          </div>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8b8b9e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+        </button>
+      `;
+    }
+    html += '</div>';
+  }
+
+  if (!nut && workouts.length === 0) {
+    html += '<p class="text-muted text-center py-6 text-sm">Ничего не записано</p>';
+  }
+
   calendarDayListEl.innerHTML = html;
   calendarDayListEl.classList.remove('hidden');
   calendarDayListEl.querySelectorAll('.calendar-day-workout').forEach(btn => {
