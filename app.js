@@ -248,7 +248,28 @@ function showScreen(name) {
  document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
  document.getElementById('nav-' + name)?.classList.add('active');
 
- document.getElementById('wrap')?.scrollTo(0, 0);
+   // Закрываем все открытые модалки при переключении экранов
+  const MODAL_BACKDROPS = [
+    'sheet-backdrop',
+    'create-ex-backdrop',
+    'programs-sheet-backdrop',
+    'weight-sheet-backdrop',
+    'reminder-sheet-backdrop',
+    'profile-edit-backdrop',
+    'full-reminders-backdrop',
+    'nutrition-sheet-backdrop',
+  ];
+  MODAL_BACKDROPS.forEach(function (id) {
+    const el = document.getElementById(id);
+    if (el && !el.classList.contains('hidden')) {
+      el.classList.add('opacity-0');
+      const inner = el.firstElementChild;
+      if (inner) inner.classList.add('translate-y-full');
+      setTimeout(function () { el.classList.add('hidden'); }, 250);
+    }
+  });
+
+document.getElementById('wrap')?.scrollTo(0, 0);
 }
 
 // ============ ИМЯ + ОНБОРДИНГ ============
