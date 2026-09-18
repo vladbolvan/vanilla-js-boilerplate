@@ -1839,6 +1839,9 @@ async function loadProfile() {
     }
 
     await loadWeight();
+    if (typeof window.nutritionLoad === 'function') {
+      try { await window.nutritionLoad(); } catch (e) { console.error(e); }
+    }
   } catch (e) {
     console.error(e);
     statStreakEl.textContent = '?';
