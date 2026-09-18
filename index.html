@@ -222,6 +222,10 @@
  <!-- ЭКРАН 1: ГЛАВНАЯ -->
  <div id="screen-home">
  <header class="mb-8">
+        <div class="flex gap-1.5 mb-5">
+          <div class="h-1 flex-1 rounded-full bg-primary"></div>
+          <div class="h-1 flex-1 rounded-full bg-primary/30"></div>
+        </div>
  <p class="text-muted text-sm mb-1">Привет,</p>
  <h1 id="user-name" class="text-3xl font-bold tracking-tight">Гость</h1>
  </header>
@@ -1187,7 +1191,7 @@
  </div>
 
  <div>
- <p class="text-[10px] uppercase tracking-wider text-muted2 mb-2">Пол</p>
+ <p class="text-[10px] uppercase tracking-wider text-muted2 mb-2">Пол <span class="text-muted2/70 normal-case tracking-normal">· необязательно</span></p>
  <div class="grid grid-cols-2 gap-2">
  <button data-gender="male" class="py-3 rounded-2xl text-sm font-medium transition
  border bg-surface2 text-muted border-white/5">
@@ -1201,7 +1205,7 @@
  </div>
 
  <div>
- <p class="text-[10px] uppercase tracking-wider text-muted2 mb-2">Цель</p>
+ <p class="text-[10px] uppercase tracking-wider text-muted2 mb-2">Цель <span class="text-primary2 normal-case tracking-normal">· обязательно</span></p>
  <div class="grid grid-cols-3 gap-2">
  <button data-goal="lose" class="py-3 rounded-2xl text-xs font-medium transition
  border bg-surface2 text-muted border-white/5">
@@ -1219,7 +1223,7 @@
  </div>
 
  <div>
- <p class="text-[10px] uppercase tracking-wider text-muted2 mb-2">Опыт тренировок</p>
+ <p class="text-[10px] uppercase tracking-wider text-muted2 mb-2">Опыт тренировок <span class="text-primary2 normal-case tracking-normal">· обязательно</span></p>
  <div class="grid grid-cols-3 gap-2">
  <button data-experience="beginner" class="py-3 rounded-2xl text-xs font-medium transition
  border bg-surface2 text-muted border-white/5">
@@ -1263,16 +1267,16 @@
  <path d="M6.5 12h11"/>
  </svg>
  </div>
- <h1 class="text-3xl font-bold tracking-tight mb-2">Добро пожаловать</h1>
+ <h1 class="text-[28px] font-bold tracking-tight mb-2">Добро пожаловать</h1>
  <p class="text-muted text-sm leading-relaxed">
- Расскажи о себе — подстроим интерфейс, расчёт калорий и будем подсказывать, как прогрессировать.
+ 2 вопроса — и сразу первая тренировка.
  </p>
  </header>
 
  <div class="space-y-5">
 
  <div>
- <p class="text-[10px] uppercase tracking-wider text-muted2 mb-2">Основное</p>
+ <p class="text-[10px] uppercase tracking-wider text-muted2 mb-2">О тебе · необязательно</p>
  <div class="grid grid-cols-3 gap-3">
  <div>
  <input id="ob-input-weight" type="text" inputmode="decimal" placeholder="Вес, кг" class="w-full bg-surface2 rounded-2xl px-3 py-3 text-white text-center
