@@ -67,6 +67,7 @@ const screenRecords = document.getElementById('screen-records');
 const screenCalendar = document.getElementById('screen-calendar');
 const screenOnboarding = document.getElementById('screen-onboarding');
 const screenProgramEditor = document.getElementById('screen-program-editor');
+const screenAi = document.getElementById('screen-ai');
 
 const userNameEl = document.getElementById('user-name');
 const recentListEl = document.getElementById('recent-list');
@@ -231,6 +232,7 @@ function showScreen(name) {
   if (screenCalendar) screenCalendar.classList.toggle('hidden-screen', name !== 'calendar');
   if (screenOnboarding) screenOnboarding.classList.toggle('hidden-screen', name !== 'onboarding');
   if (screenProgramEditor) screenProgramEditor.classList.toggle('hidden-screen', name !== 'program-editor');
+  if (screenAi) screenAi.classList.toggle('hidden-screen', name !== 'ai');
 
   document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
   document.getElementById('nav-' + name)?.classList.add('active');
@@ -2156,6 +2158,12 @@ document.getElementById('nav-calendar')?.addEventListener('click', () => {
   tg?.HapticFeedback?.impactOccurred('light');
   showScreen('calendar');
   renderCalendar(calYear, calMonth);
+});
+
+document.getElementById('nav-ai')?.addEventListener('click', () => {
+  tg?.HapticFeedback?.impactOccurred('light');
+  showScreen('ai');
+  if (typeof window.aiOpen === 'function') window.aiOpen();
 });
 
 document.getElementById('nav-profile')?.addEventListener('click', () => {
