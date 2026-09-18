@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="viewport"content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Gymly</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -14,10 +14,10 @@
             primary: '#7c6cff',
             primary2: '#a78bfa',
             accent: '#34d399',
-            surface: '#101018',
-            surface2: '#191922',
-            surface3: '#22222e',
-            bg: '#08080c',
+            surface: '#13131a',
+            surface2: '#1c1c26',
+            surface3: '#262633',
+            bg: '#0a0a0f',
             muted: '#8b8b9e',
             muted2: '#5e5e72',
           },
@@ -40,7 +40,7 @@
       margin: 0;
       padding: 0;
     }
-    body { font-feature-settings: "cv11", "ss01"; }
+    body { font-feature-settings:"cv11","ss01"; }
 
     .safe-top {
       padding-top: calc(env(safe-area-inset-top, 0) + var(--safe-top-offset, 56px));
@@ -122,7 +122,7 @@
       transition: background .25s ease;
     }
 
-    .card-shadow { box-shadow: 0 1px 0 rgba(255,255,255,0.02) inset, 0 6px 20px rgba(0,0,0,0.22); }
+    .card-shadow { box-shadow: 0 1px 2px rgba(0,0,0,0.12); }
 
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(4px); }
@@ -208,14 +208,12 @@
       <div id="screen-home">
         <header class="mb-8">
           <p class="text-muted text-sm mb-1">Привет,</p>
-          <h1 id="user-name" class="text-3xl font-bold tracking-tight">Гость</h1>
+          <h1 id="user-name"class="text-3xl font-bold tracking-tight">Гость</h1>
         </header>
 
-        <button id="start-workout"
-                class="w-full active:scale-[0.98] transition-transform
+        <button id="start-workout"class="w-full active:scale-[0.98] transition-transform
                        rounded-3xl p-6 mb-8 text-left flex items-center justify-between
-                       relative overflow-hidden"
-                style="background: linear-gradient(135deg, #7c6cff 0%, #5b4dd6 55%, #4b3fc4 100%);">
+                       relative overflow-hidden"style="background: linear-gradient(135deg, #7c6cff 0%, #5b4dd6 55%, #4b3fc4 100%);">
           <div class="relative z-10">
             <p class="start-subtitle text-xs uppercase tracking-wider text-white/70 mb-1">Новая сессия</p>
             <p class="start-title text-xl font-semibold">Начать тренировку</p>
@@ -229,25 +227,25 @@
           <div class="flex items-center justify-between mb-4">
             <h2 class="text-sm font-semibold text-white/95">Последние тренировки</h2>
           </div>
-          <div id="recent-list" class="space-y-3">
+          <div id="recent-list"class="space-y-3">
             <p class="text-muted text-sm py-4 text-center">Загрузка...</p>
           </div>
         </section>
       </div>
 
       <!-- ЭКРАН 2: ТРЕНИРОВКА -->
-      <div id="screen-workout" class="hidden-screen">
+      <div id="screen-workout"class="hidden-screen">
         <header class="flex items-center gap-3 mb-6 h-9">
-          <button id="workout-back" class="text-muted p-2 -ml-2 active:opacity-60">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+          <button id="workout-back"class="text-muted p-2 -ml-2 active:opacity-60">
+            <svg width="22"height="22"viewBox="0 0 24 24"fill="none"stroke="currentColor"stroke-width="2"stroke-linecap="round"stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
           </button>
           <h1 class="text-xl font-bold tracking-tight flex-1">Тренировка</h1>
-          <span id="workout-timer" class="text-sm font-mono text-white/85 bg-surface2/70 border border-white/5 rounded-full px-3 py-1.5 tabular-nums transition-opacity"></span>
+          <span id="workout-timer"class="text-sm font-mono text-white/85 bg-surface2/70 rounded-full px-3 py-1.5 tabular-nums transition-opacity"></span>
         </header>
 
-        <div id="workout-empty" class="text-center py-16">
-          <div class="inline-flex items-center justify-center w-20 h-20 rounded-4xl bg-surface border border-white/5 mb-5 text-muted/40 empty-icon-ring">
-            <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <div id="workout-empty"class="text-center py-16">
+          <div class="inline-flex items-center justify-center w-20 h-20 rounded-4xl bg-surface mb-5 text-muted/40 empty-icon-ring">
+            <svg width="30"height="30"viewBox="0 0 24 24"fill="none"stroke="currentColor"stroke-width="1.5"stroke-linecap="round"stroke-linejoin="round">
               <path d="M6.5 6.5v11"/>
               <path d="M17.5 6.5v11"/>
               <path d="M3 9v6"/>
@@ -259,25 +257,23 @@
           <p class="text-muted2 text-xs">Добавь первое — начнём!</p>
         </div>
 
-        <h2 id="workout-header" class="hidden text-[10px] uppercase tracking-wider text-muted2 mb-3">
+        <h2 id="workout-header"class="hidden text-[10px] uppercase tracking-wider text-muted2 mb-3">
           В тренировке
         </h2>
 
-        <div id="workout-exercises" class="space-y-4"></div>
+        <div id="workout-exercises"class="space-y-4"></div>
 
-        <div id="workout-divider" class="hidden border-t border-white/5 my-6"></div>
+        <div id="workout-divider"class="hidden border-t border-white/5 my-6"></div>
 
-        <button id="add-exercise-btn"
-                class="w-full mt-4 bg-surface hover:bg-surface2 active:scale-[0.98]
+        <button id="add-exercise-btn"class="w-full mt-4 bg-surface hover:bg-surface2 active:scale-[0.98]
                        transition rounded-3xl py-4 font-medium text-base
                        flex items-center justify-center gap-2.5
                        border border-white/8 text-white/90">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+          <svg width="18"height="18"viewBox="0 0 24 24"fill="none"stroke="currentColor"stroke-width="2"stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
           Добавить упражнение
         </button>
 
-        <button id="finish-workout"
-                class="hidden w-full mt-3 bg-red-500/10 hover:bg-red-500/15 active:scale-[0.98]
+        <button id="finish-workout"class="hidden w-full mt-3 bg-red-500/10 hover:bg-red-500/15 active:scale-[0.98]
                        transition rounded-3xl py-4 font-medium text-base text-red-300/90
                        border border-red-500/20">
           Завершить тренировку
@@ -285,37 +281,36 @@
       </div>
 
       <!-- ЭКРАН 3: ИСТОРИЯ -->
-      <div id="screen-history" class="hidden-screen">
+      <div id="screen-history"class="hidden-screen">
         <header class="mb-6 h-9 flex items-center">
           <h1 class="text-2xl font-bold tracking-tight">История</h1>
         </header>
-        <div id="history-list" class="space-y-3">
+        <div id="history-list"class="space-y-3">
           <p class="text-muted text-center py-8">Загрузка...</p>
         </div>
       </div>
 
       <!-- ЭКРАН 7: КАЛЕНДАРЬ -->
-      <div id="screen-calendar" class="hidden-screen">
+      <div id="screen-calendar"class="hidden-screen">
         <header class="mb-6 h-9 flex items-center">
           <h1 class="text-2xl font-bold tracking-tight">Календарь</h1>
         </header>
 
-        <div class="bg-surface rounded-3xl p-5 border border-white/5 card-shadow mb-4">
+        <div class="bg-surface rounded-3xl p-5 card-shadow mb-4">
           <div class="flex items-center justify-between mb-5">
-            <button id="calendar-prev" class="text-muted p-2 -ml-2 active:opacity-60">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+            <button id="calendar-prev"class="text-muted p-2 -ml-2 active:opacity-60">
+              <svg width="20"height="20"viewBox="0 0 24 24"fill="none"stroke="currentColor"stroke-width="2"stroke-linecap="round"stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
             </button>
-            <p id="calendar-title" class="text-base font-semibold">Месяц</p>
-            <button id="calendar-next" class="text-muted p-2 -mr-2 active:opacity-60">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+            <p id="calendar-title"class="text-base font-semibold">Месяц</p>
+            <button id="calendar-next"class="text-muted p-2 -mr-2 active:opacity-60">
+              <svg width="20"height="20"viewBox="0 0 24 24"fill="none"stroke="currentColor"stroke-width="2"stroke-linecap="round"stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
             </button>
           </div>
 
-          <div id="calendar-grid" class="grid grid-cols-7 gap-1"></div>
+          <div id="calendar-grid"class="grid grid-cols-7 gap-1"></div>
         </div>
 
-        <div id="calendar-day-list"
-             class="hidden bg-surface rounded-3xl p-4 border border-white/5 card-shadow mb-4"></div>
+        <div id="calendar-day-list"class="hidden bg-surface rounded-3xl p-4 card-shadow mb-4"></div>
 
         <p class="text-[10px] text-muted2 text-center uppercase tracking-wider">
           Дни с тренировками подсвечены
@@ -323,39 +318,30 @@
       </div>
 
       <!-- ЭКРАН: AI-ТРЕНЕР -->
-      <div id="screen-ai" class="hidden-screen flex flex-col" style="min-height: calc(100vh - 180px);">
+      <div id="screen-ai"class="hidden-screen flex flex-col"style="min-height: calc(100vh - 180px);">
         <header class="mb-4 h-9 flex items-center justify-between">
           <div class="flex items-center gap-2.5">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <svg width="22"height="22"viewBox="0 0 24 24"fill="none"stroke="#a78bfa"stroke-width="1.8"stroke-linecap="round"stroke-linejoin="round">
               <path d="M12 3v3M12 18v3M3 12h3M18 12h3"/>
-              <circle cx="12" cy="12" r="3"/>
+              <circle cx="12"cy="12"r="3"/>
             </svg>
             <h1 class="text-2xl font-bold tracking-tight">AI-тренер</h1>
           </div>
-          <button id="ai-clear" class="text-muted text-xs hover:text-white/80 transition px-3 py-1.5 rounded-xl border border-white/5 bg-surface2">
+          <button id="ai-clear"class="text-muted text-xs hover:text-white/80 transition px-3 py-1.5 rounded-xl bg-surface2">
             Очистить
           </button>
         </header>
 
-        <div id="ai-messages"
-             class="flex-1 overflow-y-auto pb-3 pr-0.5"
-             style="-webkit-overflow-scrolling: touch; min-height: 300px;">
+        <div id="ai-messages"class="flex-1 overflow-y-auto pb-3 pr-0.5"style="-webkit-overflow-scrolling: touch; min-height: 300px;">
         </div>
 
-        <div class="mt-3 bg-surface rounded-3xl p-2 border border-white/5 card-shadow flex items-end gap-2">
-          <textarea id="ai-input"
-                    rows="1"
-                    maxlength="500"
-                    placeholder="Что ты съел?"
-                    class="flex-1 bg-transparent text-white text-sm px-3 py-2.5 resize-none
-                           placeholder-muted2 focus:outline-none min-h-[40px] max-h-[120px]"
-                    style="line-height: 1.4;"></textarea>
-          <button id="ai-send"
-                  class="bg-primary hover:bg-primary/90 active:scale-95 transition
+        <div class="mt-3 bg-surface rounded-3xl p-2 card-shadow flex items-end gap-2">
+          <textarea id="ai-input"rows="1"maxlength="500"placeholder="Что ты съел?"class="flex-1 bg-transparent text-white text-sm px-3 py-2.5 resize-none
+                           placeholder-muted2 focus:outline-none min-h-[40px] max-h-[120px]"style="line-height: 1.4;"></textarea>
+          <button id="ai-send"class="bg-primary hover:bg-primary/90 active:scale-95 transition
                          rounded-2xl w-11 h-11 shrink-0 flex items-center justify-center
-                         text-white"
-                  style="box-shadow:0 8px 24px -10px rgba(124,108,255,0.55);">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                         text-white"style="box-shadow:0 8px 24px -10px rgba(124,108,255,0.55);">
+            <svg width="18"height="18"viewBox="0 0 24 24"fill="none"stroke="currentColor"stroke-width="2"stroke-linecap="round"stroke-linejoin="round">
               <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
             </svg>
           </button>
@@ -367,14 +353,14 @@
       </div>
 
       <!-- ЭКРАН 4: ДЕТАЛИ ТРЕНИРОВКИ -->
-      <div id="screen-workout-detail" class="hidden-screen">
+      <div id="screen-workout-detail"class="hidden-screen">
         <header class="flex items-center gap-3 mb-6 h-9">
-          <button id="back-to-history" class="text-muted p-2 -ml-2 active:opacity-60">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+          <button id="back-to-history"class="text-muted p-2 -ml-2 active:opacity-60">
+            <svg width="22"height="22"viewBox="0 0 24 24"fill="none"stroke="currentColor"stroke-width="2"stroke-linecap="round"stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
           </button>
-          <h1 id="detail-title" class="text-base font-semibold tracking-tight flex-1 truncate">Тренировка</h1>
-          <button id="detail-delete-btn" class="text-muted hover:text-red-400 transition p-2 -mr-2 active:opacity-60" title="Удалить">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <h1 id="detail-title"class="text-base font-semibold tracking-tight flex-1 truncate">Тренировка</h1>
+          <button id="detail-delete-btn"class="text-muted hover:text-red-400 transition p-2 -mr-2 active:opacity-60"title="Удалить">
+            <svg width="20"height="20"viewBox="0 0 24 24"fill="none"stroke="currentColor"stroke-width="1.8"stroke-linecap="round"stroke-linejoin="round">
               <path d="M3 6h18"/>
               <path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
               <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>
@@ -382,32 +368,31 @@
             </svg>
           </button>
         </header>
-        <div id="detail-content" class="space-y-3"></div>
+        <div id="detail-content"class="space-y-3"></div>
       </div>
 
       <!-- ЭКРАН: РЕДАКТОР ПРОГРАММЫ -->
-      <div id="screen-program-editor" class="hidden-screen">
+      <div id="screen-program-editor"class="hidden-screen">
         <header class="flex items-center gap-3 mb-6 h-9">
-          <button id="program-editor-back" class="text-muted p-2 -ml-2 active:opacity-60">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+          <button id="program-editor-back"class="text-muted p-2 -ml-2 active:opacity-60">
+            <svg width="22"height="22"viewBox="0 0 24 24"fill="none"stroke="currentColor"stroke-width="2"stroke-linecap="round"stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
           </button>
           <h1 class="text-xl font-bold tracking-tight">Своя тренировка</h1>
         </header>
 
         <div class="mb-5">
           <label class="text-[10px] uppercase tracking-wider text-muted2 block mb-1.5">Название</label>
-          <input id="program-name-input" type="text" maxlength="128" placeholder="Например: День груди"
-                 class="w-full bg-surface2 rounded-2xl px-4 py-3.5 text-white placeholder-muted2
+          <input id="program-name-input"type="text"maxlength="128"placeholder="Например: День груди"class="w-full bg-surface2 rounded-2xl px-4 py-3.5 text-white placeholder-muted2
                         focus:outline-none focus:ring-2 focus:ring-primary/40 transition">
         </div>
 
         <p class="text-[10px] uppercase tracking-wider text-muted2 mb-3">Упражнения</p>
 
-        <div id="program-exercises-list" class="space-y-2"></div>
+        <div id="program-exercises-list"class="space-y-2"></div>
 
-        <div id="program-editor-empty" class="text-center py-8">
-          <div class="inline-flex items-center justify-center w-14 h-14 rounded-3xl bg-surface border border-white/5 mb-3 text-muted/40 empty-icon-ring">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+        <div id="program-editor-empty"class="text-center py-8">
+          <div class="inline-flex items-center justify-center w-14 h-14 rounded-3xl bg-surface mb-3 text-muted/40 empty-icon-ring">
+            <svg width="22"height="22"viewBox="0 0 24 24"fill="none"stroke="currentColor"stroke-width="1.5"stroke-linecap="round"stroke-linejoin="round">
               <path d="M6.5 6.5v11"/>
               <path d="M17.5 6.5v11"/>
               <path d="M3 9v6"/>
@@ -418,17 +403,15 @@
           <p class="text-muted text-xs">Пока пусто. Добавь первое упражнение</p>
         </div>
 
-        <button id="program-add-exercise"
-                class="w-full mt-4 bg-surface hover:bg-surface2 active:scale-[0.98]
+        <button id="program-add-exercise"class="w-full mt-4 bg-surface hover:bg-surface2 active:scale-[0.98]
                        transition rounded-3xl py-4 font-medium text-base
                        flex items-center justify-center gap-2.5
                        border border-white/8 text-white/90">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+          <svg width="18"height="18"viewBox="0 0 24 24"fill="none"stroke="currentColor"stroke-width="2"stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
           Добавить упражнение
         </button>
 
-        <button id="program-save-btn"
-                class="w-full mt-3 bg-primary hover:bg-primary/90 active:scale-[0.98]
+        <button id="program-save-btn"class="w-full mt-3 bg-primary hover:bg-primary/90 active:scale-[0.98]
                        transition rounded-3xl py-4 font-semibold text-base text-white
                        shadow-[0_10px_30px_-10px_rgba(124,108,255,0.55)]">
           Сохранить
@@ -436,13 +419,13 @@
       </div>
 
       <!-- ЭКРАН 6: РЕКОРДЫ -->
-      <div id="screen-records" class="hidden-screen">
+      <div id="screen-records"class="hidden-screen">
         <header class="flex items-center gap-3 mb-6 h-9">
-          <button id="back-to-profile" class="text-muted p-2 -ml-2 active:opacity-60">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+          <button id="back-to-profile"class="text-muted p-2 -ml-2 active:opacity-60">
+            <svg width="22"height="22"viewBox="0 0 24 24"fill="none"stroke="currentColor"stroke-width="2"stroke-linecap="round"stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
           </button>
           <div class="flex items-center gap-2.5">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="text-primary2">
+            <svg width="22"height="22"viewBox="0 0 24 24"fill="none"stroke="currentColor"stroke-width="1.8"stroke-linecap="round"stroke-linejoin="round"class="text-primary2">
               <path d="M6 9H4.5a2.5 2.5 0 010-5H6"/>
               <path d="M18 9h1.5a2.5 2.5 0 000-5H18"/>
               <path d="M4 22h16"/>
@@ -453,46 +436,43 @@
             <h1 class="text-2xl font-bold tracking-tight">Рекорды</h1>
           </div>
         </header>
-        <div id="records-list" class="space-y-3">
+        <div id="records-list"class="space-y-3">
           <p class="text-muted text-center py-8">Загрузка...</p>
         </div>
       </div>
 
       <!-- ЭКРАН 5: ПРОФИЛЬ -->
-      <div id="screen-profile" class="hidden-screen">
+      <div id="screen-profile"class="hidden-screen">
         <header class="mb-8">
           <p class="text-muted text-sm mb-1">Профиль</p>
           <div class="flex items-center gap-3 flex-wrap">
-            <h1 id="profile-name" class="text-3xl font-bold tracking-tight">Гость</h1>
-            <span id="profile-experience-chip"
-                  class="hidden text-[10px] uppercase tracking-wider bg-primary/15 text-primary2
+            <h1 id="profile-name"class="text-3xl font-bold tracking-tight">Гость</h1>
+            <span id="profile-experience-chip"class="hidden text-[10px] uppercase tracking-wider bg-primary/15 text-primary2
                          rounded-full px-2.5 py-1 font-medium"></span>
           </div>
-          <p id="profile-username" class="text-sm text-muted mt-1"></p>
+          <p id="profile-username"class="text-sm text-muted mt-1"></p>
         </header>
 
-        <div class="rounded-3xl p-6 mb-4 relative overflow-hidden"
-             style="background: linear-gradient(135deg, rgba(249,115,22,.10) 0%, rgba(239,68,68,.07) 100%);
+        <div class="rounded-3xl p-6 mb-4 relative overflow-hidden"style="background: linear-gradient(135deg, rgba(249,115,22,.10) 0%, rgba(239,68,68,.07) 100%);
                     border: 1px solid rgba(249,115,22,.15);
                     box-shadow: 0 12px 32px -12px rgba(249,115,22,0.30);">
           <div class="flex items-center justify-between relative z-10">
             <div>
               <p class="text-[10px] uppercase tracking-wider text-orange-300/70">Дней подряд</p>
-              <p id="stat-streak" class="text-5xl font-bold mt-2 tracking-tight">0</p>
+              <p id="stat-streak"class="text-5xl font-bold mt-2 tracking-tight">0</p>
             </div>
-            <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" class="text-orange-400/80">
+            <svg width="52"height="52"viewBox="0 0 24 24"fill="none"stroke="currentColor"stroke-width="1.5"stroke-linecap="round"stroke-linejoin="round"class="text-orange-400/80">
               <path d="M8.5 14.5A2.5 2.5 0 0011 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 11-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 002.5 2.5z"/>
             </svg>
           </div>
-          <p id="streak-hint" class="text-xs text-orange-200/50 mt-3 relative z-10"></p>
+          <p id="streak-hint"class="text-xs text-orange-200/50 mt-3 relative z-10"></p>
         </div>
 
         <!-- Карточка питания -->
-        <div id="nutrition-card"
-             class="bg-surface rounded-3xl p-5 border border-white/5 card-shadow mb-4 cursor-pointer">
+        <div id="nutrition-card"class="bg-surface rounded-3xl p-5 card-shadow mb-4 cursor-pointer">
           <div class="flex items-center justify-between mb-3">
             <div class="flex items-center gap-2">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <svg width="16"height="16"viewBox="0 0 24 24"fill="none"stroke="#a78bfa"stroke-width="1.8"stroke-linecap="round"stroke-linejoin="round">
                 <path d="M12 7.5c-1.5-1.2-3-2-4.5-2C4.5 5.5 2.5 8 2.5 11c0 4.5 3 9 6.5 9 1 0 2-.4 3-.4s2 .4 3 .4c3.5 0 6.5-4.5 6.5-9 0-3-2-5.5-5-5.5-1.5 0-3 .8-4.5 2z"/>
                 <path d="M12 7.5v-3.2"/>
               </svg>
@@ -501,17 +481,16 @@
             <span class="text-[10px] text-muted2">КБЖУ</span>
           </div>
 
-          <div id="nutrition-totals" class="mb-3">
+          <div id="nutrition-totals"class="mb-3">
             <span class="text-3xl font-bold tracking-tight">—</span>
             <span class="text-sm text-muted2 ml-1.5">ккал</span>
           </div>
 
           <div class="h-1.5 bg-white/5 rounded-full overflow-hidden mb-3">
-            <div id="nutrition-progress" class="h-full rounded-full transition-all duration-500"
-                 style="width: 0%; background: linear-gradient(90deg, #7c6cff 0%, #a78bfa 100%);"></div>
+            <div id="nutrition-progress"class="h-full rounded-full transition-all duration-500"style="width: 0%; background: linear-gradient(90deg, #7c6cff 0%, #a78bfa 100%);"></div>
           </div>
 
-          <div id="nutrition-macros" class="grid grid-cols-3 gap-2 mb-3">
+          <div id="nutrition-macros"class="grid grid-cols-3 gap-2 mb-3">
             <div class="bg-white/[0.02] rounded-2xl py-2 px-2 text-center border border-white/[0.05]">
               <p class="text-[9px] uppercase tracking-wider text-muted2">Б</p>
               <p class="text-sm font-semibold mt-0.5 text-sky-300/80">—</p>
@@ -527,14 +506,11 @@
           </div>
 
           <div class="flex gap-2">
-            <button id="nutrition-open-btn"
-                    class="flex-1 bg-surface2 hover:bg-surface3 active:scale-[0.98] transition
-                           rounded-2xl py-2.5 text-xs font-medium text-white/90
-                           border border-white/5">
+            <button id="nutrition-open-btn"class="flex-1 bg-surface2 hover:bg-surface3 active:scale-[0.98] transition
+                           rounded-2xl py-2.5 text-xs font-medium text-white/90">
               Что съел сегодня
             </button>
-            <button id="nutrition-add-btn"
-                    class="flex-1 bg-primary/10 hover:bg-primary/15 active:scale-[0.98] transition
+            <button id="nutrition-add-btn"class="flex-1 bg-primary/10 hover:bg-primary/15 active:scale-[0.98] transition
                            rounded-2xl py-2.5 text-xs font-medium text-primary2
                            border border-primary/20">
               + Добавить еду
@@ -543,54 +519,48 @@
         </div>
 
         <!-- Карточка веса -->
-        <div id="weight-card"
-             class="bg-surface rounded-3xl p-5 border border-white/5 card-shadow mb-4">
+        <div id="weight-card"class="bg-surface rounded-3xl p-5 card-shadow mb-4">
           <div class="flex items-center justify-between mb-3">
             <div>
               <p class="text-[10px] uppercase tracking-wider text-muted">Текущий вес</p>
               <div class="flex items-baseline mt-1.5">
-                <p id="weight-current" class="text-3xl font-bold tracking-tight">—</p>
-                <p id="weight-delta" class="text-xs"></p>
+                <p id="weight-current"class="text-3xl font-bold tracking-tight">—</p>
+                <p id="weight-delta"class="text-xs"></p>
               </div>
             </div>
-            <button id="weight-card-btn"
-                    class="inline-flex items-center justify-center gap-1.5
+            <button id="weight-card-btn"class="inline-flex items-center justify-center gap-1.5
                            bg-primary/12 hover:bg-primary/18 text-primary2
                            rounded-2xl px-3.5 py-2.5 text-sm font-medium
                            active:scale-95 transition shrink-0
                            border border-primary/20">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+              <svg width="14"height="14"viewBox="0 0 24 24"fill="none"stroke="currentColor"stroke-width="2.5"stroke-linecap="round"stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
               Записать
             </button>
           </div>
-          <div id="weight-sparkline" class="w-full h-[56px]"></div>
+          <div id="weight-sparkline"class="w-full h-[56px]"></div>
         </div>
 
         <!-- Карточка напоминаний (расширенная: тренировка / вода / сон / еда) -->
-        <div id="reminders-card"
-             class="bg-surface rounded-3xl p-5 border border-white/5 card-shadow mb-4 cursor-pointer">
+        <div id="reminders-card"class="bg-surface rounded-3xl p-5 card-shadow mb-4 cursor-pointer">
           <div class="flex items-center gap-2 mb-3">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="text-primary2 shrink-0">
+            <svg width="16"height="16"viewBox="0 0 24 24"fill="none"stroke="currentColor"stroke-width="1.8"stroke-linecap="round"stroke-linejoin="round"class="text-primary2 shrink-0">
               <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/>
               <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>
             </svg>
             <p class="font-semibold text-sm">Напоминания</p>
           </div>
-          <div id="reminders-list" class="divide-y divide-white/5"></div>
-          <button id="reminders-open-btn"
-                  class="w-full mt-3 bg-surface2 hover:bg-surface3 active:scale-[0.98]
-                         transition rounded-2xl py-2.5 text-sm font-medium text-white/90
-                         border border-white/5">
+          <div id="reminders-list"class="divide-y divide-white/5"></div>
+          <button id="reminders-open-btn"class="w-full mt-3 bg-surface2 hover:bg-surface3 active:scale-[0.98]
+                         transition rounded-2xl py-2.5 text-sm font-medium text-white/90">
             Настроить
           </button>
         </div>
 
-        <button id="profile-edit-btn"
-                class="w-full bg-surface rounded-3xl p-4 border border-white/5 card-shadow
+        <button id="profile-edit-btn"class="w-full bg-surface rounded-3xl p-4 card-shadow
                        flex items-center justify-between active:scale-[0.98] transition mb-4">
           <div class="flex items-center gap-3">
             <span class="inline-flex items-center justify-center w-9 h-9 rounded-2xl bg-primary/10 text-primary2">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <svg width="16"height="16"viewBox="0 0 24 24"fill="none"stroke="currentColor"stroke-width="1.8"stroke-linecap="round"stroke-linejoin="round">
                 <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
                 <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
               </svg>
@@ -600,69 +570,67 @@
               <p class="text-xs text-muted mt-0.5">Вес, рост, возраст, цель, опыт</p>
             </div>
           </div>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5e5e72" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+          <svg width="18"height="18"viewBox="0 0 24 24"fill="none"stroke="#5e5e72"stroke-width="2"stroke-linecap="round"stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
         </button>
 
-        <div id="profile-metrics" class="hidden space-y-3 mb-4">
+        <div id="profile-metrics"class="hidden space-y-3 mb-4">
           <div class="grid grid-cols-3 gap-3">
-            <div class="bg-surface rounded-3xl p-4 border border-white/5 card-shadow text-center">
+            <div class="bg-surface rounded-3xl p-4 card-shadow text-center">
               <p class="text-[10px] uppercase tracking-wider text-muted">Вес</p>
-              <p id="pm-weight" class="text-lg font-bold mt-1.5 tracking-tight">—</p>
+              <p id="pm-weight"class="text-lg font-bold mt-1.5 tracking-tight">—</p>
             </div>
-            <div class="bg-surface rounded-3xl p-4 border border-white/5 card-shadow text-center">
+            <div class="bg-surface rounded-3xl p-4 card-shadow text-center">
               <p class="text-[10px] uppercase tracking-wider text-muted">Рост</p>
-              <p id="pm-height" class="text-lg font-bold mt-1.5 tracking-tight">—</p>
+              <p id="pm-height"class="text-lg font-bold mt-1.5 tracking-tight">—</p>
             </div>
-            <div class="bg-surface rounded-3xl p-4 border border-white/5 card-shadow text-center">
+            <div class="bg-surface rounded-3xl p-4 card-shadow text-center">
               <p class="text-[10px] uppercase tracking-wider text-muted">Возраст</p>
-              <p id="pm-age" class="text-lg font-bold mt-1.5 tracking-tight">—</p>
+              <p id="pm-age"class="text-lg font-bold mt-1.5 tracking-tight">—</p>
             </div>
           </div>
 
           <div class="grid grid-cols-2 gap-3">
-            <div class="bg-surface rounded-3xl p-4 border border-white/5 card-shadow">
+            <div class="bg-surface rounded-3xl p-4 card-shadow">
               <p class="text-[10px] uppercase tracking-wider text-muted">ИМТ</p>
               <div class="flex items-baseline gap-2 mt-1.5">
-                <p id="pm-bmi" class="text-2xl font-bold tracking-tight">—</p>
-                <p id="pm-bmi-label" class="text-xs font-medium"></p>
+                <p id="pm-bmi"class="text-2xl font-bold tracking-tight">—</p>
+                <p id="pm-bmi-label"class="text-xs font-medium"></p>
               </div>
             </div>
-            <div class="bg-surface rounded-3xl p-4 border border-white/5 card-shadow">
+            <div class="bg-surface rounded-3xl p-4 card-shadow">
               <p class="text-[10px] uppercase tracking-wider text-muted">Норма</p>
-              <p id="pm-calories" class="text-2xl font-bold mt-1.5 tracking-tight">—</p>
+              <p id="pm-calories"class="text-2xl font-bold mt-1.5 tracking-tight">—</p>
               <p class="text-[10px] text-muted mt-0.5">ккал / день</p>
             </div>
           </div>
         </div>
 
-        <div id="profile-empty-hint"
-             class="hidden bg-surface rounded-3xl p-4 border border-dashed border-white/10 text-center mb-4">
+        <div id="profile-empty-hint"class="hidden bg-surface rounded-3xl p-4 border border-dashed border-white/10 text-center mb-4">
           <p class="text-sm text-muted">Заполни профиль — рассчитаем ИМТ и норму калорий</p>
         </div>
 
         <div class="grid grid-cols-2 gap-3 mb-5">
-          <div class="bg-surface rounded-3xl p-5 border border-white/5 card-shadow">
+          <div class="bg-surface rounded-3xl p-5 card-shadow">
             <p class="text-[10px] uppercase tracking-wider text-muted">Тренировок</p>
-            <p id="stat-workouts" class="text-3xl font-bold mt-2 tracking-tight">0</p>
+            <p id="stat-workouts"class="text-3xl font-bold mt-2 tracking-tight">0</p>
           </div>
-          <div class="bg-surface rounded-3xl p-5 border border-white/5 card-shadow">
+          <div class="bg-surface rounded-3xl p-5 card-shadow">
             <p class="text-[10px] uppercase tracking-wider text-muted">Подходов</p>
-            <p id="stat-sets" class="text-3xl font-bold mt-2 tracking-tight">0</p>
+            <p id="stat-sets"class="text-3xl font-bold mt-2 tracking-tight">0</p>
           </div>
         </div>
 
-        <div class="bg-surface rounded-3xl p-5 border border-white/5 card-shadow">
+        <div class="bg-surface rounded-3xl p-5 card-shadow">
           <p class="text-[10px] uppercase tracking-wider text-muted">Общий тоннаж</p>
-          <p id="stat-volume" class="text-3xl font-bold mt-2 tracking-tight">0 т</p>
+          <p id="stat-volume"class="text-3xl font-bold mt-2 tracking-tight">0 т</p>
           <p class="text-xs text-muted mt-2">Сумма вес × повторы за всё время</p>
         </div>
 
-        <button id="open-history-from-profile"
-                class="w-full mb-4 bg-surface rounded-3xl p-4 border border-white/5 card-shadow
+        <button id="open-history-from-profile"class="w-full mb-4 bg-surface rounded-3xl p-4 card-shadow
                        flex items-center justify-between active:scale-[0.98] transition">
           <div class="flex items-center gap-3">
             <span class="inline-flex items-center justify-center w-9 h-9 rounded-2xl bg-primary/10 text-primary2">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <svg width="16"height="16"viewBox="0 0 24 24"fill="none"stroke="currentColor"stroke-width="1.8"stroke-linecap="round"stroke-linejoin="round">
                 <path d="M3 3v18h18"/>
                 <path d="M7 14l3-3 3 3 5-6"/>
               </svg>
@@ -672,15 +640,14 @@
               <p class="text-xs text-muted mt-0.5">Все подходы по датам</p>
             </div>
           </div>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5e5e72" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+          <svg width="18"height="18"viewBox="0 0 24 24"fill="none"stroke="#5e5e72"stroke-width="2"stroke-linecap="round"stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
         </button>
 
-        <button id="open-records"
-                class="w-full mt-4 bg-surface rounded-3xl p-4 border border-white/5 card-shadow
+        <button id="open-records"class="w-full mt-4 bg-surface rounded-3xl p-4 card-shadow
                        flex items-center justify-between active:scale-[0.98] transition">
           <div class="flex items-center gap-3">
             <span class="inline-flex items-center justify-center w-9 h-9 rounded-2xl bg-primary/10 text-primary2">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <svg width="16"height="16"viewBox="0 0 24 24"fill="none"stroke="currentColor"stroke-width="1.8"stroke-linecap="round"stroke-linejoin="round">
                 <path d="M6 9H4.5a2.5 2.5 0 010-5H6"/>
                 <path d="M18 9h1.5a2.5 2.5 0 000-5H18"/>
                 <path d="M4 22h16"/>
@@ -694,7 +661,7 @@
               <p class="text-xs text-muted mt-0.5">Лучшие подходы по упражнениям</p>
             </div>
           </div>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5e5e72" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+          <svg width="18"height="18"viewBox="0 0 24 24"fill="none"stroke="#5e5e72"stroke-width="2"stroke-linecap="round"stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
         </button>
 
         <p class="text-[10px] text-muted2 text-center mt-10 uppercase tracking-wider">Gymly · v0.4</p>
@@ -704,40 +671,38 @@
   </div>
 
   <!-- НИЖНЯЯ НАВИГАЦИЯ -->
-  <nav id="bottom-nav"
-       class="fixed bottom-0 left-0 right-0 border-t border-white/5
-              max-w-md mx-auto grid grid-cols-4 z-40"
-       style="background: rgba(12,12,16,.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);">
-    <button id="nav-home" class="nav-btn active py-3">
+  <nav id="bottom-nav"class="fixed bottom-0 left-0 right-0 border-t border-white/5
+              max-w-md mx-auto grid grid-cols-4 z-40"style="background: rgba(12,12,16,.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);">
+    <button id="nav-home"class="nav-btn active py-3">
       <div class="nav-icon-bg">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <svg width="20"height="20"viewBox="0 0 24 24"fill="none"stroke="currentColor"stroke-width="1.8"stroke-linecap="round"stroke-linejoin="round">
           <path d="M3 9.5L12 3l9 6.5V20a2 2 0 01-2 2h-3v-7h-8v7H5a2 2 0 01-2-2V9.5z"/>
         </svg>
       </div>
       <span class="nav-label text-[10px] font-medium">Главная</span>
     </button>
-    <button id="nav-calendar" class="nav-btn py-3">
+    <button id="nav-calendar"class="nav-btn py-3">
       <div class="nav-icon-bg">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <rect x="3" y="4" width="18" height="18" rx="2"/>
+        <svg width="20"height="20"viewBox="0 0 24 24"fill="none"stroke="currentColor"stroke-width="1.8"stroke-linecap="round"stroke-linejoin="round">
+          <rect x="3"y="4"width="18"height="18"rx="2"/>
           <path d="M16 2v4M8 2v4M3 10h18"/>
         </svg>
       </div>
       <span class="nav-label text-[10px] font-medium">Календарь</span>
     </button>
-    <button id="nav-ai" class="nav-btn py-3">
+    <button id="nav-ai"class="nav-btn py-3">
       <div class="nav-icon-bg">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <svg width="20"height="20"viewBox="0 0 24 24"fill="none"stroke="currentColor"stroke-width="1.8"stroke-linecap="round"stroke-linejoin="round">
           <path d="M12 3v3M12 18v3M3 12h3M18 12h3"/>
-          <circle cx="12" cy="12" r="3"/>
+          <circle cx="12"cy="12"r="3"/>
         </svg>
       </div>
       <span class="nav-label text-[10px] font-medium">AI</span>
     </button>
-    <button id="nav-profile" class="nav-btn py-3">
+    <button id="nav-profile"class="nav-btn py-3">
       <div class="nav-icon-bg">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="8" r="4"/>
+        <svg width="20"height="20"viewBox="0 0 24 24"fill="none"stroke="currentColor"stroke-width="1.8"stroke-linecap="round"stroke-linejoin="round">
+          <circle cx="12"cy="8"r="4"/>
           <path d="M4 21v-1a6 6 0 016-6h4a6 6 0 016 6v1"/>
         </svg>
       </div>
@@ -746,54 +711,44 @@
   </nav>
 
   <!-- REST TIMER -->
-  <div id="rest-timer"
-       class="hidden fixed bottom-[78px] left-0 right-0 z-50 max-w-md mx-auto px-4
+  <div id="rest-timer"class="hidden fixed bottom-[78px] left-0 right-0 z-50 max-w-md mx-auto px-4
               transition-transform duration-300 translate-y-full">
     <div class="bg-surface2/95 backdrop-blur-md rounded-3xl overflow-hidden
-                border border-primary/15"
-         style="box-shadow: 0 -12px 40px -10px rgba(124,108,255,0.45), 0 4px 20px rgba(0,0,0,0.4);">
+                border border-primary/15"style="box-shadow: 0 -12px 40px -10px rgba(124,108,255,0.45), 0 4px 20px rgba(0,0,0,0.4);">
       <div class="flex items-center gap-4 px-4 py-3.5">
         <span class="inline-flex items-center justify-center w-12 h-12 rounded-2xl shrink-0
-                     text-primary2 border border-primary/25"
-              style="background: linear-gradient(135deg, rgba(124,108,255,0.28) 0%, rgba(124,108,255,0.10) 100%);">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <circle cx="12" cy="12" r="9"/>
+                     text-primary2 border border-primary/25"style="background: linear-gradient(135deg, rgba(124,108,255,0.28) 0%, rgba(124,108,255,0.10) 100%);">
+          <svg width="20"height="20"viewBox="0 0 24 24"fill="none"stroke="currentColor"stroke-width="2"stroke-linecap="round"stroke-linejoin="round">
+            <circle cx="12"cy="12"r="9"/>
             <path d="M12 7v5l3 2"/>
           </svg>
         </span>
         <div class="flex-1 min-w-0">
           <p class="text-[10px] uppercase tracking-wider text-muted2">Отдых</p>
-          <p id="rest-time" class="text-2xl font-semibold tabular-nums font-mono tracking-tight mt-0.5">2:00</p>
+          <p id="rest-time"class="text-2xl font-semibold tabular-nums font-mono tracking-tight mt-0.5">2:00</p>
         </div>
-        <button id="rest-skip"
-                class="text-sm font-medium text-white/90 hover:text-white transition shrink-0
+        <button id="rest-skip"class="text-sm font-medium text-white/90 hover:text-white transition shrink-0
                        px-4 py-2.5 rounded-2xl border border-white/10 bg-white/5 active:scale-95">
           Пропустить
         </button>
       </div>
       <div class="h-1 bg-white/5 relative overflow-hidden">
-        <div id="rest-progress"
-             class="h-full rounded-r-full"
-             style="width: 100%; background: linear-gradient(90deg, #7c6cff 0%, #a78bfa 100%);"></div>
+        <div id="rest-progress"class="h-full rounded-r-full"style="width: 100%; background: linear-gradient(90deg, #7c6cff 0%, #a78bfa 100%);"></div>
       </div>
     </div>
   </div>
 
   <!-- BOTTOM SHEET: упражнения -->
-  <div id="sheet-backdrop"
-       class="hidden fixed inset-0 z-[60] opacity-0 transition-opacity duration-250"
-       style="background: rgba(0,0,0,.6); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);">
-    <div id="sheet-content"
-         class="absolute left-0 right-0 bottom-0 max-w-md mx-auto
+  <div id="sheet-backdrop"class="hidden fixed inset-0 z-[60] opacity-0 transition-opacity duration-250"style="background: rgba(0,0,0,.6); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);">
+    <div id="sheet-content"class="absolute left-0 right-0 bottom-0 max-w-md mx-auto
                 bg-surface rounded-t-3xl translate-y-full transition-transform duration-300
-                max-h-[85vh] flex flex-col border-t border-white/8"
-         style="box-shadow: 0 -20px 60px rgba(0,0,0,.5);">
+                max-h-[85vh] flex flex-col border-t border-white/8"style="box-shadow: 0 -20px 60px rgba(0,0,0,.5);">
       <div class="sheet-handle"></div>
 
       <div class="px-5 pt-4 pb-3 flex items-center justify-between">
         <h2 class="text-base font-semibold">Выбрать упражнение</h2>
-        <button id="sheet-close" class="text-muted p-1 -mr-1 active:opacity-60">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <button id="sheet-close"class="text-muted p-1 -mr-1 active:opacity-60">
+          <svg width="20"height="20"viewBox="0 0 24 24"fill="none"stroke="currentColor"stroke-width="2"stroke-linecap="round"stroke-linejoin="round">
             <path d="M18 6L6 18M6 6l12 12"/>
           </svg>
         </button>
@@ -801,25 +756,22 @@
 
       <div class="px-5 pb-3">
         <div class="relative">
-          <svg class="absolute left-4 top-1/2 -translate-y-1/2 text-muted pointer-events-none" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/></svg>
-          <input id="exercise-search" type="text" placeholder="Поиск..."
-                 class="w-full bg-surface2 rounded-2xl pl-10 pr-4 py-3
+          <svg class="absolute left-4 top-1/2 -translate-y-1/2 text-muted pointer-events-none"width="16"height="16"viewBox="0 0 24 24"fill="none"stroke="currentColor"stroke-width="2"stroke-linecap="round"><circle cx="11"cy="11"r="8"/><path d="M21 21l-4.3-4.3"/></svg>
+          <input id="exercise-search"type="text"placeholder="Поиск..."class="w-full bg-surface2 rounded-2xl pl-10 pr-4 py-3
                         text-white text-sm placeholder-muted2 focus:outline-none focus:ring-2 focus:ring-primary/40 transition">
         </div>
       </div>
 
-      <div id="exercises-picker" class="flex-1 overflow-y-auto px-5 pb-3 space-y-1.5"
-           style="-webkit-overflow-scrolling: touch;">
+      <div id="exercises-picker"class="flex-1 overflow-y-auto px-5 pb-3 space-y-1.5"style="-webkit-overflow-scrolling: touch;">
         <p class="text-muted text-center py-4 text-sm">Загрузка...</p>
       </div>
 
       <div class="px-5 pb-5 pt-3 border-t border-white/5">
-        <button id="sheet-create-btn"
-                class="w-full bg-primary/10 hover:bg-primary/15 active:scale-[0.98]
+        <button id="sheet-create-btn"class="w-full bg-primary/10 hover:bg-primary/15 active:scale-[0.98]
                        transition rounded-2xl py-3.5 font-medium text-sm text-primary2
                        border border-primary/20
                        flex items-center justify-center gap-2">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+          <svg width="16"height="16"viewBox="0 0 24 24"fill="none"stroke="currentColor"stroke-width="2"stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
           Создать своё упражнение
         </button>
       </div>
@@ -827,46 +779,39 @@
   </div>
 
   <!-- BOTTOM SHEET: СОЗДАНИЕ УПРАЖНЕНИЯ -->
-  <div id="create-ex-backdrop"
-       class="hidden fixed inset-0 z-[70] opacity-0 transition-opacity duration-250"
-       style="background: rgba(0,0,0,.6); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);">
-    <div id="create-ex-panel"
-         class="absolute left-0 right-0 bottom-0 max-w-md mx-auto
+  <div id="create-ex-backdrop"class="hidden fixed inset-0 z-[70] opacity-0 transition-opacity duration-250"style="background: rgba(0,0,0,.6); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);">
+    <div id="create-ex-panel"class="absolute left-0 right-0 bottom-0 max-w-md mx-auto
                 bg-surface rounded-t-3xl translate-y-full transition-transform duration-300
-                max-h-[90vh] flex flex-col border-t border-white/8"
-         style="box-shadow: 0 -20px 60px rgba(0,0,0,.5);">
+                max-h-[90vh] flex flex-col border-t border-white/8"style="box-shadow: 0 -20px 60px rgba(0,0,0,.5);">
       <div class="sheet-handle"></div>
 
       <div class="px-5 pt-4 pb-3 flex items-center justify-between">
         <h2 class="text-base font-semibold">Своё упражнение</h2>
-        <button id="create-ex-close" class="text-muted p-1 -mr-1 active:opacity-60">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <button id="create-ex-close"class="text-muted p-1 -mr-1 active:opacity-60">
+          <svg width="20"height="20"viewBox="0 0 24 24"fill="none"stroke="currentColor"stroke-width="2"stroke-linecap="round"stroke-linejoin="round">
             <path d="M18 6L6 18M6 6l12 12"/>
           </svg>
         </button>
       </div>
 
-      <div class="flex-1 overflow-y-auto px-5 pb-6 space-y-5"
-           style="-webkit-overflow-scrolling: touch;">
+      <div class="flex-1 overflow-y-auto px-5 pb-6 space-y-5"style="-webkit-overflow-scrolling: touch;">
 
         <div>
           <label class="text-[10px] uppercase tracking-wider text-muted2 block mb-1.5">Название</label>
-          <input id="create-ex-name" type="text" maxlength="128" placeholder="Например: Тяга Т-грифа"
-                 class="w-full bg-surface2 rounded-2xl px-4 py-3.5 text-white placeholder-muted2
+          <input id="create-ex-name"type="text"maxlength="128"placeholder="Например: Тяга Т-грифа"class="w-full bg-surface2 rounded-2xl px-4 py-3.5 text-white placeholder-muted2
                         focus:outline-none focus:ring-2 focus:ring-primary/40 transition">
         </div>
 
         <div>
           <label class="text-[10px] uppercase tracking-wider text-muted2 block mb-2">Группа мышц</label>
-          <input id="create-ex-group" type="text" hidden>
-          <div id="create-ex-group-chips" class="grid grid-cols-3 gap-2"></div>
+          <input id="create-ex-group"type="text"hidden>
+          <div id="create-ex-group-chips"class="grid grid-cols-3 gap-2"></div>
         </div>
 
       </div>
 
       <div class="px-5 pb-5 pt-3 border-t border-white/5">
-        <button id="create-ex-save"
-                class="w-full bg-primary hover:bg-primary/90 active:scale-[0.98]
+        <button id="create-ex-save"class="w-full bg-primary hover:bg-primary/90 active:scale-[0.98]
                        transition rounded-3xl py-4 font-semibold text-base text-white
                        shadow-[0_10px_30px_-10px_rgba(124,108,255,0.55)]">
           Создать упражнение
@@ -876,35 +821,29 @@
   </div>
 
   <!-- BOTTOM SHEET: ПРОГРАММЫ -->
-  <div id="programs-sheet-backdrop"
-       class="hidden fixed inset-0 z-[60] opacity-0 transition-opacity duration-250"
-       style="background: rgba(0,0,0,.6); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);">
-    <div id="programs-sheet-content"
-         class="absolute left-0 right-0 bottom-0 max-w-md mx-auto
+  <div id="programs-sheet-backdrop"class="hidden fixed inset-0 z-[60] opacity-0 transition-opacity duration-250"style="background: rgba(0,0,0,.6); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);">
+    <div id="programs-sheet-content"class="absolute left-0 right-0 bottom-0 max-w-md mx-auto
                 bg-surface rounded-t-3xl translate-y-full transition-transform duration-300
-                max-h-[85vh] flex flex-col border-t border-white/8"
-         style="box-shadow: 0 -20px 60px rgba(0,0,0,.5);">
+                max-h-[85vh] flex flex-col border-t border-white/8"style="box-shadow: 0 -20px 60px rgba(0,0,0,.5);">
       <div class="sheet-handle"></div>
 
       <div class="px-5 pt-4 pb-3 flex items-center justify-between">
         <h2 class="text-base font-semibold">Начать тренировку</h2>
-        <button id="programs-sheet-close" class="text-muted p-1 -mr-1 active:opacity-60">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <button id="programs-sheet-close"class="text-muted p-1 -mr-1 active:opacity-60">
+          <svg width="20"height="20"viewBox="0 0 24 24"fill="none"stroke="currentColor"stroke-width="2"stroke-linecap="round"stroke-linejoin="round">
             <path d="M18 6L6 18M6 6l12 12"/>
           </svg>
         </button>
       </div>
 
-      <div class="flex-1 overflow-y-auto px-5 pb-6"
-           style="-webkit-overflow-scrolling: touch;">
+      <div class="flex-1 overflow-y-auto px-5 pb-6"style="-webkit-overflow-scrolling: touch;">
 
-        <button id="programs-empty-workout"
-                class="w-full bg-primary/10 hover:bg-primary/15 active:scale-[0.98]
+        <button id="programs-empty-workout"class="w-full bg-primary/10 hover:bg-primary/15 active:scale-[0.98]
                        transition rounded-3xl p-4 text-left border border-primary/20 mb-4
                        flex items-center justify-between gap-2">
           <div class="flex items-center gap-3">
             <span class="inline-flex items-center justify-center w-9 h-9 rounded-2xl bg-primary/20 text-primary2 shrink-0">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+              <svg width="16"height="16"viewBox="0 0 24 24"fill="none"stroke="currentColor"stroke-width="2.5"stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
             </span>
             <div>
               <p class="font-semibold text-sm">Пустая тренировка</p>
@@ -913,16 +852,15 @@
           </div>
         </button>
 
-        <div id="programs-list" class="mb-4">
+        <div id="programs-list"class="mb-4">
           <p class="text-muted text-center py-4 text-sm">Загрузка...</p>
         </div>
 
-        <button id="programs-create-btn"
-                class="w-full bg-surface2 hover:bg-surface3 active:scale-[0.98]
+        <button id="programs-create-btn"class="w-full bg-surface2 hover:bg-surface3 active:scale-[0.98]
                        transition rounded-3xl py-3.5 font-medium text-sm
                        flex items-center justify-center gap-2.5
                        border border-dashed border-white/15 text-white/90">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+          <svg width="16"height="16"viewBox="0 0 24 24"fill="none"stroke="currentColor"stroke-width="2"stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
           Создать свою программу
         </button>
 
@@ -931,37 +869,29 @@
   </div>
 
   <!-- BOTTOM SHEET: ВЕС -->
-  <div id="weight-sheet-backdrop"
-       class="hidden fixed inset-0 z-[70] opacity-0 transition-opacity duration-250"
-       style="background: rgba(0,0,0,.6); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);">
-    <div id="weight-sheet-panel"
-         class="absolute left-0 right-0 bottom-0 max-w-md mx-auto
+  <div id="weight-sheet-backdrop"class="hidden fixed inset-0 z-[70] opacity-0 transition-opacity duration-250"style="background: rgba(0,0,0,.6); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);">
+    <div id="weight-sheet-panel"class="absolute left-0 right-0 bottom-0 max-w-md mx-auto
                 bg-surface rounded-t-3xl translate-y-full transition-transform duration-300
-                max-h-[85vh] flex flex-col border-t border-white/8"
-         style="box-shadow: 0 -20px 60px rgba(0,0,0,.5);">
+                max-h-[85vh] flex flex-col border-t border-white/8"style="box-shadow: 0 -20px 60px rgba(0,0,0,.5);">
       <div class="sheet-handle"></div>
 
       <div class="px-5 pt-4 pb-3 flex items-center justify-between">
         <h2 class="text-base font-semibold">Записать вес</h2>
-        <button id="weight-sheet-close" class="text-muted p-1 -mr-1 active:opacity-60">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <button id="weight-sheet-close"class="text-muted p-1 -mr-1 active:opacity-60">
+          <svg width="20"height="20"viewBox="0 0 24 24"fill="none"stroke="currentColor"stroke-width="2"stroke-linecap="round"stroke-linejoin="round">
             <path d="M18 6L6 18M6 6l12 12"/>
           </svg>
         </button>
       </div>
 
-      <div class="flex-1 overflow-y-auto px-5 pb-6 space-y-5"
-           style="-webkit-overflow-scrolling: touch;">
+      <div class="flex-1 overflow-y-auto px-5 pb-6 space-y-5"style="-webkit-overflow-scrolling: touch;">
 
         <div>
           <label class="text-[10px] uppercase tracking-wider text-muted2 block mb-1.5">Вес сегодня, кг</label>
           <div class="flex gap-2">
-            <input id="weight-input" type="text" inputmode="decimal"
-                   placeholder="75.5"
-                   class="flex-1 min-w-0 bg-surface2 rounded-3xl px-4 py-3.5 text-white text-center text-lg font-semibold
+            <input id="weight-input"type="text"inputmode="decimal"placeholder="75.5"class="flex-1 min-w-0 bg-surface2 rounded-3xl px-4 py-3.5 text-white text-center text-lg font-semibold
                           placeholder-muted2 focus:outline-none focus:ring-2 focus:ring-primary/40 transition">
-            <button id="weight-save-btn"
-                    class="bg-primary hover:bg-primary/90 active:scale-95 transition
+            <button id="weight-save-btn"class="bg-primary hover:bg-primary/90 active:scale-95 transition
                            rounded-3xl px-6 font-semibold text-white shrink-0
                            shadow-[0_10px_30px_-10px_rgba(124,108,255,0.55)]">
               OK
@@ -971,7 +901,7 @@
 
         <div>
           <p class="text-[10px] uppercase tracking-wider text-muted2 mb-2">История</p>
-          <div id="weight-history" class="bg-surface2/50 rounded-3xl p-3 border border-white/5">
+          <div id="weight-history"class="bg-surface2/50 rounded-3xl p-3">
             <p class="text-muted text-center text-sm py-3">Загрузка...</p>
           </div>
         </div>
@@ -981,55 +911,45 @@
   </div>
 
   <!-- BOTTOM SHEET: НАПОМИНАНИЯ -->
-  <div id="reminder-sheet-backdrop"
-       class="hidden fixed inset-0 z-[70] opacity-0 transition-opacity duration-250"
-       style="background: rgba(0,0,0,.6); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);">
-    <div id="reminder-sheet-panel"
-         class="absolute left-0 right-0 bottom-0 max-w-md mx-auto
+  <div id="reminder-sheet-backdrop"class="hidden fixed inset-0 z-[70] opacity-0 transition-opacity duration-250"style="background: rgba(0,0,0,.6); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);">
+    <div id="reminder-sheet-panel"class="absolute left-0 right-0 bottom-0 max-w-md mx-auto
                 bg-surface rounded-t-3xl translate-y-full transition-transform duration-300
-                max-h-[85vh] flex flex-col border-t border-white/8"
-         style="box-shadow: 0 -20px 60px rgba(0,0,0,.5);">
+                max-h-[85vh] flex flex-col border-t border-white/8"style="box-shadow: 0 -20px 60px rgba(0,0,0,.5);">
       <div class="sheet-handle"></div>
 
       <div class="px-5 pt-4 pb-3 flex items-center justify-between">
         <h2 class="text-base font-semibold">Напоминание</h2>
-        <button id="reminder-sheet-close" class="text-muted p-1 -mr-1 active:opacity-60">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <button id="reminder-sheet-close"class="text-muted p-1 -mr-1 active:opacity-60">
+          <svg width="20"height="20"viewBox="0 0 24 24"fill="none"stroke="currentColor"stroke-width="2"stroke-linecap="round"stroke-linejoin="round">
             <path d="M18 6L6 18M6 6l12 12"/>
           </svg>
         </button>
       </div>
 
-      <div class="flex-1 overflow-y-auto px-5 pb-6 space-y-5"
-           style="-webkit-overflow-scrolling: touch;">
+      <div class="flex-1 overflow-y-auto px-5 pb-6 space-y-5"style="-webkit-overflow-scrolling: touch;">
 
         <div>
           <label class="text-[10px] uppercase tracking-wider text-muted2 block mb-1.5">Время</label>
-          <input id="reminder-time-input" type="time" value="18:00"
-                 class="w-full bg-surface2 rounded-3xl px-4 py-3.5 text-white text-center text-xl font-semibold
+          <input id="reminder-time-input"type="time"value="18:00"class="w-full bg-surface2 rounded-3xl px-4 py-3.5 text-white text-center text-xl font-semibold
                         focus:outline-none focus:ring-2 focus:ring-primary/40 transition">
         </div>
 
         <div>
           <p class="text-[10px] uppercase tracking-wider text-muted2 mb-2">Быстрый выбор</p>
           <div class="grid grid-cols-4 gap-2">
-            <button data-reminder-preset="08:00"
-                    class="py-2.5 rounded-2xl text-sm font-medium transition
+            <button data-reminder-preset="08:00"class="py-2.5 rounded-2xl text-sm font-medium transition
                            border bg-surface2 text-muted border-white/5">
               08:00
             </button>
-            <button data-reminder-preset="12:00"
-                    class="py-2.5 rounded-2xl text-sm font-medium transition
+            <button data-reminder-preset="12:00"class="py-2.5 rounded-2xl text-sm font-medium transition
                            border bg-surface2 text-muted border-white/5">
               12:00
             </button>
-            <button data-reminder-preset="18:00"
-                    class="py-2.5 rounded-2xl text-sm font-medium transition
+            <button data-reminder-preset="18:00"class="py-2.5 rounded-2xl text-sm font-medium transition
                            border bg-surface2 text-muted border-white/5">
               18:00
             </button>
-            <button data-reminder-preset="21:00"
-                    class="py-2.5 rounded-2xl text-sm font-medium transition
+            <button data-reminder-preset="21:00"class="py-2.5 rounded-2xl text-sm font-medium transition
                            border bg-surface2 text-muted border-white/5">
               21:00
             </button>
@@ -1043,8 +963,7 @@
       </div>
 
       <div class="px-5 pb-5 pt-3 border-t border-white/5">
-        <button id="reminder-save-btn"
-                class="w-full bg-primary hover:bg-primary/90 active:scale-[0.98]
+        <button id="reminder-save-btn"class="w-full bg-primary hover:bg-primary/90 active:scale-[0.98]
                        transition rounded-3xl py-4 font-semibold text-base text-white
                        shadow-[0_10px_30px_-10px_rgba(124,108,255,0.55)]">
           Сохранить
@@ -1054,124 +973,112 @@
   </div>
 
   <!-- BOTTOM SHEET: РАСШИРЕННЫЕ НАПОМИНАНИЯ -->
-  <div id="full-reminders-backdrop"
-       class="hidden fixed inset-0 z-[70] opacity-0 transition-opacity duration-250"
-       style="background: rgba(0,0,0,.6); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);">
-    <div id="full-reminders-panel"
-         class="absolute left-0 right-0 bottom-0 max-w-md mx-auto
+  <div id="full-reminders-backdrop"class="hidden fixed inset-0 z-[70] opacity-0 transition-opacity duration-250"style="background: rgba(0,0,0,.6); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);">
+    <div id="full-reminders-panel"class="absolute left-0 right-0 bottom-0 max-w-md mx-auto
                 bg-surface rounded-t-3xl translate-y-full transition-transform duration-300
-                max-h-[90vh] flex flex-col border-t border-white/8"
-         style="box-shadow: 0 -20px 60px rgba(0,0,0,.5);">
+                max-h-[90vh] flex flex-col border-t border-white/8"style="box-shadow: 0 -20px 60px rgba(0,0,0,.5);">
       <div class="sheet-handle"></div>
 
       <div class="px-5 pt-4 pb-3 flex items-center justify-between">
         <h2 class="text-base font-semibold">Напоминания</h2>
-        <button id="full-reminders-close" class="text-muted p-1 -mr-1 active:opacity-60">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <button id="full-reminders-close"class="text-muted p-1 -mr-1 active:opacity-60">
+          <svg width="20"height="20"viewBox="0 0 24 24"fill="none"stroke="currentColor"stroke-width="2"stroke-linecap="round"stroke-linejoin="round">
             <path d="M18 6L6 18M6 6l12 12"/>
           </svg>
         </button>
       </div>
 
-      <div class="flex-1 overflow-y-auto px-5 pb-6 space-y-5"
-           style="-webkit-overflow-scrolling: touch;">
+      <div class="flex-1 overflow-y-auto px-5 pb-6 space-y-5"style="-webkit-overflow-scrolling: touch;">
 
         <!-- Тренировка -->
-        <div class="bg-surface2 rounded-3xl p-4 border border-white/5">
+        <div class="bg-surface2 rounded-3xl p-4">
           <div class="flex items-center justify-between gap-3 mb-3">
             <div class="flex items-center gap-2.5">
-              <span class="inline-flex items-center justify-center w-8 h-8 rounded-xl bg-primary/[0.08] border border-primary/15 text-primary2 shrink-0"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5v11"/><path d="M17.5 6.5v11"/><path d="M3 9v6"/><path d="M21 9v6"/><path d="M6.5 12h11"/></svg></span>
+              <span class="inline-flex items-center justify-center w-8 h-8 rounded-xl bg-primary/[0.08] border border-primary/15 text-primary2 shrink-0"><svg width="16"height="16"viewBox="0 0 24 24"fill="none"stroke="currentColor"stroke-width="1.8"stroke-linecap="round"stroke-linejoin="round"><path d="M6.5 6.5v11"/><path d="M17.5 6.5v11"/><path d="M3 9v6"/><path d="M21 9v6"/><path d="M6.5 12h11"/></svg></span>
               <p class="font-semibold text-sm text-white/90">Тренировка</p>
             </div>
             <label class="toggle-switch">
-              <input id="rt-training-toggle" type="checkbox">
+              <input id="rt-training-toggle"type="checkbox">
             </label>
           </div>
-          <input id="rt-training-time" type="time" value="18:00"
-                 class="w-full bg-bg rounded-2xl px-4 py-3 text-white text-center text-lg font-semibold
+          <input id="rt-training-time"type="time"value="18:00"class="w-full bg-bg rounded-2xl px-4 py-3 text-white text-center text-lg font-semibold
                         focus:outline-none focus:ring-2 focus:ring-primary/40 transition">
         </div>
 
         <!-- Вода -->
-        <div class="bg-surface2 rounded-3xl p-4 border border-white/5">
+        <div class="bg-surface2 rounded-3xl p-4">
           <div class="flex items-center justify-between gap-3 mb-3">
             <div class="flex items-center gap-2.5">
-              <span class="inline-flex items-center justify-center w-8 h-8 rounded-xl bg-sky-400/[0.08] border border-sky-400/15 text-sky-300/80 shrink-0"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c0 0-6 6.7-6 11a6 6 0 1 0 12 0c0-4.3-6-11-6-11z"/></svg></span>
+              <span class="inline-flex items-center justify-center w-8 h-8 rounded-xl bg-sky-400/[0.08] border border-sky-400/15 text-sky-300/80 shrink-0"><svg width="16"height="16"viewBox="0 0 24 24"fill="none"stroke="currentColor"stroke-width="1.8"stroke-linecap="round"stroke-linejoin="round"><path d="M12 3c0 0-6 6.7-6 11a6 6 0 1 0 12 0c0-4.3-6-11-6-11z"/></svg></span>
               <p class="font-semibold text-sm text-white/90">Вода</p>
             </div>
             <label class="toggle-switch">
-              <input id="rt-water-toggle" type="checkbox">
+              <input id="rt-water-toggle"type="checkbox">
             </label>
           </div>
           <p class="text-[10px] uppercase tracking-wider text-muted2 mb-2">Окно напоминаний</p>
           <div class="grid grid-cols-2 gap-2 mb-3">
             <div>
               <p class="text-[10px] text-muted2 mb-1">С</p>
-              <input id="rt-water-start" type="time" value="10:00"
-                     class="w-full bg-bg rounded-2xl px-3 py-2.5 text-white text-center text-base font-medium
+              <input id="rt-water-start"type="time"value="10:00"class="w-full bg-bg rounded-2xl px-3 py-2.5 text-white text-center text-base font-medium
                             focus:outline-none focus:ring-2 focus:ring-primary/40 transition">
             </div>
             <div>
               <p class="text-[10px] text-muted2 mb-1">До</p>
-              <input id="rt-water-end" type="time" value="22:00"
-                     class="w-full bg-bg rounded-2xl px-3 py-2.5 text-white text-center text-base font-medium
+              <input id="rt-water-end"type="time"value="22:00"class="w-full bg-bg rounded-2xl px-3 py-2.5 text-white text-center text-base font-medium
                             focus:outline-none focus:ring-2 focus:ring-primary/40 transition">
             </div>
           </div>
           <p class="text-[10px] uppercase tracking-wider text-muted2 mb-2">Каждые N часов</p>
-          <input id="rt-water-interval" type="hidden" value="2">
-          <div id="rt-water-intervals" class="grid grid-cols-4 gap-2">
-            <button type="button" data-interval="1" class="rt-int py-2 rounded-xl text-xs font-medium transition border bg-surface2 text-muted border-white/5">1ч</button>
-            <button type="button" data-interval="2" class="rt-int py-2 rounded-xl text-xs font-medium transition border bg-surface2 text-muted border-white/5">2ч</button>
-            <button type="button" data-interval="3" class="rt-int py-2 rounded-xl text-xs font-medium transition border bg-surface2 text-muted border-white/5">3ч</button>
-            <button type="button" data-interval="4" class="rt-int py-2 rounded-xl text-xs font-medium transition border bg-surface2 text-muted border-white/5">4ч</button>
+          <input id="rt-water-interval"type="hidden"value="2">
+          <div id="rt-water-intervals"class="grid grid-cols-4 gap-2">
+            <button type="button"data-interval="1"class="rt-int py-2 rounded-xl text-xs font-medium transition border bg-surface2 text-muted border-white/5">1ч</button>
+            <button type="button"data-interval="2"class="rt-int py-2 rounded-xl text-xs font-medium transition border bg-surface2 text-muted border-white/5">2ч</button>
+            <button type="button"data-interval="3"class="rt-int py-2 rounded-xl text-xs font-medium transition border bg-surface2 text-muted border-white/5">3ч</button>
+            <button type="button"data-interval="4"class="rt-int py-2 rounded-xl text-xs font-medium transition border bg-surface2 text-muted border-white/5">4ч</button>
           </div>
         </div>
 
         <!-- Сон -->
-        <div class="bg-surface2 rounded-3xl p-4 border border-white/5">
+        <div class="bg-surface2 rounded-3xl p-4">
           <div class="flex items-center justify-between gap-3 mb-3">
             <div class="flex items-center gap-2.5">
-              <span class="inline-flex items-center justify-center w-8 h-8 rounded-xl bg-indigo-400/[0.08] border border-indigo-400/15 text-indigo-300/80 shrink-0"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 14.5A8.5 8.5 0 1 1 11.5 3.5a6.5 6.5 0 0 0 9 11z"/></svg></span>
+              <span class="inline-flex items-center justify-center w-8 h-8 rounded-xl bg-indigo-400/[0.08] border border-indigo-400/15 text-indigo-300/80 shrink-0"><svg width="16"height="16"viewBox="0 0 24 24"fill="none"stroke="currentColor"stroke-width="1.8"stroke-linecap="round"stroke-linejoin="round"><path d="M20.5 14.5A8.5 8.5 0 1 1 11.5 3.5a6.5 6.5 0 0 0 9 11z"/></svg></span>
               <p class="font-semibold text-sm text-white/90">Сон</p>
             </div>
             <label class="toggle-switch">
-              <input id="rt-sleep-toggle" type="checkbox">
+              <input id="rt-sleep-toggle"type="checkbox">
             </label>
           </div>
-          <input id="rt-sleep-time" type="time" value="23:00"
-                 class="w-full bg-bg rounded-2xl px-4 py-3 text-white text-center text-lg font-semibold
+          <input id="rt-sleep-time"type="time"value="23:00"class="w-full bg-bg rounded-2xl px-4 py-3 text-white text-center text-lg font-semibold
                         focus:outline-none focus:ring-2 focus:ring-primary/40 transition">
         </div>
 
         <!-- Еда -->
-        <div class="bg-surface2 rounded-3xl p-4 border border-white/5">
+        <div class="bg-surface2 rounded-3xl p-4">
           <div class="flex items-center justify-between gap-3 mb-3">
             <div class="flex items-center gap-2.5">
-              <span class="inline-flex items-center justify-center w-8 h-8 rounded-xl bg-emerald-400/[0.08] border border-emerald-400/15 text-emerald-300/80 shrink-0"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 7.5c-1.5-1.2-3-2-4.5-2C4.5 5.5 2.5 8 2.5 11c0 4.5 3 9 6.5 9 1 0 2-.4 3-.4s2 .4 3 .4c3.5 0 6.5-4.5 6.5-9 0-3-2-5.5-5-5.5-1.5 0-3 .8-4.5 2z"/><path d="M12 7.5v-3.2"/><path d="M12 4.3c.5-1 1.5-1.8 2.8-1.8"/></svg></span>
+              <span class="inline-flex items-center justify-center w-8 h-8 rounded-xl bg-emerald-400/[0.08] border border-emerald-400/15 text-emerald-300/80 shrink-0"><svg width="16"height="16"viewBox="0 0 24 24"fill="none"stroke="currentColor"stroke-width="1.8"stroke-linecap="round"stroke-linejoin="round"><path d="M12 7.5c-1.5-1.2-3-2-4.5-2C4.5 5.5 2.5 8 2.5 11c0 4.5 3 9 6.5 9 1 0 2-.4 3-.4s2 .4 3 .4c3.5 0 6.5-4.5 6.5-9 0-3-2-5.5-5-5.5-1.5 0-3 .8-4.5 2z"/><path d="M12 7.5v-3.2"/><path d="M12 4.3c.5-1 1.5-1.8 2.8-1.8"/></svg></span>
               <p class="font-semibold text-sm text-white/90">Еда</p>
             </div>
             <label class="toggle-switch">
-              <input id="rt-food-toggle" type="checkbox">
+              <input id="rt-food-toggle"type="checkbox">
             </label>
           </div>
           <div class="grid grid-cols-3 gap-2">
             <div>
               <p class="text-[10px] text-muted2 mb-1 text-center">Завтрак</p>
-              <input id="rt-food-breakfast" type="time" value="08:00"
-                     class="w-full bg-bg rounded-2xl px-1 py-2.5 text-white text-center text-sm font-medium
+              <input id="rt-food-breakfast"type="time"value="08:00"class="w-full bg-bg rounded-2xl px-1 py-2.5 text-white text-center text-sm font-medium
                             focus:outline-none focus:ring-2 focus:ring-primary/40 transition">
             </div>
             <div>
               <p class="text-[10px] text-muted2 mb-1 text-center">Обед</p>
-              <input id="rt-food-lunch" type="time" value="13:00"
-                     class="w-full bg-bg rounded-2xl px-1 py-2.5 text-white text-center text-sm font-medium
+              <input id="rt-food-lunch"type="time"value="13:00"class="w-full bg-bg rounded-2xl px-1 py-2.5 text-white text-center text-sm font-medium
                             focus:outline-none focus:ring-2 focus:ring-primary/40 transition">
             </div>
             <div>
               <p class="text-[10px] text-muted2 mb-1 text-center">Ужин</p>
-              <input id="rt-food-dinner" type="time" value="19:00"
-                     class="w-full bg-bg rounded-2xl px-1 py-2.5 text-white text-center text-sm font-medium
+              <input id="rt-food-dinner"type="time"value="19:00"class="w-full bg-bg rounded-2xl px-1 py-2.5 text-white text-center text-sm font-medium
                             focus:outline-none focus:ring-2 focus:ring-primary/40 transition">
             </div>
           </div>
@@ -1180,8 +1087,7 @@
       </div>
 
       <div class="px-5 pb-5 pt-3 border-t border-white/5">
-        <button id="full-reminders-save"
-                class="w-full bg-primary hover:bg-primary/90 active:scale-[0.98]
+        <button id="full-reminders-save"class="w-full bg-primary hover:bg-primary/90 active:scale-[0.98]
                        transition rounded-3xl py-4 font-semibold text-base text-white
                        shadow-[0_10px_30px_-10px_rgba(124,108,255,0.55)]">
           Сохранить
@@ -1191,14 +1097,10 @@
   </div>
 
   <!-- BOTTOM SHEET: ПИТАНИЕ -->
-  <div id="nutrition-sheet-backdrop"
-       class="hidden fixed inset-0 z-[70] opacity-0 transition-opacity duration-250"
-       style="background: rgba(0,0,0,.6); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);">
-    <div id="nutrition-sheet-panel"
-         class="absolute left-0 right-0 bottom-0 max-w-md mx-auto
+  <div id="nutrition-sheet-backdrop"class="hidden fixed inset-0 z-[70] opacity-0 transition-opacity duration-250"style="background: rgba(0,0,0,.6); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);">
+    <div id="nutrition-sheet-panel"class="absolute left-0 right-0 bottom-0 max-w-md mx-auto
                 bg-surface rounded-t-3xl translate-y-full transition-transform duration-300
-                max-h-[85vh] flex flex-col border-t border-white/8"
-         style="box-shadow: 0 -20px 60px rgba(0,0,0,.5);">
+                max-h-[85vh] flex flex-col border-t border-white/8"style="box-shadow: 0 -20px 60px rgba(0,0,0,.5);">
       <div class="sheet-handle"></div>
 
       <div class="px-5 pt-4 pb-3 flex items-center justify-between">
@@ -1206,60 +1108,51 @@
           <p class="text-base font-semibold">Питание сегодня</p>
           <p class="text-[10px] uppercase tracking-wider text-muted2 mt-0.5">КБЖУ · нажми на карточку для деталей</p>
         </div>
-        <button id="nutrition-sheet-close" class="text-muted p-1 -mr-1 active:opacity-60">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <button id="nutrition-sheet-close"class="text-muted p-1 -mr-1 active:opacity-60">
+          <svg width="20"height="20"viewBox="0 0 24 24"fill="none"stroke="currentColor"stroke-width="2"stroke-linecap="round"stroke-linejoin="round">
             <path d="M18 6L6 18M6 6l12 12"/>
           </svg>
         </button>
       </div>
 
-      <div id="nutrition-entries" class="flex-1 overflow-y-auto px-5 pb-6"
-           style="-webkit-overflow-scrolling: touch;">
+      <div id="nutrition-entries"class="flex-1 overflow-y-auto px-5 pb-6"style="-webkit-overflow-scrolling: touch;">
         <p class="text-muted text-center py-6 text-sm">Загрузка...</p>
       </div>
     </div>
   </div>
 
   <!-- BOTTOM SHEET: РЕДАКТИРОВАНИЕ ПРОФИЛЯ -->
-  <div id="profile-edit-backdrop"
-       class="hidden fixed inset-0 z-[70] opacity-0 transition-opacity duration-250"
-       style="background: rgba(0,0,0,.6); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);">
-    <div id="profile-edit-panel"
-         class="absolute left-0 right-0 bottom-0 max-w-md mx-auto
+  <div id="profile-edit-backdrop"class="hidden fixed inset-0 z-[70] opacity-0 transition-opacity duration-250"style="background: rgba(0,0,0,.6); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);">
+    <div id="profile-edit-panel"class="absolute left-0 right-0 bottom-0 max-w-md mx-auto
                 bg-surface rounded-t-3xl translate-y-full transition-transform duration-300
-                max-h-[90vh] flex flex-col border-t border-white/8"
-         style="box-shadow: 0 -20px 60px rgba(0,0,0,.5);">
+                max-h-[90vh] flex flex-col border-t border-white/8"style="box-shadow: 0 -20px 60px rgba(0,0,0,.5);">
       <div class="sheet-handle"></div>
 
       <div class="px-5 pt-4 pb-3 flex items-center justify-between">
         <h2 class="text-base font-semibold">Редактировать профиль</h2>
-        <button id="profile-edit-close" class="text-muted p-1 -mr-1 active:opacity-60">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <button id="profile-edit-close"class="text-muted p-1 -mr-1 active:opacity-60">
+          <svg width="20"height="20"viewBox="0 0 24 24"fill="none"stroke="currentColor"stroke-width="2"stroke-linecap="round"stroke-linejoin="round">
             <path d="M18 6L6 18M6 6l12 12"/>
           </svg>
         </button>
       </div>
 
-      <div class="flex-1 overflow-y-auto px-5 pb-6 space-y-5"
-           style="-webkit-overflow-scrolling: touch;">
+      <div class="flex-1 overflow-y-auto px-5 pb-6 space-y-5"style="-webkit-overflow-scrolling: touch;">
 
         <div class="grid grid-cols-3 gap-3">
           <div>
             <label class="text-[10px] uppercase tracking-wider text-muted2 block mb-1.5">Вес, кг</label>
-            <input id="input-weight" type="text" inputmode="decimal" placeholder="75"
-                   class="w-full bg-surface2 rounded-2xl px-3 py-3 text-white text-center
+            <input id="input-weight"type="text"inputmode="decimal"placeholder="75"class="w-full bg-surface2 rounded-2xl px-3 py-3 text-white text-center
                           focus:outline-none focus:ring-2 focus:ring-primary/40 transition">
           </div>
           <div>
             <label class="text-[10px] uppercase tracking-wider text-muted2 block mb-1.5">Рост, см</label>
-            <input id="input-height" type="text" inputmode="numeric" placeholder="180"
-                   class="w-full bg-surface2 rounded-2xl px-3 py-3 text-white text-center
+            <input id="input-height"type="text"inputmode="numeric"placeholder="180"class="w-full bg-surface2 rounded-2xl px-3 py-3 text-white text-center
                           focus:outline-none focus:ring-2 focus:ring-primary/40 transition">
           </div>
           <div>
             <label class="text-[10px] uppercase tracking-wider text-muted2 block mb-1.5">Возраст</label>
-            <input id="input-age" type="text" inputmode="numeric" placeholder="28"
-                   class="w-full bg-surface2 rounded-2xl px-3 py-3 text-white text-center
+            <input id="input-age"type="text"inputmode="numeric"placeholder="28"class="w-full bg-surface2 rounded-2xl px-3 py-3 text-white text-center
                           focus:outline-none focus:ring-2 focus:ring-primary/40 transition">
           </div>
         </div>
@@ -1267,13 +1160,11 @@
         <div>
           <p class="text-[10px] uppercase tracking-wider text-muted2 mb-2">Пол</p>
           <div class="grid grid-cols-2 gap-2">
-            <button data-gender="male"
-                    class="py-3 rounded-2xl text-sm font-medium transition
+            <button data-gender="male"class="py-3 rounded-2xl text-sm font-medium transition
                            border bg-surface2 text-muted border-white/5">
               Мужской
             </button>
-            <button data-gender="female"
-                    class="py-3 rounded-2xl text-sm font-medium transition
+            <button data-gender="female"class="py-3 rounded-2xl text-sm font-medium transition
                            border bg-surface2 text-muted border-white/5">
               Женский
             </button>
@@ -1283,18 +1174,15 @@
         <div>
           <p class="text-[10px] uppercase tracking-wider text-muted2 mb-2">Цель</p>
           <div class="grid grid-cols-3 gap-2">
-            <button data-goal="lose"
-                    class="py-3 rounded-2xl text-xs font-medium transition
+            <button data-goal="lose"class="py-3 rounded-2xl text-xs font-medium transition
                            border bg-surface2 text-muted border-white/5">
               Похудеть
             </button>
-            <button data-goal="maintain"
-                    class="py-3 rounded-2xl text-xs font-medium transition
+            <button data-goal="maintain"class="py-3 rounded-2xl text-xs font-medium transition
                            border bg-surface2 text-muted border-white/5">
               Держать
             </button>
-            <button data-goal="gain"
-                    class="py-3 rounded-2xl text-xs font-medium transition
+            <button data-goal="gain"class="py-3 rounded-2xl text-xs font-medium transition
                            border bg-surface2 text-muted border-white/5">
               Набрать
             </button>
@@ -1304,18 +1192,15 @@
         <div>
           <p class="text-[10px] uppercase tracking-wider text-muted2 mb-2">Опыт тренировок</p>
           <div class="grid grid-cols-3 gap-2">
-            <button data-experience="beginner"
-                    class="py-3 rounded-2xl text-xs font-medium transition
+            <button data-experience="beginner"class="py-3 rounded-2xl text-xs font-medium transition
                            border bg-surface2 text-muted border-white/5">
               Новичок
             </button>
-            <button data-experience="intermediate"
-                    class="py-3 rounded-2xl text-xs font-medium transition
+            <button data-experience="intermediate"class="py-3 rounded-2xl text-xs font-medium transition
                            border bg-surface2 text-muted border-white/5">
               Средний
             </button>
-            <button data-experience="advanced"
-                    class="py-3 rounded-2xl text-xs font-medium transition
+            <button data-experience="advanced"class="py-3 rounded-2xl text-xs font-medium transition
                            border bg-surface2 text-muted border-white/5">
               Опытный
             </button>
@@ -1325,8 +1210,7 @@
       </div>
 
       <div class="px-5 pb-5 pt-3 border-t border-white/5">
-        <button id="profile-save-btn"
-                class="w-full bg-primary hover:bg-primary/90 active:scale-[0.98]
+        <button id="profile-save-btn"class="w-full bg-primary hover:bg-primary/90 active:scale-[0.98]
                        transition rounded-3xl py-4 font-semibold text-base text-white
                        shadow-[0_10px_30px_-10px_rgba(124,108,255,0.55)]">
           Сохранить
@@ -1336,14 +1220,13 @@
   </div>
 
   <!-- ЭКРАН ОНБОРДИНГА -->
-  <div id="screen-onboarding" class="hidden-screen">
-    <div class="max-w-md mx-auto px-5" style="padding-top: calc(env(safe-area-inset-top, 0) + 40px); padding-bottom: 40px;">
+  <div id="screen-onboarding"class="hidden-screen">
+    <div class="max-w-md mx-auto px-5"style="padding-top: calc(env(safe-area-inset-top, 0) + 40px); padding-bottom: 40px;">
 
       <header class="mb-8">
         <div class="inline-flex items-center justify-center w-14 h-14 rounded-3xl mb-5
-                    shadow-[0_12px_32px_-8px_rgba(124,108,255,0.55)]"
-             style="background: linear-gradient(135deg, #7c6cff 0%, #5b4dd6 100%);">
-          <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+                    shadow-[0_12px_32px_-8px_rgba(124,108,255,0.55)]"style="background: linear-gradient(135deg, #7c6cff 0%, #5b4dd6 100%);">
+          <svg width="26"height="26"viewBox="0 0 24 24"fill="none"stroke="white"stroke-width="1.6"stroke-linecap="round"stroke-linejoin="round">
             <path d="M6.5 6.5v11"/>
             <path d="M17.5 6.5v11"/>
             <path d="M3 9v6"/>
@@ -1363,21 +1246,15 @@
           <p class="text-[10px] uppercase tracking-wider text-muted2 mb-2">Основное</p>
           <div class="grid grid-cols-3 gap-3">
             <div>
-              <input id="ob-input-weight" type="text" inputmode="decimal"
-                     placeholder="Вес, кг"
-                     class="w-full bg-surface2 rounded-2xl px-3 py-3 text-white text-center
+              <input id="ob-input-weight"type="text"inputmode="decimal"placeholder="Вес, кг"class="w-full bg-surface2 rounded-2xl px-3 py-3 text-white text-center
                             placeholder-muted2 focus:outline-none focus:ring-2 focus:ring-primary/40 transition">
             </div>
             <div>
-              <input id="ob-input-height" type="text" inputmode="numeric"
-                     placeholder="Рост, см"
-                     class="w-full bg-surface2 rounded-2xl px-3 py-3 text-white text-center
+              <input id="ob-input-height"type="text"inputmode="numeric"placeholder="Рост, см"class="w-full bg-surface2 rounded-2xl px-3 py-3 text-white text-center
                             placeholder-muted2 focus:outline-none focus:ring-2 focus:ring-primary/40 transition">
             </div>
             <div>
-              <input id="ob-input-age" type="text" inputmode="numeric"
-                     placeholder="Возраст"
-                     class="w-full bg-surface2 rounded-2xl px-3 py-3 text-white text-center
+              <input id="ob-input-age"type="text"inputmode="numeric"placeholder="Возраст"class="w-full bg-surface2 rounded-2xl px-3 py-3 text-white text-center
                             placeholder-muted2 focus:outline-none focus:ring-2 focus:ring-primary/40 transition">
             </div>
           </div>
@@ -1386,13 +1263,11 @@
         <div>
           <p class="text-[10px] uppercase tracking-wider text-muted2 mb-2">Пол</p>
           <div class="grid grid-cols-2 gap-2">
-            <button data-ob-gender="male"
-                    class="py-3.5 rounded-2xl text-sm font-medium transition
+            <button data-ob-gender="male"class="py-3.5 rounded-2xl text-sm font-medium transition
                            border bg-surface2 text-muted border-white/5">
               Мужской
             </button>
-            <button data-ob-gender="female"
-                    class="py-3.5 rounded-2xl text-sm font-medium transition
+            <button data-ob-gender="female"class="py-3.5 rounded-2xl text-sm font-medium transition
                            border bg-surface2 text-muted border-white/5">
               Женский
             </button>
@@ -1402,18 +1277,15 @@
         <div>
           <p class="text-[10px] uppercase tracking-wider text-muted2 mb-2">Цель</p>
           <div class="grid grid-cols-3 gap-2">
-            <button data-ob-goal="lose"
-                    class="py-3.5 rounded-2xl text-xs font-medium transition
+            <button data-ob-goal="lose"class="py-3.5 rounded-2xl text-xs font-medium transition
                            border bg-surface2 text-muted border-white/5">
               Похудеть
             </button>
-            <button data-ob-goal="maintain"
-                    class="py-3.5 rounded-2xl text-xs font-medium transition
+            <button data-ob-goal="maintain"class="py-3.5 rounded-2xl text-xs font-medium transition
                            border bg-surface2 text-muted border-white/5">
               Держать
             </button>
-            <button data-ob-goal="gain"
-                    class="py-3.5 rounded-2xl text-xs font-medium transition
+            <button data-ob-goal="gain"class="py-3.5 rounded-2xl text-xs font-medium transition
                            border bg-surface2 text-muted border-white/5">
               Набрать
             </button>
@@ -1423,20 +1295,17 @@
         <div>
           <p class="text-[10px] uppercase tracking-wider text-muted2 mb-2">Опыт тренировок</p>
           <div class="grid grid-cols-3 gap-2">
-            <button data-ob-exp="beginner"
-                    class="px-2 py-3 rounded-2xl font-medium transition border bg-surface2 text-muted border-white/5
+            <button data-ob-exp="beginner"class="px-2 py-3 rounded-2xl font-medium transition border bg-surface2 text-muted border-white/5
                            flex flex-col items-center gap-1">
               <span class="text-xs">Новичок</span>
               <span class="exp-sub text-[10px] text-muted2">до 1 года</span>
             </button>
-            <button data-ob-exp="intermediate"
-                    class="px-2 py-3 rounded-2xl font-medium transition border bg-surface2 text-muted border-white/5
+            <button data-ob-exp="intermediate"class="px-2 py-3 rounded-2xl font-medium transition border bg-surface2 text-muted border-white/5
                            flex flex-col items-center gap-1">
               <span class="text-xs">Средний</span>
               <span class="exp-sub text-[10px] text-muted2">1–3 года</span>
             </button>
-            <button data-ob-exp="advanced"
-                    class="px-2 py-3 rounded-2xl font-medium transition border bg-surface2 text-muted border-white/5
+            <button data-ob-exp="advanced"class="px-2 py-3 rounded-2xl font-medium transition border bg-surface2 text-muted border-white/5
                            flex flex-col items-center gap-1">
               <span class="text-xs">Опытный</span>
               <span class="exp-sub text-[10px] text-muted2">3+ лет</span>
@@ -1446,8 +1315,7 @@
 
       </div>
 
-      <button id="ob-save-btn"
-              class="w-full mt-8 bg-primary hover:bg-primary/90 active:scale-[0.98]
+      <button id="ob-save-btn"class="w-full mt-8 bg-primary hover:bg-primary/90 active:scale-[0.98]
                      transition rounded-3xl py-4 font-semibold text-base text-white
                      shadow-[0_10px_30px_-10px_rgba(124,108,255,0.55)]">
         Поехали

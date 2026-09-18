@@ -1066,8 +1066,8 @@ function renderWorkoutExercises() {
                  class="set-reps flex-1 min-w-0 bg-surface2 rounded-2xl px-3 py-3 text-white text-center
                         focus:outline-none focus:ring-2 focus:ring-primary/40 transition"
                  data-ex-id="${ex.id}">
-          <button class="add-set-btn bg-accent hover:bg-green-500 active:scale-95 transition
-                         rounded-2xl w-12 shrink-0 font-bold text-black/80"
+          <button class="add-set-btn bg-primary hover:bg-primary/90 active:scale-95 transition
+                         rounded-2xl w-12 shrink-0 font-bold text-white text-xl"
                   data-ex-id="${ex.id}">+</button>
         </div>
       </div>
