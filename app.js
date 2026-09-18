@@ -2226,12 +2226,6 @@ document.getElementById('nav-home')?.addEventListener('click', () => {
   updateStartButton();
 });
 
-document.getElementById('nav-history')?.addEventListener('click', () => {
-  tg?.HapticFeedback?.impactOccurred('light');
-  showScreen('history');
-  loadHistory();
-});
-
 document.getElementById('nav-calendar')?.addEventListener('click', () => {
   tg?.HapticFeedback?.impactOccurred('light');
   showScreen('calendar');
@@ -2255,6 +2249,12 @@ document.getElementById('back-to-history')?.addEventListener('click', () => {
 });
 
 detailDeleteBtn?.addEventListener('click', deleteWorkout);
+
+document.getElementById('open-history-from-profile')?.addEventListener('click', () => {
+  tg?.HapticFeedback?.impactOccurred('light');
+  showScreen('history');
+  loadHistory();
+});
 
 document.getElementById('open-records')?.addEventListener('click', () => {
   tg?.HapticFeedback?.impactOccurred('light');
