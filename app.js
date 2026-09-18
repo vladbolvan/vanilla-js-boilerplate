@@ -1906,6 +1906,20 @@ async function loadProfile() {
  if (statsRes.ok) {
  const stats = await statsRes.json();
  statStreakEl.textContent = stats.streak;
+
+      const glowEl = document.getElementById('streak-glow');
+      const flameSvg = document.querySelector('.streak-flame-svg');
+      if (glowEl && flameSvg) {
+        if (stats.streak >= 1) {
+          glowEl.style.opacity = '1';
+          flameSvg.style.filter = 'drop-shadow(0 0 6px rgba(251,191,36,.5))';
+          flameSvg.style.opacity = '1';
+        } else {
+          glowEl.style.opacity = '0';
+          flameSvg.style.filter = 'none';
+          flameSvg.style.opacity = '0.35';
+        }
+      }
  statWorkoutsEl.textContent = stats.workouts_count;
  statSetsEl.textContent = stats.sets_count;
  const kg = stats.total_volume_kg;
