@@ -48,6 +48,21 @@
     .content-bottom { padding-bottom: calc(env(safe-area-inset-bottom, 0) + 100px); }
     .hidden-screen { display: none !important; }
 
+    /* iOS/Android Safari зумит input при font-size < 16px — принудительно 16px */
+    input, textarea, select {
+      font-size: 16px !important;
+    }
+    /* Для мелких полей (вес, повторы) визуально меньше, но без зума */
+    input.compact, textarea.compact {
+      font-size: 16px !important;
+      letter-spacing: -0.01em;
+    }
+
+    /* Всегда минимум 50px сверху — Telegram fullscreen рисует кнопки */
+    .safe-top {
+      padding-top: max(calc(env(safe-area-inset-top, 0) + var(--safe-top-offset, 56px)), 52px);
+    }
+
     /* Скрываем нижнюю навигацию, когда открыта клавиатура */
     body.keyboard-open #bottom-nav {
       transform: translateY(120%);

@@ -9,8 +9,19 @@ if (tg) {
   if (typeof tg.disableVerticalSwipes === 'function') tg.disableVerticalSwipes();
   if (typeof tg.requestFullscreen === 'function') tg.requestFullscreen();
 
-  const offset = tg.isFullscreen ? '16px' : '56px';
-  document.documentElement.style.setProperty('--safe-top-offset', offset);
+  // Top-offset: даже в fullscreen Telegram рисует close/expand (~50px).
+  // Используем contentSafeAreaInset из SDK 7.0+ для точного расчёта.
+  let topOffset = 56;
+  try {
+    const safeTop = (tg.contentSafeAreaInset && tg.contentSafeAreaInset.top) || 0;
+    const sysTop = (tg.safeAreaInset && tg.safeAreaInset.top) || 0;
+    if (safeTop > 0) {
+      topOffset = Math.max(topOffset, safeTop + 8);
+    } else if (sysTop > 0) {
+      topOffset = Math.max(topOffset, sysTop + 8);
+    }
+  } catch (e) {}
+  document.documentElement.style.setProperty('--safe-top-offset', topOffset + 'px');
 
   const isMobile = ['android', 'ios', 'android_x'].includes(tg.platform);
   if (isMobile) document.body.classList.add('mobile-body');
