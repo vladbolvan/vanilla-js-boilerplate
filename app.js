@@ -1232,6 +1232,28 @@ async function addSetInline(exerciseId) {
 }
 
 async function finishWorkout() {
+ const _totalSets = workoutExercises.reduce((s, ex) => s + ((ex.sets && ex.sets.length) || 0), 0);
+ if (_totalSets === 0) {
+ const _ok = await new Promise(resolve => {
+ if (tg?.showConfirm) tg.showConfirm('Пустая тренировка. Удалить?', (yes) => resolve(yes));
+ else resolve(confirm('Удалить пустую?'));
+ });
+ if (_ok) {
+ try {
+ await fetch(`${API_URL}/api/workouts/${currentWorkoutId}`, { method: 'DELETE', headers: authHeaders() });
+ } catch (_e) {}
+ currentWorkoutId = null;
+ workoutExercises = [];
+ stopWorkoutTimer();
+ stopRestTimer();
+ updateStartButton();
+ calendarCache.clear();
+ calSelectedDay = null;
+ await loadRecentWorkouts();
+ showScreen('home');
+ }
+ return;
+ }
  if (!currentWorkoutId) return;
  const ok = await new Promise(resolve => {
  if (tg?.showConfirm) tg.showConfirm('Завершить тренировку?', (yes) => resolve(yes));
