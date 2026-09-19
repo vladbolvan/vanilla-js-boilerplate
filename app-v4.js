@@ -424,16 +424,57 @@ function renderRecent(workouts) {
  const exNames = (w.exercises || []).map(e => e.exercise_name).join(', ');
  const preview = w.total_sets ? `${w.total_sets} подх. · ${exNames || 'без упражнений'}` : 'Без подходов';
  return `
- <div class="bg-surface rounded-3xl p-4 card-shadow flex items-center justify-between gap-2">
- <div class="min-w-0 flex-1">
+ <div class="bg-surface rounded-3xl p-4 card-shadow flex items-center gap-2 recent-item" data-id="${w.id}">
+ <button class="recent-open min-w-0 flex-1 text-left active:scale-[0.98] transition" data-id="${w.id}">
  <p class="font-medium truncate">${exNames || 'Тренировка'}</p>
  <p class="text-sm text-muted truncate mt-0.5">${preview}</p>
- </div>
+ </button>
  <span class="text-muted text-sm shrink-0">${dateStr}</span>
+ <button class="recent-delete text-muted2 hover:text-red-400 p-1.5 shrink-0 active:scale-90 transition" data-id="${w.id}" title="Удалить">
+ <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+ <path d="M18 6L6 18M6 6l12 12"/>
+ </svg>
+ </button>
  </div>
  `;
  }).join('');
+
+ recentListEl.querySelectorAll('.recent-open').forEach(btn => {
+ btn.addEventListener('click', async () => {
+ const wid = parseInt(btn.dataset.id);
+ tg?.HapticFeedback?.impactOccurred('light');
+ await ensureWorkoutsLoaded();
+ openWorkoutDetail(wid);
+ });
+ });
+ recentListEl.querySelectorAll('.recent-delete').forEach(btn => {
+ btn.addEventListener('click', (e) => {
+ e.stopPropagation();
+ deleteRecentWorkout(parseInt(btn.dataset.id));
+ });
+ });
 }
+
+async function deleteRecentWorkout(workoutId) {
+ const ok = await new Promise(resolve => {
+ if (tg?.showConfirm) tg.showConfirm('Удалить тренировку? Действие необратимо.', (yes) => resolve(yes));
+ else resolve(confirm('Удалить тренировку?'));
+ });
+ if (!ok) return;
+ try {
+ const res = await fetch(`${API_URL}/api/workouts/${workoutId}`, {
+ method: 'DELETE', headers: authHeaders(),
+ });
+ if (!res.ok) throw new Error(`HTTP ${res.status}`);
+ tg?.HapticFeedback?.notificationOccurred('success');
+ calendarCache.clear();
+ await loadRecentWorkouts();
+ } catch (e) {
+ console.error(e);
+ tg?.showAlert('Не удалось удалить');
+ }
+}
+
 
 // ============ УПРАЖНЕНИЯ ============
 async function loadExercises() {
