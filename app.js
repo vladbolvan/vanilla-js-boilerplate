@@ -1510,7 +1510,8 @@ async function renderCalendar(year, month) {
 
 function renderCalendarDayList(day, info) {
 function renderCalendarActiveWorkout(day, info) {
- if (!calendarDayListEl) return;
+ alert('RCW called: day=' + day + ' el=' + (!!calendarDayListEl));
+ if (!calendarDayListEl) { alert('no el'); return; }
  const monthName = MONTH_NAMES[calMonth - 1].toLowerCase();
  let html = `<p class="text-[10px] uppercase tracking-wider text-muted2 mb-3">${day} ${monthName}</p>`;
  html += `
@@ -1532,6 +1533,7 @@ function renderCalendarActiveWorkout(day, info) {
  `;
  calendarDayListEl.innerHTML = html;
  calendarDayListEl.classList.remove('hidden');
+ alert('RCW done. children=' + calendarDayListEl.children.length + ' hidden=' + calendarDayListEl.classList.contains('hidden'));
  document.getElementById('cal-resume-workout')?.addEventListener('click', () => {
  tg?.HapticFeedback?.impactOccurred('medium');
  showScreen('workout');
