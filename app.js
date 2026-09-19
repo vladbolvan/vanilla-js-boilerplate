@@ -1485,7 +1485,6 @@ async function renderCalendar(year, month) {
  const info = dayMap.get(d) || { workouts: [], nutrition: null };
  const _isToday = isCurrentMonth && d === todayDate;
  const _hasActive = !!currentWorkoutId && _isToday;
- alert('DEBUG: day=' + d + ' today=' + todayDate + ' isCur=' + isCurrentMonth + ' cw=' + currentWorkoutId + ' hasAct=' + _hasActive);
  if ((!info.workouts || info.workouts.length === 0) && !info.nutrition && !_hasActive) {
  if (calendarDayListEl) { calendarDayListEl.classList.add('hidden'); calendarDayListEl.innerHTML = ''; }
  calSelectedDay = null;
