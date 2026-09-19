@@ -957,11 +957,20 @@ async function loadActiveWorkout() {
  // Добавляем упражнения из плана (даже пустые — без подходов)
  const plan = data.active.plan || [];
  for (const p of plan) {
- if (!map[p.exercise_id]) {
- map[p.exercise_id] = { id: p.exercise_id, name: p.exercise_name || '', sets: [] };
- } else if (!map[p.exercise_id].name) {
- map[p.exercise_id].name = p.exercise_name || '';
- }
+   const pName = p.name || p.exercise_name || '';
+   if (!map[p.exercise_id]) {
+     map[p.exercise_id] = {
+       id: p.exercise_id,
+       name: pName,
+       sets: [],
+       target_sets: p.target_sets,
+       target_reps: p.target_reps,
+     };
+   } else {
+     if (!map[p.exercise_id].name) map[p.exercise_id].name = pName;
+     if (map[p.exercise_id].target_sets == null) map[p.exercise_id].target_sets = p.target_sets;
+     if (map[p.exercise_id].target_reps == null) map[p.exercise_id].target_reps = p.target_reps;
+   }
  }
 
  workoutExercises = Object.values(map);
