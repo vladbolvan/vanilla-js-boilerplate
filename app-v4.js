@@ -1396,19 +1396,28 @@ function openWorkoutDetail(workoutId) {
  if (!workout.exercises || workout.exercises.length === 0) {
  detailContentEl.innerHTML = '<p class="text-muted text-center py-8">В тренировке не было подходов</p>';
  } else {
- detailContentEl.innerHTML = workout.exercises.map(ex => `
+ detailContentEl.innerHTML = workout.exercises.map(ex => {
+   const _isBW = !!ex.is_bodyweight;
+   const rowsHtml = ex.sets.map((s, i) => {
+     const txt = _isBW
+       ? `<b>${s.reps}</b> повт`
+       : `<b>${s.weight}</b> кг × <b>${s.reps}</b>`;
+     return `
+ <div class="flex items-center justify-between text-sm">
+ <span class="text-muted2 text-xs">${i + 1}</span>
+ <span>${txt}</span>
+ </div>
+ `;
+   }).join('');
+   return `
  <div class="bg-surface rounded-3xl p-4 overflow-hidden card-shadow">
  <p class="font-semibold mb-3 break-words">${ex.exercise_name}</p>
  <div class="space-y-1.5">
- ${ex.sets.map((s, i) => `
- <div class="flex items-center justify-between text-sm">
- <span class="text-muted2 text-xs">#${i + 1}</span>
- <span><b>${s.weight}</b> кг × <b>${s.reps}</b></span>
- </div>
- `).join('')}
+ ${rowsHtml}
  </div>
  </div>
- `).join('');
+ `;
+ }).join('');
  }
  showScreen('workout-detail');
 }
