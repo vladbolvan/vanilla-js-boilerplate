@@ -740,6 +740,7 @@ async function startWorkoutFromProgram(programId) {
  sets: [],
  target_sets: e.target_sets,
  target_reps: e.target_reps,
+ is_bodyweight: !!e.is_bodyweight,
  }));
 
  closeProgramsSheet();
@@ -1022,7 +1023,11 @@ function updateStartButton() {
 function addExerciseToWorkout(id, name) {
  tg?.HapticFeedback?.impactOccurred('light');
  if (workoutExercises.some(e => e.id === id)) return;
- workoutExercises.push({ id, name, sets: [], lastWeight: null, lastReps: null });
+ const _exRef = allExercises.find(e => e.id === id);
+ workoutExercises.push({
+   id, name, sets: [], lastWeight: null, lastReps: null,
+   is_bodyweight: !!(_exRef && _exRef.is_bodyweight),
+ });
  renderWorkoutExercises();
  updateWorkoutUI();
  fillLastSet(id);
