@@ -980,12 +980,10 @@ async function loadActiveWorkout() {
 
  // Восстановим имена из локального справочника, если что-то пропущено
  for (const we of workoutExercises) {
- if (!we.name) {
  const found = allExercises.find(ex => ex.id === we.id);
  if (found) {
-   we.name = found.name;
+   if (!we.name) we.name = found.name;
    if (we.is_bodyweight == null) we.is_bodyweight = !!found.is_bodyweight;
- }
  }
  }
 
