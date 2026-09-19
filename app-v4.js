@@ -1180,12 +1180,17 @@ function renderSetsForExercise(exerciseId, sets) {
  const container = workoutExercisesEl.querySelector(`.sets-container[data-ex-id="${exerciseId}"]`);
  if (!container) return;
  if (!sets || sets.length === 0) { container.innerHTML = ''; return; }
+ const _ex = workoutExercises.find(e => e.id === exerciseId);
+ const _isBW = !!(_ex && _ex.is_bodyweight);
  container.innerHTML = sets.map((s, i) => {
  const isLast = i === sets.length - 1;
+ const setText = _isBW
+   ? `<b>${s.reps}</b> повт`
+   : `<b>${s.weight}</b> кг × <b>${s.reps}</b>`;
  return `
  <div class="set-row flex items-center gap-2 text-sm py-1" data-set-id="${s.id}">
- <span class="text-muted2 text-xs w-6 shrink-0">#${i + 1}</span>
- <span class="flex-1"><b>${s.weight}</b> кг × <b>${s.reps}</b></span>
+ <span class="text-muted2 text-xs w-6 shrink-0">${i + 1}</span>
+ <span class="flex-1">${setText}</span>
  ${isLast ? `<button class="delete-set text-muted2 hover:text-red-400 transition p-1 -mr-1 shrink-0" data-set-id="${s.id}" data-ex-id="${exerciseId}">
  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
  </button>` : ''}
