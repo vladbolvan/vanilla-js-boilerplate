@@ -1482,10 +1482,17 @@ async function renderCalendar(year, month) {
  calendarGridEl.querySelectorAll('[data-day]').forEach(el => {
  el.addEventListener('click', async () => {
  const d = parseInt(el.dataset.day);
- const info = dayMap.get(d);
- if (!info || ((!info.workouts || info.workouts.length === 0) && !info.nutrition)) {
+ const info = dayMap.get(d) || { workouts: [], nutrition: null };
+ const _isToday = isCurrentMonth && d === todayDate;
+ const _hasActive = !!currentWorkoutId && _isToday;
+ if ((!info.workouts || info.workouts.length === 0) && !info.nutrition && !_hasActive) {
  if (calendarDayListEl) { calendarDayListEl.classList.add('hidden'); calendarDayListEl.innerHTML = ''; }
  calSelectedDay = null;
+ return;
+ }
+ if (_hasActive) {
+ tg?.HapticFeedback?.impactOccurred('light');
+ renderCalendarActiveWorkout(d, info);
  return;
  }
  tg?.HapticFeedback?.impactOccurred('light');
@@ -1502,6 +1509,38 @@ async function renderCalendar(year, month) {
 }
 
 function renderCalendarDayList(day, info) {
+function renderCalendarActiveWorkout(day, info) {
+ if (!calendarDayListEl) return;
+ const monthName = MONTH_NAMES[calMonth - 1].toLowerCase();
+ let html = `<p class="text-[10px] uppercase tracking-wider text-muted2 mb-3">${day} ${monthName}</p>`;
+ html += `
+ <div class="bg-primary/10 rounded-2xl p-4 mb-3 border border-primary/20">
+ <div class="flex items-center gap-2 mb-2">
+ <span class="inline-flex items-center justify-center w-7 h-7 rounded-xl bg-primary/20 text-primary2 shrink-0">
+ <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+ <circle cx="12" cy="12" r="9"/>
+ <path d="M12 7v5l3 2"/>
+ </svg>
+ </span>
+ <p class="text-sm font-semibold">Тренировка идёт</p>
+ </div>
+ <p class="text-xs text-muted mb-3">Заверши её, чтобы она появилась в истории</p>
+ <button id="cal-resume-workout" class="w-full bg-primary hover:bg-primary/90 active:scale-[0.98] transition rounded-2xl py-3 font-semibold text-sm text-white">
+ Продолжить
+ </button>
+ </div>
+ `;
+ calendarDayListEl.innerHTML = html;
+ calendarDayListEl.classList.remove('hidden');
+ document.getElementById('cal-resume-workout')?.addEventListener('click', () => {
+ tg?.HapticFeedback?.impactOccurred('medium');
+ showScreen('workout');
+ renderWorkoutExercises();
+ updateWorkoutUI();
+ });
+}
+
+
  if (!calendarDayListEl) return;
  const workouts = info.workouts || [];
  const nut = info.nutrition || null;
