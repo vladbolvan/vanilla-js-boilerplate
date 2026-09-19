@@ -965,11 +965,13 @@ async function loadActiveWorkout() {
        sets: [],
        target_sets: p.target_sets,
        target_reps: p.target_reps,
+       is_bodyweight: !!p.is_bodyweight,
      };
    } else {
      if (!map[p.exercise_id].name) map[p.exercise_id].name = pName;
      if (map[p.exercise_id].target_sets == null) map[p.exercise_id].target_sets = p.target_sets;
      if (map[p.exercise_id].target_reps == null) map[p.exercise_id].target_reps = p.target_reps;
+     if (p.is_bodyweight) map[p.exercise_id].is_bodyweight = true;
    }
  }
 
@@ -979,7 +981,10 @@ async function loadActiveWorkout() {
  for (const we of workoutExercises) {
  if (!we.name) {
  const found = allExercises.find(ex => ex.id === we.id);
- if (found) we.name = found.name;
+ if (found) {
+   we.name = found.name;
+   if (we.is_bodyweight == null) we.is_bodyweight = !!found.is_bodyweight;
+ }
  }
  }
 
@@ -1095,10 +1100,11 @@ function renderWorkoutExercises() {
  ${planHint}
  <div class="sets-container space-y-1.5 mb-3" data-ex-id="${ex.id}"></div>
  <div class="flex gap-2 items-stretch">
- <input type="text" inputmode="decimal" placeholder="Вес"
+ ${ex.is_bodyweight ? '' : ` <input type="text" inputmode="decimal" placeholder="Вес"
  class="set-weight flex-1 min-w-0 bg-surface2 rounded-2xl px-3 py-3 text-white text-center
  focus:outline-none focus:ring-2 focus:ring-primary/40 transition"
  data-ex-id="${ex.id}">
+`}
  <input type="text" inputmode="numeric" placeholder="Повт"
  class="set-reps flex-1 min-w-0 bg-surface2 rounded-2xl px-3 py-3 text-white text-center
  focus:outline-none focus:ring-2 focus:ring-primary/40 transition"
@@ -1177,9 +1183,11 @@ async function addSetInline(exerciseId) {
  if (!card) return;
  const weightInput = card.querySelector('.set-weight');
  const repsInput = card.querySelector('.set-reps');
- const weight = parseWeightInput(weightInput.value);
+ const _weBW = workoutExercises.find(e => e.id === exerciseId);
+ const _isBW = !!(_weBW && _weBW.is_bodyweight);
+ const weight = _isBW ? 0 : parseWeightInput(weightInput.value);
  const reps = parseInt(repsInput.value);
- if (isNaN(weight) || weight < 0) { tg?.showAlert('Введи вес'); return; }
+ if (!_isBW && (isNaN(weight) || weight < 0)) { tg?.showAlert('Введи вес'); return; }
  if (isNaN(reps) || reps < 1) { tg?.showAlert('Введи повторы'); return; }
 
  const we = workoutExercises.find(e => e.id === exerciseId);
