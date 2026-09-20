@@ -215,6 +215,7 @@ let editGoal = null;
 let editExperience = null;
 
 let obRole = null;
+let createExCardioMetric = null;
 let obGender = null;
 let obGoal = null;
 let obExperience = null;
@@ -639,6 +640,9 @@ function openCreateExerciseSheet() {
  setTimeout(() => {
  createExName.value = '';
  createExGroup.value = '';
+ createExCardioMetric = null;
+ const _cb = document.getElementById('create-ex-cardio-block');
+ if (_cb) _cb.classList.add('hidden');
  renderMuscleGroupPicker();
  createExBackdrop.classList.remove('hidden');
  requestAnimationFrame(() => {
@@ -677,8 +681,36 @@ function renderMuscleGroupPicker() {
  b.classList.toggle('text-muted', !a);
  b.classList.toggle('border-white/5', !a);
  });
+ const cardioBlock = document.getElementById('create-ex-cardio-block');
+ if (cardioBlock) {
+ cardioBlock.classList.toggle('hidden', btn.dataset.group !== 'Кардио');
+ }
  tg?.HapticFeedback?.selectionChanged?.();
  });
+ });
+ renderCardioMetricPicker();
+}
+
+function renderCardioMetricPicker() {
+ const chips = document.querySelectorAll('.cardio-metric-chip');
+ if (!chips.length) return;
+ if (!createExCardioMetric) createExCardioMetric = 'time';
+ chips.forEach(btn => {
+ const a = btn.dataset.cardio === createExCardioMetric;
+ btn.classList.toggle('bg-primary', a);
+ btn.classList.toggle('text-white', a);
+ btn.classList.toggle('border-primary', a);
+ btn.classList.toggle('bg-surface2', !a);
+ btn.classList.toggle('text-muted', !a);
+ btn.classList.toggle('border-white/5', !a);
+ if (!btn.dataset.bound) {
+ btn.dataset.bound = '1';
+ btn.addEventListener('click', () => {
+ createExCardioMetric = btn.dataset.cardio;
+ renderCardioMetricPicker();
+ tg?.HapticFeedback?.selectionChanged?.();
+ });
+ }
  });
 }
 
@@ -693,7 +725,10 @@ async function saveCustomExercise() {
  const res = await fetch(`${API_URL}/api/exercises`, {
  method: 'POST',
  headers: { ...authHeaders(), 'Content-Type': 'application/json' },
- body: JSON.stringify({ name, muscle_group: group, is_compound: false }),
+body: JSON.stringify({
+ name, muscle_group: group, is_compound: false,
+ cardio_metric: (group === 'Кардио' && createExCardioMetric) ? createExCardioMetric : null,
+ }),
  });
  if (!res.ok) throw new Error(`HTTP ${res.status}`);
  const created = await res.json();
