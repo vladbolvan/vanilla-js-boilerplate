@@ -2754,6 +2754,8 @@ async function openTrainerProgramEditor(programId, returnClientId) {
  exercises: (d.exercises || []).map(e => ({
  exercise_id: e.exercise_id,
  name: e.name,
+ muscle_group: e.muscle_group || null,
+ is_bodyweight: !!e.is_bodyweight,
  target_sets: e.target_sets,
  target_reps: e.target_reps,
  targets: (e.targets && e.targets.length) ? e.targets.map(t => ({
@@ -2853,31 +2855,47 @@ function renderTrainerProgDay() {
  ex.targets = [{ weight: null, reps: null }];
  }
  }
+ const _isBW = !!ex.is_bodyweight;
  const rowsHtml = ex.targets.map((t, ri) => `
- <div class="flex items-center gap-2 mt-1.5">
- <span class="text-muted2 text-[10px] w-4 shrink-0 text-center">${ri + 1}</span>
+ <div class="flex items-center gap-1.5">
+ <span class="inline-flex items-center justify-center w-6 h-6 rounded-lg bg-bg text-muted2 text-[10px] font-semibold shrink-0 tabular-nums">${ri + 1}</span>
+ ${_isBW ? '' : `
  <input type="text" inputmode="decimal" value="${t.weight ?? ''}" placeholder="кг"
- class="tprog-tw flex-1 min-w-0 text-center bg-bg rounded-xl py-1.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-primary/40"
+ class="tprog-tw flex-1 min-w-0 text-center bg-bg rounded-xl py-2 text-sm text-white placeholder-muted2/60 focus:outline-none focus:ring-1 focus:ring-primary/40 transition"
  data-ex="${i}" data-row="${ri}">
- <span class="text-muted2 text-xs">×</span>
+ <span class="text-muted2/50 text-[10px] shrink-0 select-none">×</span>
+ `}
  <input type="text" inputmode="numeric" value="${t.reps ?? ''}" placeholder="повт"
- class="tprog-tr flex-1 min-w-0 text-center bg-bg rounded-xl py-1.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-primary/40"
+ class="tprog-tr flex-1 min-w-0 text-center bg-bg rounded-xl py-2 text-sm text-white placeholder-muted2/60 focus:outline-none focus:ring-1 focus:ring-primary/40 transition"
  data-ex="${i}" data-row="${ri}">
- <button class="tprog-rm-row text-muted2 hover:text-red-400 p-1 shrink-0" data-ex="${i}" data-row="${ri}" title="Удалить подход">
+ <button class="tprog-rm-row text-muted2/50 hover:text-red-400 p-1.5 shrink-0 rounded-lg transition active:scale-90" data-ex="${i}" data-row="${ri}" title="Удалить подход">
  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
  </button>
  </div>
  `).join('');
  return `
- <div class="bg-surface2 rounded-2xl p-3">
- <div class="flex items-center gap-2">
- <p class="text-sm font-medium flex-1 min-w-0 truncate">${ex.name}</p>
- <button class="tprog-remove text-muted2 hover:text-red-400 p-1.5 shrink-0" data-idx="${i}" title="Удалить упражнение">
+ <div class="bg-surface2 rounded-3xl p-4 border border-white/[0.06]">
+ <div class="flex items-start gap-2 mb-3">
+ <div class="flex-1 min-w-0">
+ <div class="flex items-center gap-2 flex-wrap">
+ <p class="font-semibold text-sm text-white/95 break-words">${ex.name}</p>
+ ${_isBW ? '<span class="text-[9px] uppercase tracking-wider text-primary2/80 bg-primary/10 rounded-full px-2 py-0.5 shrink-0 border border-primary/20">своё тело</span>' : ''}
+ </div>
+ ${ex.muscle_group ? `<p class="text-[10px] uppercase tracking-wider text-muted2 mt-1">${ex.muscle_group}</p>` : ''}
+ </div>
+ <button class="tprog-remove text-muted2/60 hover:text-red-400 p-1 -mt-0.5 -mr-1 shrink-0 rounded-lg transition active:scale-90" data-idx="${i}" title="Удалить упражнение">
  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
  </button>
  </div>
- <div class="tprog-rows">${rowsHtml}</div>
- <button class="tprog-add-row w-full mt-2 text-[10px] text-primary2/80 hover:text-primary2 py-1.5 rounded-xl border border-dashed border-primary/25" data-ex="${i}">+ Подход</button>
+ <div class="space-y-2">${rowsHtml}</div>
+ <button class="tprog-add-row w-full mt-3 py-2 rounded-2xl text-xs font-medium
+ text-primary2/80 hover:text-primary2
+ bg-primary/[0.06] hover:bg-primary/[0.12]
+ border border-dashed border-primary/25 hover:border-primary/40
+ transition active:scale-[0.98]"
+ data-ex="${i}">
+ + Добавить подход
+ </button>
  </div>
  `;
  }).join('');
@@ -2944,7 +2962,16 @@ function addExerciseToTrainerDay(exerciseId, name) {
  const day = trainerProgState.days[trainerProgState.activeIdx];
  if (!day) return;
  if (day.exercises.some(e => e.exercise_id === exerciseId)) return;
- day.exercises.push({ exercise_id: exerciseId, name, target_sets: null, target_reps: null, targets: [] });
+ const _ref = allExercises.find(x => x.id === exerciseId);
+ day.exercises.push({
+ exercise_id: exerciseId,
+ name,
+ muscle_group: _ref?.muscle_group || null,
+ is_bodyweight: !!(_ref && _ref.is_bodyweight),
+ target_sets: null,
+ target_reps: null,
+ targets: [],
+ });
  tg?.HapticFeedback?.impactOccurred('light');
  renderTrainerProgDay();
 }
