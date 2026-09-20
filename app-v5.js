@@ -203,6 +203,7 @@ let obGoal = null;
 let obExperience = null;
 
 const calendarCache = new Map();
+window.clearCalendarCache = () => calendarCache.clear();
 let calYear = new Date().getFullYear();
 let calMonth = new Date().getMonth() + 1;
 let calSelectedDay = null;

@@ -194,6 +194,7 @@
         headers: authHeaders(),
       });
       if (!res.ok) throw new Error('HTTP ' + res.status);
+      try { if (window.clearCalendarCache) window.clearCalendarCache(); } catch (_) {}
       tg?.HapticFeedback?.notificationOccurred('success');
 
       if (todayData) {

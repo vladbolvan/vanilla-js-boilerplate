@@ -224,6 +224,7 @@
       });
 
       if (!res.ok) throw new Error('HTTP ' + res.status);
+      try { if (window.clearCalendarCache) window.clearCalendarCache(); } catch (_) {}
 
       msg.saved = true;
       btn.outerHTML = '<div class="mt-2 text-center text-xs text-accent/80 py-2">✓ Сохранено в КБЖУ</div>';
