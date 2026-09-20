@@ -940,6 +940,7 @@ async function startWorkoutFromProgram(programId, dayIndex) {
  })) : null,
  fromTrainer: !!(e.targets && e.targets.length),
  is_bodyweight: !!e.is_bodyweight,
+ cardio_metric: e.cardio_metric || null,
  }));
 
  closeProgramsSheet();
@@ -1171,6 +1172,7 @@ async function loadActiveWorkout() {
        })) : null,
        fromTrainer: !!(p.targets && p.targets.length),
        is_bodyweight: !!p.is_bodyweight,
+       cardio_metric: p.cardio_metric || null,
        };
    } else {
      if (!map[p.exercise_id].name) map[p.exercise_id].name = pName;
@@ -1188,6 +1190,7 @@ async function loadActiveWorkout() {
  if (found) {
    if (!we.name) we.name = found.name;
    if (we.is_bodyweight == null) we.is_bodyweight = !!found.is_bodyweight;
+   if (we.cardio_metric == null) we.cardio_metric = found.cardio_metric || null;
  }
  }
 
@@ -1227,6 +1230,7 @@ function addExerciseToWorkout(id, name) {
  workoutExercises.push({
    id, name, sets: [], lastWeight: null, lastReps: null,
    is_bodyweight: !!(_exRef && _exRef.is_bodyweight),
+ cardio_metric: (_exRef && _exRef.cardio_metric) || null,
  });
  renderWorkoutExercises();
  updateWorkoutUI();
@@ -1293,6 +1297,7 @@ function renderWorkoutExercises() {
  }
  workoutExercisesEl.innerHTML = workoutExercises.map(ex => {
  const _hasTargets = Array.isArray(ex.targets) && ex.targets.length > 0;
+ const _isCardio = !!ex.cardio_metric;
  const planHint = (!_hasTargets && ex.target_sets && ex.target_reps)
  ? `<p class="plan-hint text-xs text-primary2/80 mb-2">План: ${ex.target_sets} × ${ex.target_reps}</p>`
  : '';
@@ -1331,6 +1336,20 @@ function renderWorkoutExercises() {
  <div class="text-center text-[10px] uppercase tracking-wider text-muted2/60 mt-1">
  ${_hasTargets ? 'Отметь все подходы — и готово' : '✓ Все подходы выполнены'}
  </div>
+ ` : _isCardio ? `
+ <div class="flex gap-2 items-stretch">
+ ${(ex.cardio_metric === 'time' || ex.cardio_metric === 'both') ? `<input type="text" inputmode="numeric" placeholder="мм:сс"
+ class="set-duration flex-1 min-w-0 bg-surface2 rounded-2xl px-3 py-3 text-white text-center
+ focus:outline-none focus:ring-2 focus:ring-primary/40 transition"
+ data-ex-id="${ex.id}">` : ''}
+ ${(ex.cardio_metric === 'distance' || ex.cardio_metric === 'both') ? `<input type="text" inputmode="decimal" placeholder="км"
+ class="set-distance flex-1 min-w-0 bg-surface2 rounded-2xl px-3 py-3 text-white text-center
+ focus:outline-none focus:ring-2 focus:ring-primary/40 transition"
+ data-ex-id="${ex.id}">` : ''}
+ <button class="add-set-btn bg-primary hover:bg-primary/90 active:scale-95 transition
+ rounded-2xl w-12 shrink-0 font-bold text-white text-xl"
+ data-ex-id="${ex.id}">+</button>
+ </div>
  ` : `
  <div class="flex gap-2 items-stretch">
  ${ex.is_bodyweight ? '' : ` <input type="text" inputmode="decimal" placeholder="Вес"
@@ -1353,7 +1372,7 @@ function renderWorkoutExercises() {
  <p class="font-semibold break-words min-w-0 flex-1">${ex.name}</p>
  <button class="remove-ex text-muted2 text-xs hover:text-red-400 shrink-0" data-ex-id="${ex.id}">удалить</button>
  </div>
- ${(ex.lastWeight != null && ex.lastReps != null) ? `<p class="last-set-hint text-xs text-muted mb-1">Прошлый раз: ${ex.lastWeight} кг × ${ex.lastReps}</p>` : `<p class="last-set-hint hidden text-xs text-muted mb-1"></p>`}
+ ${(ex.lastWeight != null && ex.lastReps != null && !_isCardio) ? `<p class="last-set-hint text-xs text-muted mb-1">Прошлый раз: ${ex.lastWeight} кг × ${ex.lastReps}</p>` : `<p class="last-set-hint hidden text-xs text-muted mb-1"></p>`}
  ${planHint}
  ${slotsHtml}
  <div class="sets-container space-y-1.5 mb-3" data-ex-id="${ex.id}"></div>
@@ -1380,17 +1399,73 @@ function renderWorkoutExercises() {
  });
 }
 
+function parseTimeToSec(str) {
+ if (str == null) return null;
+ const s = String(str).trim();
+ if (!s) return null;
+ const parts = s.split(':').map(p => p.trim());
+ if (parts.length === 2) {
+ const m = parseInt(parts[0]); const sec = parseInt(parts[1]);
+ if (isNaN(m) || isNaN(sec) || m < 0 || sec < 0 || sec > 59) return null;
+ return m * 60 + sec;
+ }
+ if (parts.length === 3) {
+ const h = parseInt(parts[0]); const m = parseInt(parts[1]); const sec = parseInt(parts[2]);
+ if (isNaN(h) || isNaN(m) || isNaN(sec) || h < 0 || m < 0 || sec < 0 || m > 59 || sec > 59) return null;
+ return h * 3600 + m * 60 + sec;
+ }
+ return null;
+}
+
+function formatSec(sec) {
+ if (sec == null) return '';
+ const s = Math.round(sec);
+ if (s < 3600) {
+ const m = Math.floor(s / 60), r = s % 60;
+ return `${m}:${String(r).padStart(2, '0')}`;
+ }
+ const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), r = s % 60;
+ return `${h}:${String(m).padStart(2, '0')}:${String(r).padStart(2, '0')}`;
+}
+
+function parseDistanceKmToM(str) {
+ if (str == null) return null;
+ const s = String(str).trim().replace(',', '.').replace(/[^\d.\-]/g, '');
+ if (!s) return null;
+ const km = parseFloat(s);
+ if (isNaN(km) || km < 0) return null;
+ return Math.round(km * 1000);
+}
+
+function formatDistanceM(m) {
+ if (m == null) return '';
+ const km = m / 1000;
+ let s = km.toFixed(2);
+ if (s.endsWith('00')) s = s.slice(0, -2) + '0';
+ s = s.replace(/(\.\d)0$/, '$1').replace(/\.0$/, '');
+ return s + ' км';
+}
+
 function renderSetsForExercise(exerciseId, sets) {
  const container = workoutExercisesEl.querySelector(`.sets-container[data-ex-id="${exerciseId}"]`);
  if (!container) return;
  if (!sets || sets.length === 0) { container.innerHTML = ''; return; }
  const _ex = workoutExercises.find(e => e.id === exerciseId);
  const _isBW = !!(_ex && _ex.is_bodyweight);
+ const _isCardio = !!(_ex && _ex.cardio_metric);
  container.innerHTML = sets.map((s, i) => {
  const isLast = i === sets.length - 1;
- const setText = _isBW
-   ? `<b>${s.reps}</b> повт`
-   : `<b>${s.weight}</b> кг × <b>${s.reps}</b>`;
+ let setText;
+ if (_isCardio) {
+ const parts = [];
+ if (s.duration_sec != null) parts.push(`<b>${formatSec(s.duration_sec)}</b>`);
+ if (s.distance_m != null) parts.push(`<b>${formatDistanceM(s.distance_m)}</b>`);
+ setText = parts.join(' · ') || '—';
+ } else if (_isBW) {
+ setText = `<b>${s.reps}</b> повт`;
+ } else {
+ setText = `<b>${s.weight}</b> кг × <b>${s.reps}</b>`;
+ }
  return `
  <div class="set-row flex items-center gap-2 text-sm py-1" data-set-id="${s.id}">
  <span class="text-muted2 text-xs w-6 shrink-0">${i + 1}</span>
@@ -1434,22 +1509,48 @@ async function deleteSetInline(exerciseId, setId) {
 async function addSetInline(exerciseId) {
  const card = workoutExercisesEl.querySelector(`[data-ex-id="${exerciseId}"]`);
  if (!card) return;
- const weightInput = card.querySelector('.set-weight');
- const repsInput = card.querySelector('.set-reps');
- const _weBW = workoutExercises.find(e => e.id === exerciseId);
- const _isBW = !!(_weBW && _weBW.is_bodyweight);
- const weight = _isBW ? 0 : parseWeightInput(weightInput.value);
- const reps = parseInt(repsInput.value);
- if (!_isBW && (isNaN(weight) || weight < 0)) { tg?.showAlert('Введи вес'); return; }
- if (isNaN(reps) || reps < 1) { tg?.showAlert('Введи повторы'); return; }
-
  const we = workoutExercises.find(e => e.id === exerciseId);
  if (!we) return;
+
+ const _isBW = !!we.is_bodyweight;
+ const _isCardio = !!we.cardio_metric;
+
+ let weight = 0, reps = 0, duration_sec = null, distance_m = null;
+
+ if (_isCardio) {
+ const durInput = card.querySelector('.set-duration');
+ const distInput = card.querySelector('.set-distance');
+ if (durInput && durInput.value.trim()) {
+ duration_sec = parseTimeToSec(durInput.value);
+ if (duration_sec == null) { tg?.showAlert('Время в формате мм:сс или ч:мм:сс'); return; }
+ }
+ if (distInput && distInput.value.trim()) {
+ distance_m = parseDistanceKmToM(distInput.value);
+ if (distance_m == null) { tg?.showAlert('Дистанция в км, например 5.2'); return; }
+ }
+ if (duration_sec == null && distance_m == null) {
+ tg?.showAlert('Заполни время или дистанцию');
+ return;
+ }
+ } else {
+ const weightInput = card.querySelector('.set-weight');
+ const repsInput = card.querySelector('.set-reps');
+ weight = _isBW ? 0 : parseWeightInput(weightInput?.value ?? '');
+ reps = parseInt(repsInput?.value ?? '');
+ if (!_isBW && (isNaN(weight) || weight < 0)) { tg?.showAlert('Введи вес'); return; }
+ if (isNaN(reps) || reps < 1) { tg?.showAlert('Введи повторы'); return; }
+ }
+
  const tempId = 'temp_' + Date.now();
- const optimisticSet = { id: tempId, exercise_id: exerciseId, set_number: we.sets.length + 1, weight, reps };
+ const optimisticSet = {
+ id: tempId, exercise_id: exerciseId, set_number: we.sets.length + 1,
+ weight, reps, duration_sec, distance_m,
+ };
  we.sets.push(optimisticSet);
  renderSetsForExercise(exerciseId, we.sets);
- repsInput.blur();
+ card.querySelector('.set-duration')?.blur();
+ card.querySelector('.set-distance')?.blur();
+ card.querySelector('.set-reps')?.blur();
  tg?.HapticFeedback?.notificationOccurred('success');
 
  if (!currentWorkoutId) {
@@ -1463,6 +1564,8 @@ async function addSetInline(exerciseId) {
  }
  try {
  const params = new URLSearchParams({ exercise_id: exerciseId, weight, reps });
+ if (duration_sec != null) params.set('duration_sec', duration_sec);
+ if (distance_m != null) params.set('distance_m', distance_m);
  const res = await fetch(`${API_URL}/api/workouts/${currentWorkoutId}/sets?${params}`, {
  method: 'POST', headers: authHeaders(),
  });
@@ -1471,6 +1574,8 @@ async function addSetInline(exerciseId) {
  const idx = we.sets.findIndex(s => s.id === tempId);
  if (idx !== -1) we.sets[idx] = realSet;
  renderSetsForExercise(exerciseId, we.sets);
+ // Очистим инпуты
+ card.querySelectorAll('.set-duration, .set-distance, .set-weight, .set-reps').forEach(i => i.value = '');
  startRestTimer();
  calendarCache.clear();
  } catch (e) {
