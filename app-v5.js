@@ -386,7 +386,7 @@ async function saveOnboarding() {
  showScreen('home');
   updateStartButton();
   // Сразу ведём в тренировку
-  setTimeout(function(){ try { openProgramsSheet(); } catch(e) {} }, 400);
+  
  } catch (e) {
  console.error(e);
  tg?.showAlert('Не удалось сохранить');

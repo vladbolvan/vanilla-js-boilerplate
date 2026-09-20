@@ -241,7 +241,7 @@
  <div class="grid grid-cols-2 gap-3 mb-8">
  <button id="home-add-weight" class="bg-surface hover:bg-surface2 active:scale-[0.98] transition rounded-3xl p-4 text-left card-shadow">
  <span class="inline-flex items-center justify-center w-9 h-9 rounded-2xl bg-primary/10 text-primary2 mb-3">
- <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/><circle cx="12" cy="12" r="3"/></svg>
+ <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 16l3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1z"/><path d="M2 16l3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></svg>
  </span>
  <p class="font-semibold text-sm">Записать вес</p>
  <p class="text-xs text-muted mt-0.5">Контроль прогресса</p>
@@ -366,10 +366,7 @@
  <div id="screen-ai" class="hidden-screen flex flex-col" style="min-height: calc(100vh - 180px);">
  <header class="mb-4 h-9 flex items-center justify-between">
  <div class="flex items-center gap-2.5">
- <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
- <path d="M12 3v3M12 18v3M3 12h3M18 12h3"/>
- <circle cx="12" cy="12" r="3"/>
- </svg>
+ <span class="inline-flex items-center justify-center w-8 h-8 rounded-xl bg-primary/15 text-primary2 text-[13px] font-bold tracking-tight">AI</span>
  <h1 class="text-[26px] font-bold tracking-tight">AI-тренер</h1>
  </div>
  <button id="ai-clear" class="text-muted text-xs hover:text-white/80 transition px-3 py-1.5 rounded-xl bg-surface2">
@@ -752,10 +749,7 @@
  </button>
  <button id="nav-ai" class="nav-btn py-2.5">
  <div class="nav-icon-bg">
- <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
- <path d="M12 3v3M12 18v3M3 12h3M18 12h3"/>
- <circle cx="12" cy="12" r="3"/>
- </svg>
+ <span class="text-[15px] font-bold tracking-tight leading-none">AI</span>
  </div>
  <span class="nav-label text-[10px] font-medium">AI</span>
  </button>
@@ -1388,7 +1382,7 @@
  <script>
  (function () {
  var v = Date.now();
- document.write('<script src="app-v4.js?v=' + v + '&x=2"><\/script>');
+ document.write('<script src="app-v5.js?v=' + v + '&x=2"><\/script>');
  document.write('<script src="js/reminders.js?v=' + v + '"><\/script>');
  document.write('<script src="js/sharing.js?v=' + v + '"><\/script>');
  document.write('<script src="js/ai.js?v=' + v + '"><\/script>');
