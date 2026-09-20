@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
  <meta charset="UTF-8">
@@ -48,22 +48,22 @@
  .content-bottom { padding-bottom: calc(env(safe-area-inset-bottom, 0) + 100px); }
  .hidden-screen { display: none !important; }
 
- /* iOS/Android Safari Р·СѓРјРёС‚ input РїСЂРё font-size < 16px вЂ” РїСЂРёРЅСѓРґРёС‚РµР»СЊРЅРѕ 16px */
+ /* iOS/Android Safari зумит input при font-size < 16px — принудительно 16px */
  input, textarea, select {
  font-size: 16px !important;
  }
- /* Р”Р»СЏ РјРµР»РєРёС… РїРѕР»РµР№ (РІРµСЃ, РїРѕРІС‚РѕСЂС‹) РІРёР·СѓР°Р»СЊРЅРѕ РјРµРЅСЊС€Рµ, РЅРѕ Р±РµР· Р·СѓРјР° */
+ /* Для мелких полей (вес, повторы) визуально меньше, но без зума */
  input.compact, textarea.compact {
  font-size: 16px !important;
  letter-spacing: -0.01em;
  }
 
- /* Р’СЃРµРіРґР° РјРёРЅРёРјСѓРј 50px СЃРІРµСЂС…Сѓ вЂ” Telegram fullscreen СЂРёСЃСѓРµС‚ РєРЅРѕРїРєРё */
+ /* Всегда минимум 50px сверху — Telegram fullscreen рисует кнопки */
  .safe-top {
  padding-top: max(calc(env(safe-area-inset-top, 0) + var(--safe-top-offset, 56px)), 52px);
  }
 
- /* РЎРєСЂС‹РІР°РµРј РЅРёР¶РЅСЋСЋ РЅР°РІРёРіР°С†РёСЋ, РєРѕРіРґР° РѕС‚РєСЂС‹С‚Р° РєР»Р°РІРёР°С‚СѓСЂР° */
+ /* Скрываем нижнюю навигацию, когда открыта клавиатура */
  body.keyboard-open #bottom-nav {
  transform: translateY(120%);
  transition: transform 0.2s ease;
@@ -151,10 +151,10 @@
  margin: 8px auto 0;
  }
 
- /* РўР°Р№РјРµСЂ РѕС‚РґС‹С…Р° вЂ” РїР»Р°РІРЅС‹Р№ РїСЂРѕРіСЂРµСЃСЃ */
+ /* Таймер отдыха — плавный прогресс */
  #rest-progress { transition: width 1s linear; }
 
- /* РўР°Р№РјРµСЂ С‚СЂРµРЅРёСЂРѕРІРєРё вЂ” СЃРєСЂС‹РІР°РµРј, РєРѕРіРґР° РїСѓСЃС‚ */
+ /* Таймер тренировки — скрываем, когда пуст */
  #workout-timer:empty { display: none; }
 
  input:focus { background: rgba(124,108,255,0.05); }
@@ -206,7 +206,7 @@
  background: radial-gradient(circle at center, rgba(124,108,255,0.10) 0%, rgba(124,108,255,0) 70%);
  }
 
- /* РљРЅРѕРїРєР° СЃС‚Р°СЂС‚Р° вЂ” РїСѓР»СЊСЃРёСЂСѓСЋС‰РµРµ СЃРІРµС‡РµРЅРёРµ */
+ /* Кнопка старта — пульсирующее свечение */
  @keyframes pulse-glow {
  0%, 100% { box-shadow: 0 14px 38px -12px rgba(124,108,255,0.55); }
  50% { box-shadow: 0 18px 48px -12px rgba(124,108,255,0.75); }
@@ -219,19 +219,19 @@
  <div id="wrap">
  <div class="max-w-md mx-auto px-5 safe-top content-bottom">
 
- <!-- Р­РљР РђРќ 1: Р“Р›РђР’РќРђРЇ -->
+ <!-- ЭКРАН 1: ГЛАВНАЯ -->
  <div id="screen-home">
  <header class="mb-8">
-        <p class="text-muted text-sm mb-1">РџСЂРёРІРµС‚,</p>
- <h1 id="user-name" class="text-3xl font-bold tracking-tight">Р“РѕСЃС‚СЊ</h1>
+        <p class="text-muted text-sm mb-1">Привет,</p>
+ <h1 id="user-name" class="text-3xl font-bold tracking-tight">Гость</h1>
  </header>
 
  <button id="start-workout" class="w-full active:scale-[0.98] transition-transform
  rounded-3xl p-6 mb-5 text-left flex items-center justify-between
  relative overflow-hidden" style="background: linear-gradient(135deg, #7c6cff 0%, #5b4dd6 55%, #4b3fc4 100%);">
  <div class="relative z-10">
- <p class="start-subtitle text-xs uppercase tracking-wider text-white/70 mb-1">РќРѕРІР°СЏ СЃРµСЃСЃРёСЏ</p>
- <p class="start-title text-xl font-semibold">РќР°С‡Р°С‚СЊ С‚СЂРµРЅРёСЂРѕРІРєСѓ</p>
+ <p class="start-subtitle text-xs uppercase tracking-wider text-white/70 mb-1">Новая сессия</p>
+ <p class="start-title text-xl font-semibold">Начать тренировку</p>
  </div>
  <span class="start-icon relative z-10 inline-flex items-center justify-center"></span>
  <div class="absolute -right-8 -top-8 w-32 h-32 rounded-full bg-white/10 blur-2xl"></div>
@@ -243,49 +243,49 @@
  <span class="inline-flex items-center justify-center w-9 h-9 rounded-2xl bg-primary/10 text-primary2 mb-3">
  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M16 16l3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1z"/><path d="M2 16l3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1z"/><path d="M7 21h10"/><path d="M12 3v18"/><path d="M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2"/></svg>
  </span>
- <p class="font-semibold text-sm">Р—Р°РїРёСЃР°С‚СЊ РІРµСЃ</p>
- <p class="text-xs text-muted mt-0.5">РљРѕРЅС‚СЂРѕР»СЊ РїСЂРѕРіСЂРµСЃСЃР°</p>
+ <p class="font-semibold text-sm">Записать вес</p>
+ <p class="text-xs text-muted mt-0.5">Контроль прогресса</p>
  </button>
  <button id="home-add-food" class="bg-surface hover:bg-surface2 active:scale-[0.98] transition rounded-3xl p-4 text-left card-shadow">
  <span class="inline-flex items-center justify-center w-9 h-9 rounded-2xl bg-amber-400/10 text-amber-300/90 mb-3">
  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 7.5c-1.5-1.2-3-2-4.5-2C4.5 5.5 2.5 8 2.5 11c0 4.5 3 9 6.5 9 1 0 2-.4 3-.4s2 .4 3 .4c3.5 0 6.5-4.5 6.5-9 0-3-2-5.5-5-5.5-1.5 0-3 .8-4.5 2z"/></svg>
  </span>
- <p class="font-semibold text-sm">Р§С‚Рѕ СЃСЉРµР»</p>
- <p class="text-xs text-muted mt-0.5">РљР‘Р–РЈ Р·Р° 5 СЃРµРєСѓРЅРґ</p>
+ <p class="font-semibold text-sm">Что съел</p>
+ <p class="text-xs text-muted mt-0.5">КБЖУ за 5 секунд</p>
  </button>
  <button id="home-records" class="bg-surface hover:bg-surface2 active:scale-[0.98] transition rounded-3xl p-4 text-left card-shadow">
  <span class="inline-flex items-center justify-center w-9 h-9 rounded-2xl bg-amber-400/10 text-amber-300/90 mb-3">
  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 010-5H6"/><path d="M18 9h1.5a2.5 2.5 0 000-5H18"/><path d="M4 22h16"/><path d="M18 2H6v7a6 6 0 0012 0V2z"/></svg>
  </span>
- <p class="font-semibold text-sm">Р РµРєРѕСЂРґС‹</p>
- <p class="text-xs text-muted mt-0.5">Р›СѓС‡С€РёРµ РїРѕРґС…РѕРґС‹</p>
+ <p class="font-semibold text-sm">Рекорды</p>
+ <p class="text-xs text-muted mt-0.5">Лучшие подходы</p>
  </button>
  <button id="home-history" class="bg-surface hover:bg-surface2 active:scale-[0.98] transition rounded-3xl p-4 text-left card-shadow">
  <span class="inline-flex items-center justify-center w-9 h-9 rounded-2xl bg-emerald-400/10 text-emerald-300/90 mb-3">
  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l3-3 3 3 5-6"/></svg>
  </span>
- <p class="font-semibold text-sm">РСЃС‚РѕСЂРёСЏ</p>
- <p class="text-xs text-muted mt-0.5">Р’СЃРµ С‚СЂРµРЅРёСЂРѕРІРєРё</p>
+ <p class="font-semibold text-sm">История</p>
+ <p class="text-xs text-muted mt-0.5">Все тренировки</p>
  </button>
  </div>
 
  <section>
  <div class="flex items-center justify-between mb-4">
- <h2 class="text-sm font-semibold text-white/95">РџРѕСЃР»РµРґРЅРёРµ С‚СЂРµРЅРёСЂРѕРІРєРё</h2>
+ <h2 class="text-sm font-semibold text-white/95">Последние тренировки</h2>
  </div>
  <div id="recent-list" class="space-y-3">
- <p class="text-muted text-sm py-4 text-center">Р—Р°РіСЂСѓР·РєР°...</p>
+ <p class="text-muted text-sm py-4 text-center">Загрузка...</p>
  </div>
  </section>
  </div>
 
- <!-- Р­РљР РђРќ 2: РўР Р•РќРР РћР’РљРђ -->
+ <!-- ЭКРАН 2: ТРЕНИРОВКА -->
  <div id="screen-workout" class="hidden-screen">
  <header class="flex items-center gap-3 mb-6 h-9">
  <button id="workout-back" class="text-muted p-2 -ml-2 active:opacity-60">
  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
  </button>
- <h1 class="text-xl font-bold tracking-tight flex-1">РўСЂРµРЅРёСЂРѕРІРєР°</h1>
+ <h1 class="text-xl font-bold tracking-tight flex-1">Тренировка</h1>
  <span id="workout-timer" class="text-sm font-mono text-white/85 bg-surface2/70 rounded-full px-3 py-1.5 tabular-nums transition-opacity"></span>
  </header>
 
@@ -299,12 +299,12 @@
  <path d="M6.5 12h11"/>
  </svg>
  </div>
- <p class="text-white/90 text-sm font-medium mb-1">Р•С‰С‘ РЅРµС‚ СѓРїСЂР°Р¶РЅРµРЅРёР№</p>
- <p class="text-muted2 text-xs">Р”РѕР±Р°РІСЊ РїРµСЂРІРѕРµ вЂ” РЅР°С‡РЅС‘Рј!</p>
+ <p class="text-white/90 text-sm font-medium mb-1">Ещё нет упражнений</p>
+ <p class="text-muted2 text-xs">Добавь первое — начнём!</p>
  </div>
 
  <h2 id="workout-header" class="hidden text-[10px] uppercase tracking-wider text-muted2 mb-3">
- Р’ С‚СЂРµРЅРёСЂРѕРІРєРµ
+ В тренировке
  </h2>
 
  <div id="workout-exercises" class="space-y-4"></div>
@@ -316,29 +316,29 @@
  flex items-center justify-center gap-2.5
  text-white/90">
  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
- Р”РѕР±Р°РІРёС‚СЊ СѓРїСЂР°Р¶РЅРµРЅРёРµ
+ Добавить упражнение
  </button>
 
  <button id="finish-workout" class="hidden w-full mt-3 bg-red-500/10 hover:bg-red-500/15 active:scale-[0.98]
  transition rounded-3xl py-4 font-medium text-base text-red-300/90">
- Р—Р°РІРµСЂС€РёС‚СЊ С‚СЂРµРЅРёСЂРѕРІРєСѓ
+ Завершить тренировку
  </button>
  </div>
 
- <!-- Р­РљР РђРќ 3: РРЎРўРћР РРЇ -->
+ <!-- ЭКРАН 3: ИСТОРИЯ -->
  <div id="screen-history" class="hidden-screen">
  <header class="mb-6 h-9 flex items-center">
- <h1 class="text-[26px] font-bold tracking-tight">РСЃС‚РѕСЂРёСЏ</h1>
+ <h1 class="text-[26px] font-bold tracking-tight">История</h1>
  </header>
  <div id="history-list" class="space-y-3">
- <p class="text-muted text-center py-8">Р—Р°РіСЂСѓР·РєР°...</p>
+ <p class="text-muted text-center py-8">Загрузка...</p>
  </div>
  </div>
 
- <!-- Р­РљР РђРќ 7: РљРђР›Р•РќР”РђР Р¬ -->
+ <!-- ЭКРАН 7: КАЛЕНДАРЬ -->
  <div id="screen-calendar" class="hidden-screen">
  <header class="mb-6 h-9 flex items-center">
- <h1 class="text-[26px] font-bold tracking-tight">РљР°Р»РµРЅРґР°СЂСЊ</h1>
+ <h1 class="text-[26px] font-bold tracking-tight">Календарь</h1>
  </header>
 
  <div class="bg-surface rounded-3xl p-5 card-shadow mb-4">
@@ -346,7 +346,7 @@
  <button id="calendar-prev" class="text-muted p-2 -ml-2 active:opacity-60">
  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
  </button>
- <p id="calendar-title" class="text-base font-semibold">РњРµСЃСЏС†</p>
+ <p id="calendar-title" class="text-base font-semibold">Месяц</p>
  <button id="calendar-next" class="text-muted p-2 -mr-2 active:opacity-60">
  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
  </button>
@@ -358,19 +358,19 @@
  <div id="calendar-day-list" class="hidden bg-surface rounded-3xl p-4 card-shadow mb-4"></div>
 
  <p class="text-[10px] text-muted2 text-center uppercase tracking-wider">
- Р”РЅРё СЃ С‚СЂРµРЅРёСЂРѕРІРєР°РјРё РїРѕРґСЃРІРµС‡РµРЅС‹
+ Дни с тренировками подсвечены
  </p>
  </div>
 
- <!-- Р­РљР РђРќ: AI-РўР Р•РќР•Р  -->
+ <!-- ЭКРАН: AI-ТРЕНЕР -->
  <div id="screen-ai" class="hidden-screen flex flex-col" style="min-height: calc(100vh - 180px);">
  <header class="mb-4 h-9 flex items-center justify-between">
  <div class="flex items-center gap-2.5">
  <span class="inline-flex items-center justify-center w-8 h-8 rounded-xl bg-primary/15 text-primary2 text-[13px] font-bold tracking-tight">AI</span>
- <h1 class="text-[26px] font-bold tracking-tight">AI-С‚СЂРµРЅРµСЂ</h1>
+ <h1 class="text-[26px] font-bold tracking-tight">AI-тренер</h1>
  </div>
  <button id="ai-clear" class="text-muted text-xs hover:text-white/80 transition px-3 py-1.5 rounded-xl bg-surface2">
- РћС‡РёСЃС‚РёС‚СЊ
+ Очистить
  </button>
  </header>
 
@@ -378,7 +378,7 @@
  </div>
 
  <div class="mt-3 bg-surface rounded-3xl p-2 card-shadow flex items-end gap-2">
- <textarea id="ai-input" rows="1" maxlength="500" placeholder="Р§С‚Рѕ С‚С‹ СЃСЉРµР»?" class="flex-1 bg-transparent text-white text-sm px-3 py-2.5 resize-none
+ <textarea id="ai-input" rows="1" maxlength="500" placeholder="Что ты съел?" class="flex-1 bg-transparent text-white text-sm px-3 py-2.5 resize-none
  placeholder-muted2 focus:outline-none min-h-[40px] max-h-[120px]" style="line-height: 1.4;"></textarea>
  <button id="ai-send" class="bg-primary hover:bg-primary/90 active:scale-95 transition
  rounded-2xl w-11 h-11 shrink-0 flex items-center justify-center
@@ -390,18 +390,18 @@
  </div>
 
  <p class="text-[10px] text-muted2 text-center mt-2">
- AI РјРѕР¶РµС‚ РѕС€РёР±Р°С‚СЊСЃСЏ. РџСЂРѕРІРµСЂСЏР№ РІР°Р¶РЅРѕРµ.
+ AI может ошибаться. Проверяй важное.
  </p>
  </div>
 
- <!-- Р­РљР РђРќ 4: Р”Р•РўРђР›Р РўР Р•РќРР РћР’РљР -->
+ <!-- ЭКРАН 4: ДЕТАЛИ ТРЕНИРОВКИ -->
  <div id="screen-workout-detail" class="hidden-screen">
  <header class="flex items-center gap-3 mb-6 h-9">
  <button id="back-to-history" class="text-muted p-2 -ml-2 active:opacity-60">
  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
  </button>
- <h1 id="detail-title" class="text-base font-semibold tracking-tight flex-1 truncate">РўСЂРµРЅРёСЂРѕРІРєР°</h1>
- <button id="detail-delete-btn" class="text-muted hover:text-red-400 transition p-2 -mr-2 active:opacity-60" title="РЈРґР°Р»РёС‚СЊ">
+ <h1 id="detail-title" class="text-base font-semibold tracking-tight flex-1 truncate">Тренировка</h1>
+ <button id="detail-delete-btn" class="text-muted hover:text-red-400 transition p-2 -mr-2 active:opacity-60" title="Удалить">
  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
  <path d="M3 6h18"/>
  <path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
@@ -413,22 +413,22 @@
  <div id="detail-content" class="space-y-3"></div>
  </div>
 
- <!-- Р­РљР РђРќ: Р Р•Р”РђРљРўРћР  РџР РћР“Р РђРњРњР« -->
+ <!-- ЭКРАН: РЕДАКТОР ПРОГРАММЫ -->
  <div id="screen-program-editor" class="hidden-screen">
  <header class="flex items-center gap-3 mb-6 h-9">
  <button id="program-editor-back" class="text-muted p-2 -ml-2 active:opacity-60">
  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
  </button>
- <h1 class="text-xl font-bold tracking-tight">РЎРІРѕСЏ С‚СЂРµРЅРёСЂРѕРІРєР°</h1>
+ <h1 class="text-xl font-bold tracking-tight">Своя тренировка</h1>
  </header>
 
  <div class="mb-5">
- <label class="text-[10px] uppercase tracking-wider text-muted2 block mb-1.5">РќР°Р·РІР°РЅРёРµ</label>
- <input id="program-name-input" type="text" maxlength="128" placeholder="РќР°РїСЂРёРјРµСЂ: Р”РµРЅСЊ РіСЂСѓРґРё" class="w-full bg-surface2 rounded-2xl px-4 py-3.5 text-white placeholder-muted2
+ <label class="text-[10px] uppercase tracking-wider text-muted2 block mb-1.5">Название</label>
+ <input id="program-name-input" type="text" maxlength="128" placeholder="Например: День груди" class="w-full bg-surface2 rounded-2xl px-4 py-3.5 text-white placeholder-muted2
  focus:outline-none focus:ring-2 focus:ring-primary/40 transition">
  </div>
 
- <p class="text-[10px] uppercase tracking-wider text-muted2 mb-3">РЈРїСЂР°Р¶РЅРµРЅРёСЏ</p>
+ <p class="text-[10px] uppercase tracking-wider text-muted2 mb-3">Упражнения</p>
 
  <div id="program-exercises-list" class="space-y-2"></div>
 
@@ -442,7 +442,7 @@
  <path d="M6.5 12h11"/>
  </svg>
  </div>
- <p class="text-muted text-xs">РџРѕРєР° РїСѓСЃС‚Рѕ. Р”РѕР±Р°РІСЊ РїРµСЂРІРѕРµ СѓРїСЂР°Р¶РЅРµРЅРёРµ</p>
+ <p class="text-muted text-xs">Пока пусто. Добавь первое упражнение</p>
  </div>
 
  <button id="program-add-exercise" class="w-full mt-4 bg-surface hover:bg-surface2 active:scale-[0.98]
@@ -450,17 +450,17 @@
  flex items-center justify-center gap-2.5
  text-white/90">
  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
- Р”РѕР±Р°РІРёС‚СЊ СѓРїСЂР°Р¶РЅРµРЅРёРµ
+ Добавить упражнение
  </button>
 
  <button id="program-save-btn" class="w-full mt-3 bg-primary hover:bg-primary/90 active:scale-[0.98]
  transition rounded-3xl py-4 font-semibold text-base text-white
  shadow-[0_10px_30px_-10px_rgba(124,108,255,0.55)]">
- РЎРѕС…СЂР°РЅРёС‚СЊ
+ Сохранить
  </button>
  </div>
 
- <!-- Р­РљР РђРќ 6: Р Р•РљРћР Р”Р« -->
+ <!-- ЭКРАН 6: РЕКОРДЫ -->
  <div id="screen-records" class="hidden-screen">
  <header class="flex items-center gap-3 mb-6 h-9">
  <button id="back-to-profile" class="text-muted p-2 -ml-2 active:opacity-60">
@@ -475,20 +475,20 @@
  <path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/>
  <path d="M18 2H6v7a6 6 0 0012 0V2z"/>
  </svg>
- <h1 class="text-[26px] font-bold tracking-tight">Р РµРєРѕСЂРґС‹</h1>
+ <h1 class="text-[26px] font-bold tracking-tight">Рекорды</h1>
  </div>
  </header>
  <div id="records-list" class="space-y-3">
- <p class="text-muted text-center py-8">Р—Р°РіСЂСѓР·РєР°...</p>
+ <p class="text-muted text-center py-8">Загрузка...</p>
  </div>
  </div>
 
- <!-- Р­РљР РђРќ 5: РџР РћР¤РР›Р¬ -->
+ <!-- ЭКРАН 5: ПРОФИЛЬ -->
  <div id="screen-profile" class="hidden-screen">
  <header class="mb-8">
- <p class="text-muted text-sm mb-1">РџСЂРѕС„РёР»СЊ</p>
+ <p class="text-muted text-sm mb-1">Профиль</p>
  <div class="flex items-center gap-3 flex-wrap">
- <h1 id="profile-name" class="text-3xl font-bold tracking-tight">Р“РѕСЃС‚СЊ</h1>
+ <h1 id="profile-name" class="text-3xl font-bold tracking-tight">Гость</h1>
  <span id="profile-experience-chip" class="hidden text-[10px] uppercase tracking-wider bg-primary/15 text-primary2
  rounded-full px-2.5 py-1 font-medium"></span>
  </div>
@@ -500,7 +500,7 @@
  box-shadow: 0 8px 24px -16px rgba(251,191,36,0.18);">
  <div class="flex items-center justify-between relative z-10">
  <div>
- <p class="text-[10px] uppercase tracking-wider text-amber-200/60">Р”РЅРµР№ РїРѕРґСЂСЏРґ</p>
+ <p class="text-[10px] uppercase tracking-wider text-amber-200/60">Дней подряд</p>
  <p id="stat-streak" class="text-5xl font-bold mt-2 tracking-tight">0</p>
  </div>
  <div id="streak-flame" class="relative">
@@ -525,7 +525,7 @@
  <p id="streak-hint" class="text-xs text-amber-100/40 mt-3 relative z-10"></p>
  </div>
 
- <!-- РљР°СЂС‚РѕС‡РєР° РїРёС‚Р°РЅРёСЏ -->
+ <!-- Карточка питания -->
  <div id="nutrition-card" class="bg-surface rounded-3xl p-5 card-shadow mb-4 cursor-pointer">
  <div class="flex items-center justify-between mb-3">
  <div class="flex items-center gap-2">
@@ -533,14 +533,14 @@
  <path d="M12 7.5c-1.5-1.2-3-2-4.5-2C4.5 5.5 2.5 8 2.5 11c0 4.5 3 9 6.5 9 1 0 2-.4 3-.4s2 .4 3 .4c3.5 0 6.5-4.5 6.5-9 0-3-2-5.5-5-5.5-1.5 0-3 .8-4.5 2z"/>
  <path d="M12 7.5v-3.2"/>
  </svg>
- <p class="text-[10px] uppercase tracking-wider text-muted">РџРёС‚Р°РЅРёРµ СЃРµРіРѕРґРЅСЏ</p>
+ <p class="text-[10px] uppercase tracking-wider text-muted">Питание сегодня</p>
  </div>
- <span class="text-[10px] text-muted2">РљР‘Р–РЈ</span>
+ <span class="text-[10px] text-muted2">КБЖУ</span>
  </div>
 
  <div id="nutrition-totals" class="mb-3">
- <span class="text-3xl font-bold tracking-tight">вЂ”</span>
- <span class="text-sm text-muted2 ml-1.5">РєРєР°Р»</span>
+ <span class="text-3xl font-bold tracking-tight">—</span>
+ <span class="text-sm text-muted2 ml-1.5">ккал</span>
  </div>
 
  <div class="h-1.5 bg-white/5 rounded-full overflow-hidden mb-3">
@@ -549,39 +549,39 @@
 
  <div id="nutrition-macros" class="grid grid-cols-3 gap-2 mb-3">
  <div class="bg-white/[0.02] rounded-2xl py-2 px-2 text-center">
- <p class="text-[9px] uppercase tracking-wider text-muted2">Р‘</p>
- <p class="text-sm font-semibold mt-0.5 text-sky-300/80">вЂ”</p>
+ <p class="text-[9px] uppercase tracking-wider text-muted2">Б</p>
+ <p class="text-sm font-semibold mt-0.5 text-sky-300/80">—</p>
  </div>
  <div class="bg-white/[0.02] rounded-2xl py-2 px-2 text-center">
- <p class="text-[9px] uppercase tracking-wider text-muted2">Р–</p>
- <p class="text-sm font-semibold mt-0.5 text-amber-300/80">вЂ”</p>
+ <p class="text-[9px] uppercase tracking-wider text-muted2">Ж</p>
+ <p class="text-sm font-semibold mt-0.5 text-amber-300/80">—</p>
  </div>
  <div class="bg-white/[0.02] rounded-2xl py-2 px-2 text-center">
- <p class="text-[9px] uppercase tracking-wider text-muted2">РЈ</p>
- <p class="text-sm font-semibold mt-0.5 text-emerald-300/80">вЂ”</p>
+ <p class="text-[9px] uppercase tracking-wider text-muted2">У</p>
+ <p class="text-sm font-semibold mt-0.5 text-emerald-300/80">—</p>
  </div>
  </div>
 
  <div class="flex gap-2">
  <button id="nutrition-open-btn" class="flex-1 bg-surface2 hover:bg-surface3 active:scale-[0.98] transition
  rounded-2xl py-2.5 text-xs font-medium text-white/90">
- Р§С‚Рѕ СЃСЉРµР» СЃРµРіРѕРґРЅСЏ
+ Что съел сегодня
  </button>
  <button id="nutrition-add-btn" class="flex-1 bg-primary/10 hover:bg-primary/15 active:scale-[0.98] transition
  rounded-2xl py-2.5 text-xs font-medium text-primary2
  border border-primary/20">
- + Р”РѕР±Р°РІРёС‚СЊ РµРґСѓ
+ + Добавить еду
  </button>
  </div>
  </div>
 
- <!-- РљР°СЂС‚РѕС‡РєР° РІРµСЃР° -->
+ <!-- Карточка веса -->
  <div id="weight-card" class="bg-surface rounded-3xl p-5 card-shadow mb-4">
  <div class="flex items-center justify-between mb-3">
  <div>
- <p class="text-[10px] uppercase tracking-wider text-muted">РўРµРєСѓС‰РёР№ РІРµСЃ</p>
+ <p class="text-[10px] uppercase tracking-wider text-muted">Текущий вес</p>
  <div class="flex items-baseline mt-1.5">
- <p id="weight-current" class="text-3xl font-bold tracking-tight">вЂ”</p>
+ <p id="weight-current" class="text-3xl font-bold tracking-tight">—</p>
  <p id="weight-delta" class="text-xs"></p>
  </div>
  </div>
@@ -591,25 +591,25 @@
  active:scale-95 transition shrink-0
  border border-primary/20">
  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
- Р—Р°РїРёСЃР°С‚СЊ
+ Записать
  </button>
  </div>
  <div id="weight-sparkline" class="w-full h-[56px]"></div>
  </div>
 
- <!-- РљР°СЂС‚РѕС‡РєР° РЅР°РїРѕРјРёРЅР°РЅРёР№ (СЂР°СЃС€РёСЂРµРЅРЅР°СЏ: С‚СЂРµРЅРёСЂРѕРІРєР° / РІРѕРґР° / СЃРѕРЅ / РµРґР°) -->
+ <!-- Карточка напоминаний (расширенная: тренировка / вода / сон / еда) -->
  <div id="reminders-card" class="bg-surface rounded-3xl p-5 card-shadow mb-4 cursor-pointer">
  <div class="flex items-center gap-2 mb-3">
  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" class="text-primary2 shrink-0">
  <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/>
  <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/>
  </svg>
- <p class="font-semibold text-sm">РќР°РїРѕРјРёРЅР°РЅРёСЏ</p>
+ <p class="font-semibold text-sm">Напоминания</p>
  </div>
  <div id="reminders-list" class="divide-y divide-white/5"></div>
  <button id="reminders-open-btn" class="w-full mt-3 bg-surface2 hover:bg-surface3 active:scale-[0.98]
  transition rounded-2xl py-2.5 text-sm font-medium text-white/90">
- РќР°СЃС‚СЂРѕРёС‚СЊ
+ Настроить
  </button>
  </div>
 
@@ -623,8 +623,8 @@
  </svg>
  </span>
  <div class="text-left">
- <p class="font-semibold text-sm">РџСЂРѕС„РёР»СЊ</p>
- <p class="text-xs text-muted mt-0.5">Р’РµСЃ, СЂРѕСЃС‚, РІРѕР·СЂР°СЃС‚, С†РµР»СЊ, РѕРїС‹С‚</p>
+ <p class="font-semibold text-sm">Профиль</p>
+ <p class="text-xs text-muted mt-0.5">Вес, рост, возраст, цель, опыт</p>
  </div>
  </div>
  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5e5e72" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
@@ -633,54 +633,54 @@
  <div id="profile-metrics" class="hidden space-y-3 mb-4">
  <div class="grid grid-cols-3 gap-3">
  <div class="bg-surface rounded-3xl p-4 card-shadow text-center">
- <p class="text-[10px] uppercase tracking-wider text-muted">Р’РµСЃ</p>
- <p id="pm-weight" class="text-lg font-bold mt-1.5 tracking-tight">вЂ”</p>
+ <p class="text-[10px] uppercase tracking-wider text-muted">Вес</p>
+ <p id="pm-weight" class="text-lg font-bold mt-1.5 tracking-tight">—</p>
  </div>
  <div class="bg-surface rounded-3xl p-4 card-shadow text-center">
- <p class="text-[10px] uppercase tracking-wider text-muted">Р РѕСЃС‚</p>
- <p id="pm-height" class="text-lg font-bold mt-1.5 tracking-tight">вЂ”</p>
+ <p class="text-[10px] uppercase tracking-wider text-muted">Рост</p>
+ <p id="pm-height" class="text-lg font-bold mt-1.5 tracking-tight">—</p>
  </div>
  <div class="bg-surface rounded-3xl p-4 card-shadow text-center">
- <p class="text-[10px] uppercase tracking-wider text-muted">Р’РѕР·СЂР°СЃС‚</p>
- <p id="pm-age" class="text-lg font-bold mt-1.5 tracking-tight">вЂ”</p>
+ <p class="text-[10px] uppercase tracking-wider text-muted">Возраст</p>
+ <p id="pm-age" class="text-lg font-bold mt-1.5 tracking-tight">—</p>
  </div>
  </div>
 
  <div class="grid grid-cols-2 gap-3">
  <div class="bg-surface rounded-3xl p-4 card-shadow">
- <p class="text-[10px] uppercase tracking-wider text-muted">РРњРў</p>
+ <p class="text-[10px] uppercase tracking-wider text-muted">ИМТ</p>
  <div class="flex items-baseline gap-2 mt-1.5">
- <p id="pm-bmi" class="text-2xl font-bold tracking-tight">вЂ”</p>
+ <p id="pm-bmi" class="text-2xl font-bold tracking-tight">—</p>
  <p id="pm-bmi-label" class="text-xs font-medium"></p>
  </div>
  </div>
  <div class="bg-surface rounded-3xl p-4 card-shadow">
- <p class="text-[10px] uppercase tracking-wider text-muted">РќРѕСЂРјР°</p>
- <p id="pm-calories" class="text-2xl font-bold mt-1.5 tracking-tight">вЂ”</p>
- <p class="text-[10px] text-muted mt-0.5">РєРєР°Р» / РґРµРЅСЊ</p>
+ <p class="text-[10px] uppercase tracking-wider text-muted">Норма</p>
+ <p id="pm-calories" class="text-2xl font-bold mt-1.5 tracking-tight">—</p>
+ <p class="text-[10px] text-muted mt-0.5">ккал / день</p>
  </div>
  </div>
  </div>
 
  <div id="profile-empty-hint" class="hidden bg-surface rounded-3xl p-4 border border-dashed border-white/10 text-center mb-4">
- <p class="text-sm text-muted">Р—Р°РїРѕР»РЅРё РїСЂРѕС„РёР»СЊ вЂ” СЂР°СЃСЃС‡РёС‚Р°РµРј РРњРў Рё РЅРѕСЂРјСѓ РєР°Р»РѕСЂРёР№</p>
+ <p class="text-sm text-muted">Заполни профиль — рассчитаем ИМТ и норму калорий</p>
  </div>
 
  <div class="grid grid-cols-2 gap-3 mb-5">
  <div class="bg-surface rounded-3xl p-5 card-shadow">
- <p class="text-[10px] uppercase tracking-wider text-muted">РўСЂРµРЅРёСЂРѕРІРѕРє</p>
+ <p class="text-[10px] uppercase tracking-wider text-muted">Тренировок</p>
  <p id="stat-workouts" class="text-3xl font-bold mt-2 tracking-tight">0</p>
  </div>
  <div class="bg-surface rounded-3xl p-5 card-shadow">
- <p class="text-[10px] uppercase tracking-wider text-muted">РџРѕРґС…РѕРґРѕРІ</p>
+ <p class="text-[10px] uppercase tracking-wider text-muted">Подходов</p>
  <p id="stat-sets" class="text-3xl font-bold mt-2 tracking-tight">0</p>
  </div>
  </div>
 
  <div class="bg-surface rounded-3xl p-5 card-shadow mb-4">
- <p class="text-[10px] uppercase tracking-wider text-muted">РћР±С‰РёР№ С‚РѕРЅРЅР°Р¶</p>
- <p id="stat-volume" class="text-3xl font-bold mt-2 tracking-tight">0 С‚</p>
- <p class="text-xs text-muted mt-2">РЎСѓРјРјР° РІРµСЃ Г— РїРѕРІС‚РѕСЂС‹ Р·Р° РІСЃС‘ РІСЂРµРјСЏ</p>
+ <p class="text-[10px] uppercase tracking-wider text-muted">Общий тоннаж</p>
+ <p id="stat-volume" class="text-3xl font-bold mt-2 tracking-tight">0 т</p>
+ <p class="text-xs text-muted mt-2">Сумма вес × повторы за всё время</p>
  </div>
 
  <button id="open-history-from-profile" class="w-full mb-4 bg-surface rounded-3xl p-4 card-shadow
@@ -693,8 +693,8 @@
  </svg>
  </span>
  <div class="text-left">
- <p class="font-semibold text-sm">РСЃС‚РѕСЂРёСЏ С‚СЂРµРЅРёСЂРѕРІРѕРє</p>
- <p class="text-xs text-muted mt-0.5">Р’СЃРµ РїРѕРґС…РѕРґС‹ РїРѕ РґР°С‚Р°Рј</p>
+ <p class="font-semibold text-sm">История тренировок</p>
+ <p class="text-xs text-muted mt-0.5">Все подходы по датам</p>
  </div>
  </div>
  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5e5e72" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
@@ -714,58 +714,58 @@
  </svg>
  </span>
  <div class="text-left">
- <p class="font-semibold text-sm">Р›РёС‡РЅС‹Рµ СЂРµРєРѕСЂРґС‹</p>
- <p class="text-xs text-muted mt-0.5">Р›СѓС‡С€РёРµ РїРѕРґС…РѕРґС‹ РїРѕ СѓРїСЂР°Р¶РЅРµРЅРёСЏРј</p>
+ <p class="font-semibold text-sm">Личные рекорды</p>
+ <p class="text-xs text-muted mt-0.5">Лучшие подходы по упражнениям</p>
  </div>
  </div>
  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5e5e72" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
  </button>
 
 
- <p class="text-[10px] text-muted2 text-center mt-10 uppercase tracking-wider">Gymly В· v0.5-cache-test</p>
+ <p class="text-[10px] text-muted2 text-center mt-10 uppercase tracking-wider">Gymly · v0.5-cache-test</p>
  </div>
 
 <div id="screen-trainer-clients" class="hidden-screen">
  <header class="mb-6 h-9 flex items-center justify-between">
- <h1 class="text-[26px] font-bold tracking-tight">РњРѕРё РєР»РёРµРЅС‚С‹</h1>
+ <h1 class="text-[26px] font-bold tracking-tight">Мои клиенты</h1>
  <button id="add-client-btn" class="inline-flex items-center justify-center gap-1.5
  bg-primary/12 hover:bg-primary/18 text-primary2
  rounded-2xl px-3.5 py-2 text-sm font-medium
  active:scale-95 transition
  border border-primary/20">
  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
- Р”РѕР±Р°РІРёС‚СЊ
+ Добавить
  </button>
  </header>
  <div id="trainer-clients-list" class="space-y-3">
- <p class="text-muted text-center py-8">Р—Р°РіСЂСѓР·РєР°...</p>
+ <p class="text-muted text-center py-8">Загрузка...</p>
  </div>
  <p class="text-[10px] text-muted2 text-center mt-6 uppercase tracking-wider">
- РљР»РёРµРЅС‚С‹, РєРѕС‚РѕСЂС‹С… С‚С‹ РїСЂРёРіР»Р°СЃРёР»
+ Клиенты, которых ты пригласил
  </p>
  </div>
 
- <!-- Р­РљР РђРќ: РљРђР РўРћР§РљРђ РљР›РР•РќРўРђ (С‚СЂРµРЅРµСЂ) -->
+ <!-- ЭКРАН: КАРТОЧКА КЛИЕНТА (тренер) -->
  <div id="screen-client-detail" class="hidden-screen">
  <header class="flex items-center gap-3 mb-6 h-9">
  <button id="client-detail-back" class="text-muted p-2 -ml-2 active:opacity-60">
  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
  </button>
- <h1 id="client-detail-title" class="text-xl font-bold tracking-tight flex-1 truncate">РљР»РёРµРЅС‚</h1>
+ <h1 id="client-detail-title" class="text-xl font-bold tracking-tight flex-1 truncate">Клиент</h1>
  </header>
  <div id="client-detail-content" class="space-y-3">
- <p class="text-muted text-center py-8">Р—Р°РіСЂСѓР·РєР°...</p>
+ <p class="text-muted text-center py-8">Загрузка...</p>
  </div>
  </div>
 
- <!-- Р­РљР РђРќ: Р Р•Р”РђРљРўРћР  РџР РћР“Р РђРњРњР« РўР Р•РќР•Р Рђ (РќР•Р”Р•Р›РЇ) -->
+ <!-- ЭКРАН: РЕДАКТОР ПРОГРАММЫ ТРЕНЕРА (НЕДЕЛЯ) -->
  <div id="screen-program-trainer-editor" class="hidden-screen">
  <header class="flex items-center gap-3 mb-5 h-9">
  <button id="tprog-back" class="text-muted p-2 -ml-2 active:opacity-60">
  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
  </button>
- <h1 class="text-xl font-bold tracking-tight flex-1">РџСЂРѕРіСЂР°РјРјР°</h1>
- <button id="tprog-delete" class="text-muted hover:text-red-400 transition p-2 -mr-2 active:opacity-60" title="РЈРґР°Р»РёС‚СЊ">
+ <h1 class="text-xl font-bold tracking-tight flex-1">Программа</h1>
+ <button id="tprog-delete" class="text-muted hover:text-red-400 transition p-2 -mr-2 active:opacity-60" title="Удалить">
  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
  <path d="M3 6h18"/>
  <path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/>
@@ -776,8 +776,8 @@
  </header>
 
  <div class="mb-5">
- <label class="text-[10px] uppercase tracking-wider text-muted2 block mb-1.5">РќР°Р·РІР°РЅРёРµ</label>
- <input id="tprog-name-input" type="text" maxlength="128" placeholder="РќР°РїСЂРёРјРµСЂ: РќРµРґРµР»СЏ A"
+ <label class="text-[10px] uppercase tracking-wider text-muted2 block mb-1.5">Название</label>
+ <input id="tprog-name-input" type="text" maxlength="128" placeholder="Например: Неделя A"
  class="w-full bg-surface2 rounded-2xl px-4 py-3.5 text-white placeholder-muted2
  focus:outline-none focus:ring-2 focus:ring-primary/40 transition">
  </div>
@@ -785,7 +785,7 @@
  <div class="flex items-center gap-2 mb-3 flex-wrap">
  <div id="tprog-days-tabs" class="flex gap-2 flex-wrap flex-1"></div>
  <button id="tprog-remove-day" class="hidden text-xs text-red-300/80 hover:text-red-400 transition px-3 py-2 rounded-2xl bg-red-500/10 border border-red-500/20">
- РЈРґР°Р»РёС‚СЊ РґРµРЅСЊ
+ Удалить день
  </button>
  </div>
 
@@ -801,7 +801,7 @@
  <path d="M6.5 12h11"/>
  </svg>
  </div>
- <p class="text-muted text-xs">РџРѕРєР° РїСѓСЃС‚Рѕ. Р”РѕР±Р°РІСЊ СѓРїСЂР°Р¶РЅРµРЅРёРµ РІ СЌС‚РѕС‚ РґРµРЅСЊ</p>
+ <p class="text-muted text-xs">Пока пусто. Добавь упражнение в этот день</p>
  </div>
 
  <button id="tprog-add-exercise" class="w-full mt-4 bg-surface hover:bg-surface2 active:scale-[0.98]
@@ -809,17 +809,17 @@
  flex items-center justify-center gap-2.5
  text-white/90">
  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
- Р”РѕР±Р°РІРёС‚СЊ СѓРїСЂР°Р¶РЅРµРЅРёРµ
+ Добавить упражнение
  </button>
 
  <button id="tprog-save" class="w-full mt-3 bg-primary hover:bg-primary/90 active:scale-[0.98]
  transition rounded-3xl py-4 font-semibold text-base text-white
  shadow-[0_10px_30px_-10px_rgba(124,108,255,0.55)]">
- РЎРѕС…СЂР°РЅРёС‚СЊ
+ Сохранить
  </button>
  </div>
 
- <!-- FULLSCREEN: Р’Р«Р‘РћР  РџР РћР“Р РђРњРњР« Р”Р›РЇ РљР›РР•РќРўРђ (С‚СЂРµРЅРµСЂ) -->
+ <!-- FULLSCREEN: ВЫБОР ПРОГРАММЫ ДЛЯ КЛИЕНТА (тренер) -->
  <div id="trainer-programs-sheet-backdrop" class="hidden fixed inset-0 z-[70] opacity-0 transition-opacity duration-250" style="background: #0a0a0f;">
  <div id="trainer-programs-sheet-panel" class="absolute inset-0 max-w-md mx-auto bg-bg translate-y-full transition-transform duration-300 flex flex-col">
 
@@ -827,11 +827,11 @@
  <button id="trainer-programs-sheet-close" class="text-muted p-2 -ml-2 active:opacity-60">
  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
  </button>
- <h2 class="text-[22px] font-bold tracking-tight">Р”Р°С‚СЊ РїСЂРѕРіСЂР°РјРјСѓ</h2>
+ <h2 class="text-[22px] font-bold tracking-tight">Дать программу</h2>
  </div>
 
  <div id="trainer-programs-list" class="flex-1 overflow-y-auto px-5 pb-3" style="-webkit-overflow-scrolling: touch;">
- <p class="text-muted text-center py-6 text-sm">Р—Р°РіСЂСѓР·РєР°...</p>
+ <p class="text-muted text-center py-6 text-sm">Загрузка...</p>
  </div>
 
  <div class="px-5 pb-5 pt-3 border-t border-white/5" style="padding-bottom: calc(env(safe-area-inset-bottom, 0) + 20px);">
@@ -840,7 +840,7 @@
  border border-primary/20
  flex items-center justify-center gap-2.5">
  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
- РЎРѕР·РґР°С‚СЊ РЅРѕРІСѓСЋ РїСЂРѕРіСЂР°РјРјСѓ
+ Создать новую программу
  </button>
  </div>
  </div>
@@ -849,8 +849,8 @@
  </div>
 </div>
 
- <!-- РќРР–РќРЇРЇ РќРђР’РР“РђР¦РРЇ -->
- <!-- Р­РљР РђРќ: РњРћР РљР›РР•РќРўР« (С‚СЂРµРЅРµСЂ) -->
+ <!-- НИЖНЯЯ НАВИГАЦИЯ -->
+ <!-- ЭКРАН: МОИ КЛИЕНТЫ (тренер) -->
 
  <nav id="bottom-nav" class="fixed bottom-0 left-0 right-0
  max-w-md mx-auto grid grid-cols-4 z-40" style="background: rgba(12,12,16,.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);">
@@ -860,7 +860,7 @@
  <path d="M3 9.5L12 3l9 6.5V20a2 2 0 01-2 2h-3v-7h-8v7H5a2 2 0 01-2-2V9.5z"/>
  </svg>
  </div>
- <span class="nav-label text-[10px] font-medium">Р“Р»Р°РІРЅР°СЏ</span>
+ <span class="nav-label text-[10px] font-medium">Главная</span>
  </button>
  <button id="nav-calendar" class="nav-btn py-2.5">
  <div class="nav-icon-bg">
@@ -869,7 +869,7 @@
  <path d="M16 2v4M8 2v4M3 10h18"/>
  </svg>
  </div>
- <span class="nav-label text-[10px] font-medium">РљР°Р»РµРЅРґР°СЂСЊ</span>
+ <span class="nav-label text-[10px] font-medium">Календарь</span>
  </button>
 
  <button id="nav-trainer" class="nav-btn py-2.5 hidden">
@@ -881,7 +881,7 @@
  <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
  </svg>
  </div>
- <span class="nav-label text-[10px] font-medium">РљР»РёРµРЅС‚С‹</span>
+ <span class="nav-label text-[10px] font-medium">Клиенты</span>
  </button>
  <button id="nav-ai" class="nav-btn py-2.5">
  <div class="nav-icon-bg">
@@ -896,7 +896,7 @@
  <path d="M4 21v-1a6 6 0 016-6h4a6 6 0 016 6v1"/>
  </svg>
  </div>
- <span class="nav-label text-[10px] font-medium">РџСЂРѕС„РёР»СЊ</span>
+ <span class="nav-label text-[10px] font-medium">Профиль</span>
  </button>
  </nav>
 
@@ -914,12 +914,12 @@
  </svg>
  </span>
  <div class="flex-1 min-w-0">
- <p class="text-[10px] uppercase tracking-wider text-muted2">РћС‚РґС‹С…</p>
+ <p class="text-[10px] uppercase tracking-wider text-muted2">Отдых</p>
  <p id="rest-time" class="text-2xl font-semibold tabular-nums font-mono tracking-tight mt-0.5">2:00</p>
  </div>
  <button id="rest-skip" class="text-sm font-medium text-white/90 hover:text-white transition shrink-0
  px-4 py-2.5 rounded-2xl bg-white/5 active:scale-95">
- РџСЂРѕРїСѓСЃС‚РёС‚СЊ
+ Пропустить
  </button>
  </div>
  <div class="h-1 bg-white/5 relative overflow-hidden">
@@ -928,7 +928,7 @@
  </div>
  </div>
 
- <!-- BOTTOM SHEET: СѓРїСЂР°Р¶РЅРµРЅРёСЏ -->
+ <!-- BOTTOM SHEET: упражнения -->
  <div id="sheet-backdrop" class="hidden fixed inset-0 z-[60] opacity-0 transition-opacity duration-250" style="background: rgba(0,0,0,.6); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);">
  <div id="sheet-content" class="absolute left-0 right-0 bottom-0 max-w-md mx-auto
  bg-surface rounded-t-3xl translate-y-full transition-transform duration-300
@@ -936,7 +936,7 @@
  <div class="sheet-handle"></div>
 
  <div class="px-5 pt-4 pb-3 flex items-center justify-between">
- <h2 class="text-base font-semibold">Р’С‹Р±СЂР°С‚СЊ СѓРїСЂР°Р¶РЅРµРЅРёРµ</h2>
+ <h2 class="text-base font-semibold">Выбрать упражнение</h2>
  <button id="sheet-close" class="text-muted p-1 -mr-1 active:opacity-60">
  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
  <path d="M18 6L6 18M6 6l12 12"/>
@@ -947,13 +947,13 @@
  <div class="px-5 pb-3">
  <div class="relative">
  <svg class="absolute left-4 top-1/2 -translate-y-1/2 text-muted pointer-events-none" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.3-4.3"/></svg>
- <input id="exercise-search" type="text" placeholder="РџРѕРёСЃРє..." class="w-full bg-surface2 rounded-2xl pl-10 pr-4 py-3
+ <input id="exercise-search" type="text" placeholder="Поиск..." class="w-full bg-surface2 rounded-2xl pl-10 pr-4 py-3
  text-white text-sm placeholder-muted2 focus:outline-none focus:ring-2 focus:ring-primary/40 transition">
  </div>
  </div>
 
  <div id="exercises-picker" class="flex-1 overflow-y-auto px-5 pb-3 space-y-1.5" style="-webkit-overflow-scrolling: touch;">
- <p class="text-muted text-center py-4 text-sm">Р—Р°РіСЂСѓР·РєР°...</p>
+ <p class="text-muted text-center py-4 text-sm">Загрузка...</p>
  </div>
 
  <div class="px-5 pb-5 pt-3 border-t border-white/5">
@@ -962,13 +962,13 @@
  border border-primary/20
  flex items-center justify-center gap-2">
  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
- РЎРѕР·РґР°С‚СЊ СЃРІРѕС‘ СѓРїСЂР°Р¶РЅРµРЅРёРµ
+ Создать своё упражнение
  </button>
  </div>
  </div>
  </div>
 
- <!-- BOTTOM SHEET: РЎРћР—Р”РђРќРР• РЈРџР РђР–РќР•РќРРЇ -->
+ <!-- BOTTOM SHEET: СОЗДАНИЕ УПРАЖНЕНИЯ -->
  <div id="create-ex-backdrop" class="hidden fixed inset-0 z-[70] opacity-0 transition-opacity duration-250" style="background: rgba(0,0,0,.6); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);">
  <div id="create-ex-panel" class="absolute left-0 right-0 bottom-0 max-w-md mx-auto
  bg-surface rounded-t-3xl translate-y-full transition-transform duration-300
@@ -976,7 +976,7 @@
  <div class="sheet-handle"></div>
 
  <div class="px-5 pt-4 pb-3 flex items-center justify-between">
- <h2 class="text-base font-semibold">РЎРІРѕС‘ СѓРїСЂР°Р¶РЅРµРЅРёРµ</h2>
+ <h2 class="text-base font-semibold">Своё упражнение</h2>
  <button id="create-ex-close" class="text-muted p-1 -mr-1 active:opacity-60">
  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
  <path d="M18 6L6 18M6 6l12 12"/>
@@ -987,13 +987,13 @@
  <div class="flex-1 overflow-y-auto px-5 pb-6 space-y-5" style="-webkit-overflow-scrolling: touch;">
 
  <div>
- <label class="text-[10px] uppercase tracking-wider text-muted2 block mb-1.5">РќР°Р·РІР°РЅРёРµ</label>
- <input id="create-ex-name" type="text" maxlength="128" placeholder="РќР°РїСЂРёРјРµСЂ: РўСЏРіР° Рў-РіСЂРёС„Р°" class="w-full bg-surface2 rounded-2xl px-4 py-3.5 text-white placeholder-muted2
+ <label class="text-[10px] uppercase tracking-wider text-muted2 block mb-1.5">Название</label>
+ <input id="create-ex-name" type="text" maxlength="128" placeholder="Например: Тяга Т-грифа" class="w-full bg-surface2 rounded-2xl px-4 py-3.5 text-white placeholder-muted2
  focus:outline-none focus:ring-2 focus:ring-primary/40 transition">
  </div>
 
  <div>
- <label class="text-[10px] uppercase tracking-wider text-muted2 block mb-2">Р“СЂСѓРїРїР° РјС‹С€С†</label>
+ <label class="text-[10px] uppercase tracking-wider text-muted2 block mb-2">Группа мышц</label>
  <input id="create-ex-group" type="text" hidden>
  <div id="create-ex-group-chips" class="grid grid-cols-3 gap-2"></div>
  </div>
@@ -1004,13 +1004,13 @@
  <button id="create-ex-save" class="w-full bg-primary hover:bg-primary/90 active:scale-[0.98]
  transition rounded-3xl py-4 font-semibold text-base text-white
  shadow-[0_10px_30px_-10px_rgba(124,108,255,0.55)]">
- РЎРѕР·РґР°С‚СЊ СѓРїСЂР°Р¶РЅРµРЅРёРµ
+ Создать упражнение
  </button>
  </div>
  </div>
  </div>
 
- <!-- BOTTOM SHEET: РџР РћР“Р РђРњРњР« -->
+ <!-- BOTTOM SHEET: ПРОГРАММЫ -->
  <div id="programs-sheet-backdrop" class="hidden fixed inset-0 z-[60] opacity-0 transition-opacity duration-250" style="background: #0a0a0f;">
  <div id="programs-sheet-content" class="absolute inset-0 max-w-md mx-auto bg-bg translate-y-full transition-transform duration-300 flex flex-col">
  <div class="px-5 pb-3 flex items-center justify-between" style="padding-top: calc(env(safe-area-inset-top, 0) + var(--safe-top-offset, 56px));">
@@ -1019,7 +1019,7 @@
  <path d="M15 18l-6-6 6-6"/>
  </svg>
  </button>
- <h2 class="text-[22px] font-bold tracking-tight">РќР°С‡Р°С‚СЊ С‚СЂРµРЅРёСЂРѕРІРєСѓ</h2>
+ <h2 class="text-[22px] font-bold tracking-tight">Начать тренировку</h2>
  <div class="w-8"></div>
  </div>
 
@@ -1033,14 +1033,14 @@
  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
  </span>
  <div>
- <p class="font-semibold text-sm">РџСѓСЃС‚Р°СЏ С‚СЂРµРЅРёСЂРѕРІРєР°</p>
- <p class="text-xs text-muted mt-0.5">Р”РѕР±Р°РІР»СЋ СѓРїСЂР°Р¶РЅРµРЅРёСЏ РїРѕ С…РѕРґСѓ</p>
+ <p class="font-semibold text-sm">Пустая тренировка</p>
+ <p class="text-xs text-muted mt-0.5">Добавлю упражнения по ходу</p>
  </div>
  </div>
  </button>
 
  <div id="programs-list" class="mb-4">
- <p class="text-muted text-center py-4 text-sm">Р—Р°РіСЂСѓР·РєР°...</p>
+ <p class="text-muted text-center py-4 text-sm">Загрузка...</p>
  </div>
 
  <button id="programs-create-btn" class="w-full bg-surface2 hover:bg-surface3 active:scale-[0.98]
@@ -1048,14 +1048,14 @@
  flex items-center justify-center gap-2.5
  border border-dashed border-white/15 text-white/90">
  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
- РЎРѕР·РґР°С‚СЊ СЃРІРѕСЋ РїСЂРѕРіСЂР°РјРјСѓ
+ Создать свою программу
  </button>
 
  </div>
  </div>
  </div>
 
- <!-- BOTTOM SHEET: Р’Р•РЎ -->
+ <!-- BOTTOM SHEET: ВЕС -->
  <div id="weight-sheet-backdrop" class="hidden fixed inset-0 z-[70] opacity-0 transition-opacity duration-250" style="background: rgba(0,0,0,.6); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);">
  <div id="weight-sheet-panel" class="absolute left-0 right-0 bottom-0 max-w-md mx-auto
  bg-surface rounded-t-3xl translate-y-full transition-transform duration-300
@@ -1063,7 +1063,7 @@
  <div class="sheet-handle"></div>
 
  <div class="px-5 pt-4 pb-3 flex items-center justify-between">
- <h2 class="text-base font-semibold">Р—Р°РїРёСЃР°С‚СЊ РІРµСЃ</h2>
+ <h2 class="text-base font-semibold">Записать вес</h2>
  <button id="weight-sheet-close" class="text-muted p-1 -mr-1 active:opacity-60">
  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
  <path d="M18 6L6 18M6 6l12 12"/>
@@ -1074,7 +1074,7 @@
  <div class="flex-1 overflow-y-auto px-5 pb-6 space-y-5" style="-webkit-overflow-scrolling: touch;">
 
  <div>
- <label class="text-[10px] uppercase tracking-wider text-muted2 block mb-1.5">Р’РµСЃ СЃРµРіРѕРґРЅСЏ, РєРі</label>
+ <label class="text-[10px] uppercase tracking-wider text-muted2 block mb-1.5">Вес сегодня, кг</label>
  <div class="flex gap-2">
  <input id="weight-input" type="text" inputmode="decimal" placeholder="75.5" class="flex-1 min-w-0 bg-surface2 rounded-3xl px-4 py-3.5 text-white text-center text-lg font-semibold
  placeholder-muted2 focus:outline-none focus:ring-2 focus:ring-primary/40 transition">
@@ -1087,9 +1087,9 @@
  </div>
 
  <div>
- <p class="text-[10px] uppercase tracking-wider text-muted2 mb-2">РСЃС‚РѕСЂРёСЏ</p>
+ <p class="text-[10px] uppercase tracking-wider text-muted2 mb-2">История</p>
  <div id="weight-history" class="bg-surface2/50 rounded-3xl p-3">
- <p class="text-muted text-center text-sm py-3">Р—Р°РіСЂСѓР·РєР°...</p>
+ <p class="text-muted text-center text-sm py-3">Загрузка...</p>
  </div>
  </div>
 
@@ -1097,7 +1097,7 @@
  </div>
  </div>
 
- <!-- BOTTOM SHEET: РќРђРџРћРњРРќРђРќРРЇ -->
+ <!-- BOTTOM SHEET: НАПОМИНАНИЯ -->
  <div id="reminder-sheet-backdrop" class="hidden fixed inset-0 z-[70] opacity-0 transition-opacity duration-250" style="background: rgba(0,0,0,.6); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);">
  <div id="reminder-sheet-panel" class="absolute left-0 right-0 bottom-0 max-w-md mx-auto
  bg-surface rounded-t-3xl translate-y-full transition-transform duration-300
@@ -1105,7 +1105,7 @@
  <div class="sheet-handle"></div>
 
  <div class="px-5 pt-4 pb-3 flex items-center justify-between">
- <h2 class="text-base font-semibold">РќР°РїРѕРјРёРЅР°РЅРёРµ</h2>
+ <h2 class="text-base font-semibold">Напоминание</h2>
  <button id="reminder-sheet-close" class="text-muted p-1 -mr-1 active:opacity-60">
  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
  <path d="M18 6L6 18M6 6l12 12"/>
@@ -1116,13 +1116,13 @@
  <div class="flex-1 overflow-y-auto px-5 pb-6 space-y-5" style="-webkit-overflow-scrolling: touch;">
 
  <div>
- <label class="text-[10px] uppercase tracking-wider text-muted2 block mb-1.5">Р’СЂРµРјСЏ</label>
+ <label class="text-[10px] uppercase tracking-wider text-muted2 block mb-1.5">Время</label>
  <input id="reminder-time-input" type="time" value="18:00" class="w-full bg-surface2 rounded-3xl px-4 py-3.5 text-white text-center text-xl font-semibold
  focus:outline-none focus:ring-2 focus:ring-primary/40 transition">
  </div>
 
  <div>
- <p class="text-[10px] uppercase tracking-wider text-muted2 mb-2">Р‘С‹СЃС‚СЂС‹Р№ РІС‹Р±РѕСЂ</p>
+ <p class="text-[10px] uppercase tracking-wider text-muted2 mb-2">Быстрый выбор</p>
  <div class="grid grid-cols-4 gap-2">
  <button data-reminder-preset="08:00" class="py-2.5 rounded-2xl text-sm font-medium transition
  border bg-surface2 text-muted border-white/5">
@@ -1144,7 +1144,7 @@
  </div>
 
  <p class="text-xs text-muted leading-relaxed">
- Р‘РѕС‚ РЅР°РїРѕРјРЅРёС‚, РµСЃР»Рё СЃРµРіРѕРґРЅСЏ РµС‰С‘ РЅРµ Р±С‹Р»Рѕ С‚СЂРµРЅРёСЂРѕРІРєРё. Р•СЃР»Рё СѓР¶Рµ РїРѕС‚СЂРµРЅРёСЂРѕРІР°Р»СЃСЏ вЂ” РЅРµ РїРѕР±РµСЃРїРѕРєРѕРёС‚.
+ Бот напомнит, если сегодня ещё не было тренировки. Если уже потренировался — не побеспокоит.
  </p>
 
  </div>
@@ -1153,13 +1153,13 @@
  <button id="reminder-save-btn" class="w-full bg-primary hover:bg-primary/90 active:scale-[0.98]
  transition rounded-3xl py-4 font-semibold text-base text-white
  shadow-[0_10px_30px_-10px_rgba(124,108,255,0.55)]">
- РЎРѕС…СЂР°РЅРёС‚СЊ
+ Сохранить
  </button>
  </div>
  </div>
  </div>
 
- <!-- BOTTOM SHEET: Р РђРЎРЁРР Р•РќРќР«Р• РќРђРџРћРњРРќРђРќРРЇ -->
+ <!-- BOTTOM SHEET: РАСШИРЕННЫЕ НАПОМИНАНИЯ -->
  <div id="full-reminders-backdrop" class="hidden fixed inset-0 z-[70] opacity-0 transition-opacity duration-250" style="background: rgba(0,0,0,.6); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);">
  <div id="full-reminders-panel" class="absolute left-0 right-0 bottom-0 max-w-md mx-auto
  bg-surface rounded-t-3xl translate-y-full transition-transform duration-300
@@ -1167,7 +1167,7 @@
  <div class="sheet-handle"></div>
 
  <div class="px-5 pt-4 pb-3 flex items-center justify-between">
- <h2 class="text-base font-semibold">РќР°РїРѕРјРёРЅР°РЅРёСЏ</h2>
+ <h2 class="text-base font-semibold">Напоминания</h2>
  <button id="full-reminders-close" class="text-muted p-1 -mr-1 active:opacity-60">
  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
  <path d="M18 6L6 18M6 6l12 12"/>
@@ -1177,12 +1177,12 @@
 
  <div class="flex-1 overflow-y-auto px-5 pb-6 space-y-5" style="-webkit-overflow-scrolling: touch;">
 
- <!-- РўСЂРµРЅРёСЂРѕРІРєР° -->
+ <!-- Тренировка -->
  <div class="bg-surface2 rounded-3xl p-4">
  <div class="flex items-center justify-between gap-3 mb-3">
  <div class="flex items-center gap-2.5">
  <span class="inline-flex items-center justify-center w-8 h-8 rounded-xl bg-primary/[0.08] border border-primary/15 text-primary2 shrink-0"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5v11"/><path d="M17.5 6.5v11"/><path d="M3 9v6"/><path d="M21 9v6"/><path d="M6.5 12h11"/></svg></span>
- <p class="font-semibold text-sm text-white/90">РўСЂРµРЅРёСЂРѕРІРєР°</p>
+ <p class="font-semibold text-sm text-white/90">Тренировка</p>
  </div>
  <label class="toggle-switch">
  <input id="rt-training-toggle" type="checkbox">
@@ -1192,46 +1192,46 @@
  focus:outline-none focus:ring-2 focus:ring-primary/40 transition">
  </div>
 
- <!-- Р’РѕРґР° -->
+ <!-- Вода -->
  <div class="bg-surface2 rounded-3xl p-4">
  <div class="flex items-center justify-between gap-3 mb-3">
  <div class="flex items-center gap-2.5">
  <span class="inline-flex items-center justify-center w-8 h-8 rounded-xl bg-sky-400/[0.08] border border-sky-400/15 text-sky-300/80 shrink-0"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3c0 0-6 6.7-6 11a6 6 0 1 0 12 0c0-4.3-6-11-6-11z"/></svg></span>
- <p class="font-semibold text-sm text-white/90">Р’РѕРґР°</p>
+ <p class="font-semibold text-sm text-white/90">Вода</p>
  </div>
  <label class="toggle-switch">
  <input id="rt-water-toggle" type="checkbox">
  </label>
  </div>
- <p class="text-[10px] uppercase tracking-wider text-muted2 mb-2">РћРєРЅРѕ РЅР°РїРѕРјРёРЅР°РЅРёР№</p>
+ <p class="text-[10px] uppercase tracking-wider text-muted2 mb-2">Окно напоминаний</p>
  <div class="grid grid-cols-2 gap-2 mb-3">
  <div>
- <p class="text-[10px] text-muted2 mb-1">РЎ</p>
+ <p class="text-[10px] text-muted2 mb-1">С</p>
  <input id="rt-water-start" type="time" value="10:00" class="w-full bg-bg rounded-2xl px-3 py-2.5 text-white text-center text-base font-medium
  focus:outline-none focus:ring-2 focus:ring-primary/40 transition">
  </div>
  <div>
- <p class="text-[10px] text-muted2 mb-1">Р”Рѕ</p>
+ <p class="text-[10px] text-muted2 mb-1">До</p>
  <input id="rt-water-end" type="time" value="22:00" class="w-full bg-bg rounded-2xl px-3 py-2.5 text-white text-center text-base font-medium
  focus:outline-none focus:ring-2 focus:ring-primary/40 transition">
  </div>
  </div>
- <p class="text-[10px] uppercase tracking-wider text-muted2 mb-2">РљР°Р¶РґС‹Рµ N С‡Р°СЃРѕРІ</p>
+ <p class="text-[10px] uppercase tracking-wider text-muted2 mb-2">Каждые N часов</p>
  <input id="rt-water-interval" type="hidden" value="2">
  <div id="rt-water-intervals" class="grid grid-cols-4 gap-2">
- <button type="button" data-interval="1" class="rt-int py-2 rounded-xl text-xs font-medium transition border bg-surface2 text-muted border-white/5">1С‡</button>
- <button type="button" data-interval="2" class="rt-int py-2 rounded-xl text-xs font-medium transition border bg-surface2 text-muted border-white/5">2С‡</button>
- <button type="button" data-interval="3" class="rt-int py-2 rounded-xl text-xs font-medium transition border bg-surface2 text-muted border-white/5">3С‡</button>
- <button type="button" data-interval="4" class="rt-int py-2 rounded-xl text-xs font-medium transition border bg-surface2 text-muted border-white/5">4С‡</button>
+ <button type="button" data-interval="1" class="rt-int py-2 rounded-xl text-xs font-medium transition border bg-surface2 text-muted border-white/5">1ч</button>
+ <button type="button" data-interval="2" class="rt-int py-2 rounded-xl text-xs font-medium transition border bg-surface2 text-muted border-white/5">2ч</button>
+ <button type="button" data-interval="3" class="rt-int py-2 rounded-xl text-xs font-medium transition border bg-surface2 text-muted border-white/5">3ч</button>
+ <button type="button" data-interval="4" class="rt-int py-2 rounded-xl text-xs font-medium transition border bg-surface2 text-muted border-white/5">4ч</button>
  </div>
  </div>
 
- <!-- РЎРѕРЅ -->
+ <!-- Сон -->
  <div class="bg-surface2 rounded-3xl p-4">
  <div class="flex items-center justify-between gap-3 mb-3">
  <div class="flex items-center gap-2.5">
  <span class="inline-flex items-center justify-center w-8 h-8 rounded-xl bg-indigo-400/[0.08] border border-indigo-400/15 text-indigo-300/80 shrink-0"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.5 14.5A8.5 8.5 0 1 1 11.5 3.5a6.5 6.5 0 0 0 9 11z"/></svg></span>
- <p class="font-semibold text-sm text-white/90">РЎРѕРЅ</p>
+ <p class="font-semibold text-sm text-white/90">Сон</p>
  </div>
  <label class="toggle-switch">
  <input id="rt-sleep-toggle" type="checkbox">
@@ -1241,12 +1241,12 @@
  focus:outline-none focus:ring-2 focus:ring-primary/40 transition">
  </div>
 
- <!-- Р•РґР° -->
+ <!-- Еда -->
  <div class="bg-surface2 rounded-3xl p-4">
  <div class="flex items-center justify-between gap-3 mb-3">
  <div class="flex items-center gap-2.5">
  <span class="inline-flex items-center justify-center w-8 h-8 rounded-xl bg-emerald-400/[0.08] border border-emerald-400/15 text-emerald-300/80 shrink-0"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 7.5c-1.5-1.2-3-2-4.5-2C4.5 5.5 2.5 8 2.5 11c0 4.5 3 9 6.5 9 1 0 2-.4 3-.4s2 .4 3 .4c3.5 0 6.5-4.5 6.5-9 0-3-2-5.5-5-5.5-1.5 0-3 .8-4.5 2z"/><path d="M12 7.5v-3.2"/><path d="M12 4.3c.5-1 1.5-1.8 2.8-1.8"/></svg></span>
- <p class="font-semibold text-sm text-white/90">Р•РґР°</p>
+ <p class="font-semibold text-sm text-white/90">Еда</p>
  </div>
  <label class="toggle-switch">
  <input id="rt-food-toggle" type="checkbox">
@@ -1254,17 +1254,17 @@
  </div>
  <div class="grid grid-cols-3 gap-2">
  <div>
- <p class="text-[10px] text-muted2 mb-1 text-center">Р—Р°РІС‚СЂР°Рє</p>
+ <p class="text-[10px] text-muted2 mb-1 text-center">Завтрак</p>
  <input id="rt-food-breakfast" type="time" value="08:00" class="w-full bg-bg rounded-2xl px-1 py-2.5 text-white text-center text-sm font-medium
  focus:outline-none focus:ring-2 focus:ring-primary/40 transition">
  </div>
  <div>
- <p class="text-[10px] text-muted2 mb-1 text-center">РћР±РµРґ</p>
+ <p class="text-[10px] text-muted2 mb-1 text-center">Обед</p>
  <input id="rt-food-lunch" type="time" value="13:00" class="w-full bg-bg rounded-2xl px-1 py-2.5 text-white text-center text-sm font-medium
  focus:outline-none focus:ring-2 focus:ring-primary/40 transition">
  </div>
  <div>
- <p class="text-[10px] text-muted2 mb-1 text-center">РЈР¶РёРЅ</p>
+ <p class="text-[10px] text-muted2 mb-1 text-center">Ужин</p>
  <input id="rt-food-dinner" type="time" value="19:00" class="w-full bg-bg rounded-2xl px-1 py-2.5 text-white text-center text-sm font-medium
  focus:outline-none focus:ring-2 focus:ring-primary/40 transition">
  </div>
@@ -1277,13 +1277,13 @@
  <button id="full-reminders-save" class="w-full bg-primary hover:bg-primary/90 active:scale-[0.98]
  transition rounded-3xl py-4 font-semibold text-base text-white
  shadow-[0_10px_30px_-10px_rgba(124,108,255,0.55)]">
- РЎРѕС…СЂР°РЅРёС‚СЊ
+ Сохранить
  </button>
  </div>
  </div>
  </div>
 
- <!-- BOTTOM SHEET: РџРРўРђРќРР• -->
+ <!-- BOTTOM SHEET: ПИТАНИЕ -->
  <div id="nutrition-sheet-backdrop" class="hidden fixed inset-0 z-[70] opacity-0 transition-opacity duration-250" style="background: rgba(0,0,0,.6); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);">
  <div id="nutrition-sheet-panel" class="absolute left-0 right-0 bottom-0 max-w-md mx-auto
  bg-surface rounded-t-3xl translate-y-full transition-transform duration-300
@@ -1292,8 +1292,8 @@
 
  <div class="px-5 pt-4 pb-3 flex items-center justify-between">
  <div>
- <p class="text-base font-semibold">РџРёС‚Р°РЅРёРµ СЃРµРіРѕРґРЅСЏ</p>
- <p class="text-[10px] uppercase tracking-wider text-muted2 mt-0.5">РљР‘Р–РЈ В· РЅР°Р¶РјРё РЅР° РєР°СЂС‚РѕС‡РєСѓ РґР»СЏ РґРµС‚Р°Р»РµР№</p>
+ <p class="text-base font-semibold">Питание сегодня</p>
+ <p class="text-[10px] uppercase tracking-wider text-muted2 mt-0.5">КБЖУ · нажми на карточку для деталей</p>
  </div>
  <button id="nutrition-sheet-close" class="text-muted p-1 -mr-1 active:opacity-60">
  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -1303,12 +1303,12 @@
  </div>
 
  <div id="nutrition-entries" class="flex-1 overflow-y-auto px-5 pb-6" style="-webkit-overflow-scrolling: touch;">
- <p class="text-muted text-center py-6 text-sm">Р—Р°РіСЂСѓР·РєР°...</p>
+ <p class="text-muted text-center py-6 text-sm">Загрузка...</p>
  </div>
  </div>
  </div>
 
- <!-- BOTTOM SHEET: Р Р•Р”РђРљРўРР РћР’РђРќРР• РџР РћР¤РР›РЇ -->
+ <!-- BOTTOM SHEET: РЕДАКТИРОВАНИЕ ПРОФИЛЯ -->
  <div id="profile-edit-backdrop" class="hidden fixed inset-0 z-[70] opacity-0 transition-opacity duration-250" style="background: rgba(0,0,0,.6); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);">
  <div id="profile-edit-panel" class="absolute left-0 right-0 bottom-0 max-w-md mx-auto
  bg-surface rounded-t-3xl translate-y-full transition-transform duration-300
@@ -1316,7 +1316,7 @@
  <div class="sheet-handle"></div>
 
  <div class="px-5 pt-4 pb-3 flex items-center justify-between">
- <h2 class="text-base font-semibold">Р РµРґР°РєС‚РёСЂРѕРІР°С‚СЊ РїСЂРѕС„РёР»СЊ</h2>
+ <h2 class="text-base font-semibold">Редактировать профиль</h2>
  <button id="profile-edit-close" class="text-muted p-1 -mr-1 active:opacity-60">
  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
  <path d="M18 6L6 18M6 6l12 12"/>
@@ -1328,68 +1328,68 @@
 
  <div class="grid grid-cols-3 gap-3">
  <div>
- <label class="text-[10px] uppercase tracking-wider text-muted2 block mb-1.5">Р’РµСЃ, РєРі</label>
+ <label class="text-[10px] uppercase tracking-wider text-muted2 block mb-1.5">Вес, кг</label>
  <input id="input-weight" type="text" inputmode="decimal" placeholder="75" class="w-full bg-surface2 rounded-2xl px-3 py-3 text-white text-center
  focus:outline-none focus:ring-2 focus:ring-primary/40 transition">
  </div>
  <div>
- <label class="text-[10px] uppercase tracking-wider text-muted2 block mb-1.5">Р РѕСЃС‚, СЃРј</label>
+ <label class="text-[10px] uppercase tracking-wider text-muted2 block mb-1.5">Рост, см</label>
  <input id="input-height" type="text" inputmode="numeric" placeholder="180" class="w-full bg-surface2 rounded-2xl px-3 py-3 text-white text-center
  focus:outline-none focus:ring-2 focus:ring-primary/40 transition">
  </div>
  <div>
- <label class="text-[10px] uppercase tracking-wider text-muted2 block mb-1.5">Р’РѕР·СЂР°СЃС‚</label>
+ <label class="text-[10px] uppercase tracking-wider text-muted2 block mb-1.5">Возраст</label>
  <input id="input-age" type="text" inputmode="numeric" placeholder="28" class="w-full bg-surface2 rounded-2xl px-3 py-3 text-white text-center
  focus:outline-none focus:ring-2 focus:ring-primary/40 transition">
  </div>
  </div>
 
  <div>
- <p class="text-[10px] uppercase tracking-wider text-muted2 mb-2">РџРѕР» <span class="text-muted2/70 normal-case tracking-normal">В· РЅРµРѕР±СЏР·Р°С‚РµР»СЊРЅРѕ</span></p>
+ <p class="text-[10px] uppercase tracking-wider text-muted2 mb-2">Пол <span class="text-muted2/70 normal-case tracking-normal">· необязательно</span></p>
  <div class="grid grid-cols-2 gap-2">
  <button data-gender="male" class="py-3 rounded-2xl text-sm font-medium transition
  border bg-surface2 text-muted border-white/5">
- РњСѓР¶СЃРєРѕР№
+ Мужской
  </button>
  <button data-gender="female" class="py-3 rounded-2xl text-sm font-medium transition
  border bg-surface2 text-muted border-white/5">
- Р–РµРЅСЃРєРёР№
+ Женский
  </button>
  </div>
  </div>
 
  <div>
- <p class="text-[10px] uppercase tracking-wider text-muted2 mb-2">Р¦РµР»СЊ <span class="text-primary2 normal-case tracking-normal">В· РѕР±СЏР·Р°С‚РµР»СЊРЅРѕ</span></p>
+ <p class="text-[10px] uppercase tracking-wider text-muted2 mb-2">Цель <span class="text-primary2 normal-case tracking-normal">· обязательно</span></p>
  <div class="grid grid-cols-3 gap-2">
  <button data-goal="lose" class="py-3 rounded-2xl text-xs font-medium transition
  border bg-surface2 text-muted border-white/5">
- РџРѕС…СѓРґРµС‚СЊ
+ Похудеть
  </button>
  <button data-goal="maintain" class="py-3 rounded-2xl text-xs font-medium transition
  border bg-surface2 text-muted border-white/5">
- Р”РµСЂР¶Р°С‚СЊ
+ Держать
  </button>
  <button data-goal="gain" class="py-3 rounded-2xl text-xs font-medium transition
  border bg-surface2 text-muted border-white/5">
- РќР°Р±СЂР°С‚СЊ
+ Набрать
  </button>
  </div>
  </div>
 
  <div>
- <p class="text-[10px] uppercase tracking-wider text-muted2 mb-2">РћРїС‹С‚ С‚СЂРµРЅРёСЂРѕРІРѕРє <span class="text-primary2 normal-case tracking-normal">В· РѕР±СЏР·Р°С‚РµР»СЊРЅРѕ</span></p>
+ <p class="text-[10px] uppercase tracking-wider text-muted2 mb-2">Опыт тренировок <span class="text-primary2 normal-case tracking-normal">· обязательно</span></p>
  <div class="grid grid-cols-3 gap-2">
  <button data-experience="beginner" class="py-3 rounded-2xl text-xs font-medium transition
  border bg-surface2 text-muted border-white/5">
- РќРѕРІРёС‡РѕРє
+ Новичок
  </button>
  <button data-experience="intermediate" class="py-3 rounded-2xl text-xs font-medium transition
  border bg-surface2 text-muted border-white/5">
- РЎСЂРµРґРЅРёР№
+ Средний
  </button>
  <button data-experience="advanced" class="py-3 rounded-2xl text-xs font-medium transition
  border bg-surface2 text-muted border-white/5">
- РћРїС‹С‚РЅС‹Р№
+ Опытный
  </button>
  </div>
  </div>
@@ -1400,13 +1400,13 @@
  <button id="profile-save-btn" class="w-full bg-primary hover:bg-primary/90 active:scale-[0.98]
  transition rounded-3xl py-4 font-semibold text-base text-white
  shadow-[0_10px_30px_-10px_rgba(124,108,255,0.55)]">
- РЎРѕС…СЂР°РЅРёС‚СЊ
+ Сохранить
  </button>
  </div>
  </div>
  </div>
 
- <!-- Р­РљР РђРќ РћРќР‘РћР Р”РРќР“Рђ -->
+ <!-- ЭКРАН ОНБОРДИНГА -->
  <div id="screen-onboarding" class="hidden-screen">
  <div class="max-w-md mx-auto px-5" style="padding-top: calc(env(safe-area-inset-top, 0) + 40px); padding-bottom: 40px;">
 
@@ -1421,22 +1421,22 @@
  <path d="M6.5 12h11"/>
  </svg>
  </div>
- <h1 class="text-[28px] font-bold tracking-tight mb-2">Р”РѕР±СЂРѕ РїРѕР¶Р°Р»РѕРІР°С‚СЊ</h1>
+ <h1 class="text-[28px] font-bold tracking-tight mb-2">Добро пожаловать</h1>
  <p class="text-muted text-sm leading-relaxed">
- 2 РІРѕРїСЂРѕСЃР° вЂ” Рё СЃСЂР°Р·Сѓ РїРµСЂРІР°СЏ С‚СЂРµРЅРёСЂРѕРІРєР°.
+ 2 вопроса — и сразу первая тренировка.
  </p>
  </header>
 
  <div class="mb-5">
- <p class="text-[10px] uppercase tracking-wider text-muted2 mb-2">РљС‚Рѕ С‚С‹?</p>
+ <p class="text-[10px] uppercase tracking-wider text-muted2 mb-2">Кто ты?</p>
  <div class="grid grid-cols-2 gap-2">
  <button data-ob-role="user" class="py-3.5 rounded-2xl text-sm font-medium transition
  border bg-surface2 text-muted border-white/5">
- РўСЂРµРЅРёСЂСѓСЋСЃСЊ РґР»СЏ СЃРµР±СЏ
+ Тренируюсь для себя
  </button>
  <button data-ob-role="trainer" class="py-3.5 rounded-2xl text-sm font-medium transition
  border bg-surface2 text-muted border-white/5">
- РЇ С‚СЂРµРЅРµСЂ
+ Я тренер
  </button>
  </div>
  </div>
@@ -1444,72 +1444,72 @@
  <div class="space-y-5">
 
  <div>
- <p class="text-[10px] uppercase tracking-wider text-muted2 mb-2">Рћ С‚РµР±Рµ В· РЅРµРѕР±СЏР·Р°С‚РµР»СЊРЅРѕ</p>
+ <p class="text-[10px] uppercase tracking-wider text-muted2 mb-2">О тебе · необязательно</p>
  <div class="grid grid-cols-3 gap-3">
  <div>
- <input id="ob-input-weight" type="text" inputmode="decimal" placeholder="Р’РµСЃ, РєРі" class="w-full bg-surface2 rounded-2xl px-3 py-3 text-white text-center
+ <input id="ob-input-weight" type="text" inputmode="decimal" placeholder="Вес, кг" class="w-full bg-surface2 rounded-2xl px-3 py-3 text-white text-center
  placeholder-muted2 focus:outline-none focus:ring-2 focus:ring-primary/40 transition">
  </div>
  <div>
- <input id="ob-input-height" type="text" inputmode="numeric" placeholder="Р РѕСЃС‚, СЃРј" class="w-full bg-surface2 rounded-2xl px-3 py-3 text-white text-center
+ <input id="ob-input-height" type="text" inputmode="numeric" placeholder="Рост, см" class="w-full bg-surface2 rounded-2xl px-3 py-3 text-white text-center
  placeholder-muted2 focus:outline-none focus:ring-2 focus:ring-primary/40 transition">
  </div>
  <div>
- <input id="ob-input-age" type="text" inputmode="numeric" placeholder="Р’РѕР·СЂР°СЃС‚" class="w-full bg-surface2 rounded-2xl px-3 py-3 text-white text-center
+ <input id="ob-input-age" type="text" inputmode="numeric" placeholder="Возраст" class="w-full bg-surface2 rounded-2xl px-3 py-3 text-white text-center
  placeholder-muted2 focus:outline-none focus:ring-2 focus:ring-primary/40 transition">
  </div>
  </div>
  </div>
 
  <div>
- <p class="text-[10px] uppercase tracking-wider text-muted2 mb-2">РџРѕР»</p>
+ <p class="text-[10px] uppercase tracking-wider text-muted2 mb-2">Пол</p>
  <div class="grid grid-cols-2 gap-2">
  <button data-ob-gender="male" class="py-3.5 rounded-2xl text-sm font-medium transition
  border bg-surface2 text-muted border-white/5">
- РњСѓР¶СЃРєРѕР№
+ Мужской
  </button>
  <button data-ob-gender="female" class="py-3.5 rounded-2xl text-sm font-medium transition
  border bg-surface2 text-muted border-white/5">
- Р–РµРЅСЃРєРёР№
+ Женский
  </button>
  </div>
  </div>
 
  <div>
- <p class="text-[10px] uppercase tracking-wider text-muted2 mb-2">Р¦РµР»СЊ</p>
+ <p class="text-[10px] uppercase tracking-wider text-muted2 mb-2">Цель</p>
  <div class="grid grid-cols-3 gap-2">
  <button data-ob-goal="lose" class="py-3.5 rounded-2xl text-xs font-medium transition
  border bg-surface2 text-muted border-white/5">
- РџРѕС…СѓРґРµС‚СЊ
+ Похудеть
  </button>
  <button data-ob-goal="maintain" class="py-3.5 rounded-2xl text-xs font-medium transition
  border bg-surface2 text-muted border-white/5">
- Р”РµСЂР¶Р°С‚СЊ
+ Держать
  </button>
  <button data-ob-goal="gain" class="py-3.5 rounded-2xl text-xs font-medium transition
  border bg-surface2 text-muted border-white/5">
- РќР°Р±СЂР°С‚СЊ
+ Набрать
  </button>
  </div>
  </div>
 
  <div>
- <p class="text-[10px] uppercase tracking-wider text-muted2 mb-2">РћРїС‹С‚ С‚СЂРµРЅРёСЂРѕРІРѕРє</p>
+ <p class="text-[10px] uppercase tracking-wider text-muted2 mb-2">Опыт тренировок</p>
  <div class="grid grid-cols-3 gap-2">
  <button data-ob-exp="beginner" class="px-2 py-3 rounded-2xl font-medium transition border bg-surface2 text-muted border-white/5
  flex flex-col items-center gap-1">
- <span class="text-xs">РќРѕРІРёС‡РѕРє</span>
- <span class="exp-sub text-[10px] text-muted2">РґРѕ 1 РіРѕРґР°</span>
+ <span class="text-xs">Новичок</span>
+ <span class="exp-sub text-[10px] text-muted2">до 1 года</span>
  </button>
  <button data-ob-exp="intermediate" class="px-2 py-3 rounded-2xl font-medium transition border bg-surface2 text-muted border-white/5
  flex flex-col items-center gap-1">
- <span class="text-xs">РЎСЂРµРґРЅРёР№</span>
- <span class="exp-sub text-[10px] text-muted2">1вЂ“3 РіРѕРґР°</span>
+ <span class="text-xs">Средний</span>
+ <span class="exp-sub text-[10px] text-muted2">1–3 года</span>
  </button>
  <button data-ob-exp="advanced" class="px-2 py-3 rounded-2xl font-medium transition border bg-surface2 text-muted border-white/5
  flex flex-col items-center gap-1">
- <span class="text-xs">РћРїС‹С‚РЅС‹Р№</span>
- <span class="exp-sub text-[10px] text-muted2">3+ Р»РµС‚</span>
+ <span class="text-xs">Опытный</span>
+ <span class="exp-sub text-[10px] text-muted2">3+ лет</span>
  </button>
  </div>
  </div>
@@ -1519,11 +1519,11 @@
  <button id="ob-save-btn" class="w-full mt-8 bg-primary hover:bg-primary/90 active:scale-[0.98]
  transition rounded-3xl py-4 font-semibold text-base text-white
  shadow-[0_10px_30px_-10px_rgba(124,108,255,0.55)]">
- РџРѕРµС…Р°Р»Рё
+ Поехали
  </button>
 
  <p class="text-xs text-muted2 text-center mt-4">
- Р’СЃС‘ РјРѕР¶РЅРѕ РёР·РјРµРЅРёС‚СЊ РїРѕР·Р¶Рµ РІ РїСЂРѕС„РёР»Рµ
+ Всё можно изменить позже в профиле
  </p>
 
  </div>
@@ -1541,7 +1541,7 @@
  </script>
 
  <script>
- // РЎРєСЂС‹РІР°РµРј РЅРёР¶РЅСЋСЋ РЅР°РІРёРіР°С†РёСЋ РїСЂРё РѕС‚РєСЂС‹С‚РёРё РєР»Р°РІРёР°С‚СѓСЂС‹
+ // Скрываем нижнюю навигацию при открытии клавиатуры
  (function () {
  var isKeyboardOpen = false;
  function setKeyboard(open) {
@@ -1558,7 +1558,7 @@
  document.addEventListener('focusout', function (e) {
  var t = e.target;
  if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA')) {
- // РќРµР±РѕР»СЊС€Р°СЏ Р·Р°РґРµСЂР¶РєР° вЂ” РЅР° СЃР»СѓС‡Р°Р№ РїРµСЂРµС…РѕРґР° С„РѕРєСѓСЃР° РЅР° РґСЂСѓРіРѕР№ input
+ // Небольшая задержка — на случай перехода фокуса на другой input
  setTimeout(function () {
  var ae = document.activeElement;
  if (!ae || (ae.tagName !== 'INPUT' && ae.tagName !== 'TEXTAREA')) {
@@ -1567,7 +1567,7 @@
  }, 50);
  }
  });
- // Р”РѕРїРѕР»РЅРёС‚РµР»СЊРЅРѕ вЂ” Telegram viewport change (РґР»СЏ iOS)
+ // Дополнительно — Telegram viewport change (для iOS)
  if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.onEvent) {
  window.Telegram.WebApp.onEvent('viewportChanged', function () {
  var tg = window.Telegram.WebApp;
@@ -1579,4 +1579,3 @@
  </script>
 </body>
 </html>
-
