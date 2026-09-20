@@ -185,6 +185,7 @@ let allExercises = [];
 let allPrograms = [];
 let currentWorkoutId = null;
 let currentDetailWorkoutId = null;
+let detailBackScreen = 'history';
 let currentWorkoutStartedAt = null;
 let workoutExercises = [];
 let allWorkouts = [];
@@ -444,7 +445,7 @@ function renderRecent(workouts) {
  const wid = parseInt(btn.dataset.id);
  tg?.HapticFeedback?.impactOccurred('light');
  await ensureWorkoutsLoaded();
- openWorkoutDetail(wid);
+ openWorkoutDetail(wid, 'home');
  });
  });
  recentListEl.querySelectorAll('.recent-delete').forEach(btn => {
@@ -1034,9 +1035,7 @@ async function loadActiveWorkout() {
 
  // Подтянем прошлые веса для пустых упражнений из плана
  for (const we of workoutExercises) {
- if (we.sets.length === 0) {
  fillLastSet(we.id);
- }
  }
  }
  } catch (e) { console.error(e); }
@@ -1384,10 +1383,11 @@ function renderHistory(workouts) {
  });
 }
 
-function openWorkoutDetail(workoutId) {
+function openWorkoutDetail(workoutId, backScreen = 'history') {
  const workout = allWorkouts.find(w => w.id === workoutId);
  if (!workout) { tg?.showAlert('Тренировка не найдена'); return; }
  currentDetailWorkoutId = workoutId;
+detailBackScreen = backScreen;
  tg?.HapticFeedback?.impactOccurred('light');
  const date = parseServerDate(workout.finished_at || workout.started_at);
  detailTitleEl.textContent = date.toLocaleDateString('ru-RU', {
@@ -1553,7 +1553,7 @@ async function renderCalendar(year, month) {
  tg?.HapticFeedback?.impactOccurred('light');
  if ((info.workouts || []).length === 1 && !info.nutrition) {
  await ensureWorkoutsLoaded();
- openWorkoutDetail(info.workouts[0].workout_id);
+ openWorkoutDetail(info.workouts[0].workout_id, 'calendar');
  return;
  }
  calSelectedDay = d;
@@ -1683,7 +1683,7 @@ function renderCalendarDayList(day, info) {
  const wid = parseInt(btn.dataset.workoutId);
  tg?.HapticFeedback?.impactOccurred('light');
  await ensureWorkoutsLoaded();
- openWorkoutDetail(wid);
+ openWorkoutDetail(wid, 'calendar');
  });
  });
 }
@@ -2455,7 +2455,14 @@ document.getElementById('nav-profile')?.addEventListener('click', () => {
 });
 
 document.getElementById('back-to-history')?.addEventListener('click', () => {
+ if (detailBackScreen === 'calendar') {
+ showScreen('calendar');
+ renderCalendar(calYear, calMonth);
+ } else if (detailBackScreen === 'home') {
+ showScreen('home');
+ } else {
  showScreen('history');
+ }
 });
 
 detailDeleteBtn?.addEventListener('click', deleteWorkout);
