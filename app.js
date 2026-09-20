@@ -899,6 +899,10 @@ async function startWorkoutFromProgram(programId, dayIndex) {
  sets: [],
  target_sets: e.target_sets,
  target_reps: e.target_reps,
+ targets: (e.targets && e.targets.length) ? e.targets.map(t => ({
+ weight: t.weight ?? null,
+ reps: t.reps ?? null,
+ })) : null,
  is_bodyweight: !!e.is_bodyweight,
  }));
 
@@ -1247,9 +1251,41 @@ function renderWorkoutExercises() {
  return;
  }
  workoutExercisesEl.innerHTML = workoutExercises.map(ex => {
- const planHint = (ex.target_sets && ex.target_reps)
+ const _hasTargets = Array.isArray(ex.targets) && ex.targets.length > 0;
+ const planHint = (!_hasTargets && ex.target_sets && ex.target_reps)
  ? `<p class="plan-hint text-xs text-primary2/80 mb-2">План: ${ex.target_sets} × ${ex.target_reps}</p>`
  : '';
+ const slotsHtml = _hasTargets ? `
+ <div class="target-slots mb-3" data-ex-id="${ex.id}">
+ <p class="text-[10px] uppercase tracking-wider text-primary2/80 mb-2 flex items-center gap-1.5">
+ <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+ План от тренера
+ </p>
+ <div class="space-y-2">
+ ${ex.targets.map((t, si) => {
+ const _isBWslot = !!ex.is_bodyweight;
+ return `
+ <div class="target-slot flex items-center gap-1.5" data-slot="${si}">
+ <span class="inline-flex items-center justify-center w-6 h-6 rounded-lg bg-primary/15 text-primary2 text-[10px] font-semibold shrink-0 tabular-nums">${si + 1}</span>
+ ${_isBWslot ? '' : `
+ <input type="text" inputmode="decimal" value="${t.weight ?? ''}" placeholder="кг"
+ class="slot-weight flex-1 min-w-0 bg-surface2 rounded-xl px-3 py-2.5 text-white text-center text-sm
+ placeholder-muted2/60 focus:outline-none focus:ring-1 focus:ring-primary/40 transition">
+ <span class="text-muted2/50 text-[10px] shrink-0 select-none">×</span>
+ `}
+ <input type="text" inputmode="numeric" value="${t.reps ?? ''}" placeholder="повт"
+ class="slot-reps flex-1 min-w-0 bg-surface2 rounded-xl px-3 py-2.5 text-white text-center text-sm
+ placeholder-muted2/60 focus:outline-none focus:ring-1 focus:ring-primary/40 transition">
+ <button class="slot-done bg-primary hover:bg-primary/90 active:scale-95 transition
+ rounded-xl w-10 h-10 shrink-0 font-bold text-white text-lg
+ flex items-center justify-center shadow-[0_6px_16px_-6px_rgba(124,108,255,0.55)]"
+ data-ex-id="${ex.id}" data-slot="${si}">+</button>
+ </div>
+ `;
+ }).join('')}
+ </div>
+ </div>
+ ` : '';
  return `
  <div class="bg-surface rounded-3xl p-4 overflow-hidden card-shadow" data-ex-id="${ex.id}">
  <div class="flex items-start justify-between gap-2 mb-2">
@@ -1258,6 +1294,7 @@ function renderWorkoutExercises() {
  </div>
  ${(ex.lastWeight != null && ex.lastReps != null) ? `<p class="last-set-hint text-xs text-muted mb-1">Прошлый раз: ${ex.lastWeight} кг × ${ex.lastReps}</p>` : `<p class="last-set-hint hidden text-xs text-muted mb-1"></p>`}
  ${planHint}
+ ${slotsHtml}
  <div class="sets-container space-y-1.5 mb-3" data-ex-id="${ex.id}"></div>
  <div class="flex gap-2 items-stretch">
  ${ex.is_bodyweight ? '' : ` <input type="text" inputmode="decimal" placeholder="Вес"
@@ -1289,6 +1326,9 @@ function renderWorkoutExercises() {
  inp.addEventListener('keydown', (e) => {
  if (e.key === 'Enter') addSetInline(parseInt(inp.dataset.exId));
  });
+ });
+ workoutExercisesEl.querySelectorAll('.slot-done').forEach(btn => {
+ btn.addEventListener('click', () => commitTargetSlot(parseInt(btn.dataset.exId), parseInt(btn.dataset.slot)));
  });
 }
 
@@ -1389,6 +1429,63 @@ async function addSetInline(exerciseId) {
  console.error(e);
  we.sets = we.sets.filter(s => s.id !== tempId);
  renderSetsForExercise(exerciseId, we.sets);
+ tg?.showAlert('Не удалось сохранить подход');
+ }
+}
+
+async function commitTargetSlot(exerciseId, slotIdx) {
+ const card = workoutExercisesEl.querySelector(`[data-ex-id="${exerciseId}"]`);
+ const we = workoutExercises.find(e => e.id === exerciseId);
+ if (!card || !we || !we.targets || !we.targets[slotIdx]) return;
+ const slotEl = card.querySelector(`.target-slot[data-slot="${slotIdx}"]`);
+ if (!slotEl) return;
+
+ const _isBW = !!we.is_bodyweight;
+ const wInput = slotEl.querySelector('.slot-weight');
+ const rInput = slotEl.querySelector('.slot-reps');
+ const weight = _isBW ? 0 : parseWeightInput(wInput?.value ?? '');
+ const reps = parseInt(rInput?.value ?? '');
+
+ if (!_isBW && (isNaN(weight) || weight < 0)) { tg?.showAlert('Введи вес'); return; }
+ if (isNaN(reps) || reps < 1) { tg?.showAlert('Введи повторы'); return; }
+
+ const tempId = 'temp_' + Date.now();
+ const optimisticSet = { id: tempId, exercise_id: exerciseId, set_number: we.sets.length + 1, weight, reps };
+ we.sets.push(optimisticSet);
+
+ // Убираем использованный слот
+ we.targets.splice(slotIdx, 1);
+ if (we.targets.length === 0) we.targets = null;
+
+ renderWorkoutExercises();
+ tg?.HapticFeedback?.notificationOccurred('success');
+
+ if (!currentWorkoutId) {
+ await startEmptyWorkout();
+ if (!currentWorkoutId) {
+ we.sets = we.sets.filter(s => s.id !== tempId);
+ renderWorkoutExercises();
+ tg?.showAlert('Не удалось начать тренировку');
+ return;
+ }
+ }
+
+ try {
+ const params = new URLSearchParams({ exercise_id: exerciseId, weight, reps });
+ const res = await fetch(`${API_URL}/api/workouts/${currentWorkoutId}/sets?${params}`, {
+ method: 'POST', headers: authHeaders(),
+ });
+ if (!res.ok) throw new Error(`HTTP ${res.status}`);
+ const realSet = await res.json();
+ const idx = we.sets.findIndex(s => s.id === tempId);
+ if (idx !== -1) we.sets[idx] = realSet;
+ renderSetsForExercise(exerciseId, we.sets);
+ startRestTimer();
+ calendarCache.clear();
+ } catch (e) {
+ console.error('commitTargetSlot', e);
+ we.sets = we.sets.filter(s => s.id !== tempId);
+ renderWorkoutExercises();
  tg?.showAlert('Не удалось сохранить подход');
  }
 }
