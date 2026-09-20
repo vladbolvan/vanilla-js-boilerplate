@@ -745,6 +745,19 @@
  </p>
  </div>
 
+ <!-- ЭКРАН: КАРТОЧКА КЛИЕНТА (тренер) -->
+ <div id="screen-client-detail" class="hidden-screen">
+ <header class="flex items-center gap-3 mb-6 h-9">
+ <button id="client-detail-back" class="text-muted p-2 -ml-2 active:opacity-60">
+ <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+ </button>
+ <h1 id="client-detail-title" class="text-xl font-bold tracking-tight flex-1 truncate">Клиент</h1>
+ </header>
+ <div id="client-detail-content" class="space-y-3">
+ <p class="text-muted text-center py-8">Загрузка...</p>
+ </div>
+ </div>
+
  </div>
 </div>
 
@@ -1431,7 +1444,7 @@
  <script>
  (function () {
  var v = Date.now();
- document.write('<script src="app-v6.js?v=' + v + '&x=2"><\/script>');
+ document.write('<script src="app-v7.js?v=' + v + '&x=3"><\/script>');
  document.write('<script src="js/reminders.js?v=' + v + '"><\/script>');
  document.write('<script src="js/sharing.js?v=' + v + '"><\/script>');
  document.write('<script src="js/ai.js?v=' + v + '"><\/script>');
