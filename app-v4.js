@@ -2259,6 +2259,29 @@ function renderRecords(records) {
 }
 
 // ============ СОБЫТИЯ ============
+document.getElementById('home-add-weight')?.addEventListener('click', () => {
+ tg?.HapticFeedback?.impactOccurred('light');
+ openWeightSheet();
+});
+
+document.getElementById('home-add-food')?.addEventListener('click', () => {
+ tg?.HapticFeedback?.impactOccurred('light');
+ showScreen('ai');
+ if (typeof window.aiOpen === 'function') window.aiOpen();
+});
+
+document.getElementById('home-records')?.addEventListener('click', () => {
+ tg?.HapticFeedback?.impactOccurred('light');
+ showScreen('records');
+ loadRecords();
+});
+
+document.getElementById('home-history')?.addEventListener('click', () => {
+ tg?.HapticFeedback?.impactOccurred('light');
+ showScreen('history');
+ loadHistory();
+});
+
 startWorkoutBtn?.addEventListener('click', async () => {
  tg?.HapticFeedback?.impactOccurred('medium');
  if (currentWorkoutId) {

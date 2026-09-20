@@ -227,7 +227,7 @@
  </header>
 
  <button id="start-workout" class="w-full active:scale-[0.98] transition-transform
- rounded-3xl p-6 mb-8 text-left flex items-center justify-between
+ rounded-3xl p-6 mb-5 text-left flex items-center justify-between
  relative overflow-hidden" style="background: linear-gradient(135deg, #7c6cff 0%, #5b4dd6 55%, #4b3fc4 100%);">
  <div class="relative z-10">
  <p class="start-subtitle text-xs uppercase tracking-wider text-white/70 mb-1">Новая сессия</p>
@@ -237,6 +237,37 @@
  <div class="absolute -right-8 -top-8 w-32 h-32 rounded-full bg-white/10 blur-2xl"></div>
  <div class="absolute -left-6 -bottom-10 w-24 h-24 rounded-full bg-white/5 blur-2xl"></div>
  </button>
+
+ <div class="grid grid-cols-2 gap-3 mb-8">
+ <button id="home-add-weight" class="bg-surface hover:bg-surface2 active:scale-[0.98] transition rounded-3xl p-4 text-left card-shadow">
+ <span class="inline-flex items-center justify-center w-9 h-9 rounded-2xl bg-primary/10 text-primary2 mb-3">
+ <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3M12 18v3M3 12h3M18 12h3"/><circle cx="12" cy="12" r="3"/></svg>
+ </span>
+ <p class="font-semibold text-sm">Записать вес</p>
+ <p class="text-xs text-muted mt-0.5">Контроль прогресса</p>
+ </button>
+ <button id="home-add-food" class="bg-surface hover:bg-surface2 active:scale-[0.98] transition rounded-3xl p-4 text-left card-shadow">
+ <span class="inline-flex items-center justify-center w-9 h-9 rounded-2xl bg-amber-400/10 text-amber-300/90 mb-3">
+ <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 7.5c-1.5-1.2-3-2-4.5-2C4.5 5.5 2.5 8 2.5 11c0 4.5 3 9 6.5 9 1 0 2-.4 3-.4s2 .4 3 .4c3.5 0 6.5-4.5 6.5-9 0-3-2-5.5-5-5.5-1.5 0-3 .8-4.5 2z"/></svg>
+ </span>
+ <p class="font-semibold text-sm">Что съел</p>
+ <p class="text-xs text-muted mt-0.5">КБЖУ за 5 секунд</p>
+ </button>
+ <button id="home-records" class="bg-surface hover:bg-surface2 active:scale-[0.98] transition rounded-3xl p-4 text-left card-shadow">
+ <span class="inline-flex items-center justify-center w-9 h-9 rounded-2xl bg-amber-400/10 text-amber-300/90 mb-3">
+ <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 010-5H6"/><path d="M18 9h1.5a2.5 2.5 0 000-5H18"/><path d="M4 22h16"/><path d="M18 2H6v7a6 6 0 0012 0V2z"/></svg>
+ </span>
+ <p class="font-semibold text-sm">Рекорды</p>
+ <p class="text-xs text-muted mt-0.5">Лучшие подходы</p>
+ </button>
+ <button id="home-history" class="bg-surface hover:bg-surface2 active:scale-[0.98] transition rounded-3xl p-4 text-left card-shadow">
+ <span class="inline-flex items-center justify-center w-9 h-9 rounded-2xl bg-emerald-400/10 text-emerald-300/90 mb-3">
+ <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l3-3 3 3 5-6"/></svg>
+ </span>
+ <p class="font-semibold text-sm">История</p>
+ <p class="text-xs text-muted mt-0.5">Все тренировки</p>
+ </button>
+ </div>
 
  <section>
  <div class="flex items-center justify-between mb-4">
