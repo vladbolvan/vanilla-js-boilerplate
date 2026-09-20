@@ -2503,17 +2503,36 @@ function renderClientDetail(d) {
 
  // Программа
  if (d.program) {
+ const _isAssigned = !!d.program.is_assigned;
+ const _days = d.program.days_count || 0;
+ const _exs = d.program.exercises_count || 0;
+ const _label = _isAssigned ? 'Программа (от тебя)' : 'Программа (своя)';
+ const _meta = _days > 1 ? `${_days} дн. · ${_exs} упражнений` : `${_exs} упражнений`;
  html += `
  <div class="bg-surface rounded-3xl p-4 card-shadow">
- <p class="text-[10px] uppercase tracking-wider text-muted2 mb-1">Программа</p>
- <p class="font-semibold">${d.program.name}</p>
- <p class="text-xs text-muted mt-0.5">${d.program.exercises_count} упражнений</p>
+ <div class="flex items-start justify-between gap-2">
+ <div class="min-w-0">
+ <p class="text-[10px] uppercase tracking-wider text-muted2 mb-1">${_label}</p>
+ <p class="font-semibold break-words">${d.program.name}</p>
+ <p class="text-xs text-muted mt-0.5">${_meta}</p>
+ </div>
+ <button id="client-detail-change-prog" class="text-xs text-primary2 bg-primary/10 hover:bg-primary/15 active:scale-95 transition rounded-2xl px-3 py-2 shrink-0 border border-primary/20">
+ ${_isAssigned ? 'Сменить' : 'Назначить'}
+ </button>
+ </div>
  </div>`;
  } else {
  html += `
  <div class="bg-surface rounded-3xl p-4 card-shadow">
+ <div class="flex items-start justify-between gap-2">
+ <div>
  <p class="text-[10px] uppercase tracking-wider text-muted2 mb-1">Программа</p>
  <p class="text-sm text-muted">Пока не задана</p>
+ </div>
+ <button id="client-detail-change-prog" class="text-xs text-primary2 bg-primary/10 hover:bg-primary/15 active:scale-95 transition rounded-2xl px-3 py-2 shrink-0 border border-primary/20">
+ Дать программу
+ </button>
+ </div>
  </div>`;
  }
 
@@ -2608,6 +2627,11 @@ function renderClientDetail(d) {
  content.innerHTML = html;
 
  // Кнопки
+ document.getElementById('client-detail-change-prog')?.addEventListener('click', () => {
+ tg?.HapticFeedback?.impactOccurred('light');
+ openTrainerProgramsSheet(c.id);
+ });
+
  document.getElementById('client-detail-write')?.addEventListener('click', () => {
  tg?.HapticFeedback?.impactOccurred('light');
  const url = c.username ? ('https://t.me/' + c.username) : ('tg://user?id=' + c.id);
@@ -2617,12 +2641,107 @@ function renderClientDetail(d) {
 
  document.getElementById('client-detail-give')?.addEventListener('click', () => {
  tg?.HapticFeedback?.impactOccurred('light');
- if (typeof window.shareProgramWithClient === 'function') {
- window.shareProgramWithClient(c.id, c.username);
- } else {
- tg?.showAlert && tg.showAlert('Шаринг программ появится в след. обновлении');
- }
+ openTrainerProgramsSheet(c.id);
  });
+}
+
+// ============ ТРЕНЕР: ВЫБОР ПРОГРАММЫ ДЛЯ КЛИЕНТА ============
+let assignTargetClientId = null;
+
+function openTrainerProgramsSheet(clientId) {
+ assignTargetClientId = clientId;
+ const backdrop = document.getElementById('trainer-programs-sheet-backdrop');
+ const panel = document.getElementById('trainer-programs-sheet-panel');
+ const listEl = document.getElementById('trainer-programs-list');
+ if (!backdrop || !panel || !listEl) return;
+ listEl.innerHTML = '<p class="text-muted text-center py-6 text-sm">Загрузка...</p>';
+ backdrop.classList.remove('hidden');
+ requestAnimationFrame(() => {
+ backdrop.classList.remove('opacity-0');
+ panel.classList.remove('translate-y-full');
+ });
+ tg?.HapticFeedback?.impactOccurred('light');
+ loadTrainerProgramsForAssign();
+}
+
+function closeTrainerProgramsSheet() {
+ const backdrop = document.getElementById('trainer-programs-sheet-backdrop');
+ const panel = document.getElementById('trainer-programs-sheet-panel');
+ if (!backdrop || !panel) return;
+ backdrop.classList.add('opacity-0');
+ panel.classList.add('translate-y-full');
+ setTimeout(() => backdrop.classList.add('hidden'), 250);
+ tg?.HapticFeedback?.impactOccurred('light');
+}
+
+async function loadTrainerProgramsForAssign() {
+ const listEl = document.getElementById('trainer-programs-list');
+ if (!listEl) return;
+ try {
+ const res = await fetch(`${API_URL}/api/trainer/programs`, { headers: authHeaders() });
+ if (!res.ok) throw new Error(`HTTP ${res.status}`);
+ const data = await res.json();
+ renderTrainerProgramsForAssign(data.programs || []);
+ } catch (e) {
+ console.error('loadTrainerProgramsForAssign', e);
+ listEl.innerHTML = '<p class="text-red-400 text-center py-6 text-sm">Ошибка загрузки</p>';
+ }
+}
+
+function renderTrainerProgramsForAssign(programs) {
+ const listEl = document.getElementById('trainer-programs-list');
+ if (!listEl) return;
+ if (!programs || programs.length === 0) {
+ listEl.innerHTML = `
+ <div class="text-center py-8">
+ <p class="text-white/90 text-sm font-medium mb-1">Пока нет программ</p>
+ <p class="text-muted2 text-xs">Создай программу — и сможешь назначать её клиентам</p>
+ </div>`;
+ return;
+ }
+ listEl.innerHTML = programs.map(p => {
+ const meta = (p.days_count > 1)
+ ? `${p.days_count} дн. · ${p.exercises_count} упражнений`
+ : `${p.exercises_count} упражнений`;
+ return `
+ <button class="assign-prog-item w-full bg-surface2 hover:bg-surface active:scale-[0.98] transition rounded-2xl p-4 text-left mb-2"
+ data-program-id="${p.id}">
+ <div class="flex items-center justify-between gap-2">
+ <div class="min-w-0">
+ <p class="font-semibold truncate">${p.name}</p>
+ <p class="text-xs text-muted mt-0.5">${meta}</p>
+ </div>
+ <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8b8b9e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
+ </div>
+ </button>`;
+ }).join('');
+
+ listEl.querySelectorAll('.assign-prog-item').forEach(btn => {
+ btn.addEventListener('click', () => assignProgramToClient(parseInt(btn.dataset.programId)));
+ });
+}
+
+async function assignProgramToClient(programId) {
+ if (!assignTargetClientId) return;
+ const listEl = document.getElementById('trainer-programs-list');
+ if (listEl) listEl.style.opacity = '0.5';
+ try {
+ const res = await fetch(`${API_URL}/api/trainer/clients/${assignTargetClientId}/assign_program`, {
+ method: 'POST',
+ headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+ body: JSON.stringify({ program_id: programId }),
+ });
+ if (!res.ok) throw new Error(`HTTP ${res.status}`);
+ tg?.HapticFeedback?.notificationOccurred('success');
+ closeTrainerProgramsSheet();
+ // Перерисовать карточку клиента
+ await openClientDetail(assignTargetClientId);
+ } catch (e) {
+ console.error('assignProgramToClient', e);
+ tg?.showAlert && tg.showAlert('Не удалось назначить программу');
+ } finally {
+ if (listEl) listEl.style.opacity = '1';
+ }
 }
 
 async function showAddClientLink() {
@@ -2827,6 +2946,11 @@ document.getElementById('nav-trainer')?.addEventListener('click', () => {
  tg?.HapticFeedback?.impactOccurred('light');
  showScreen('trainer-clients');
  loadTrainerClients();
+});
+
+document.getElementById('trainer-programs-sheet-close')?.addEventListener('click', closeTrainerProgramsSheet);
+document.getElementById('trainer-programs-sheet-backdrop')?.addEventListener('click', (e) => {
+ if (e.target === document.getElementById('trainer-programs-sheet-backdrop')) closeTrainerProgramsSheet();
 });
 
 document.getElementById('client-detail-back')?.addEventListener('click', () => {
