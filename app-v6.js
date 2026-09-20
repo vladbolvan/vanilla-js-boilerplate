@@ -264,7 +264,8 @@ function showScreen(name) {
  if (screenTrainerClients) screenTrainerClients.classList.toggle('hidden-screen', name !== 'trainer-clients');
 
  document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
- document.getElementById('nav-' + name)?.classList.add('active');
+ const navName = name === 'trainer-clients' ? 'trainer' : name;
+ document.getElementById('nav-' + navName)?.classList.add('active');
 
    // Закрываем все открытые модалки при переключении экранов
   const MODAL_BACKDROPS = [
