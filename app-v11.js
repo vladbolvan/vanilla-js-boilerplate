@@ -2994,9 +2994,16 @@ function renderTrainerProgramsForAssign(programs) {
  if (!listEl) return;
  if (!programs || programs.length === 0) {
  listEl.innerHTML = `
- <div class="text-center py-8">
+ <div class="h-full flex flex-col items-center justify-center text-center px-4">
+ <div class="inline-flex items-center justify-center w-16 h-16 rounded-3xl bg-surface2 mb-4 text-muted/40 empty-icon-ring">
+ <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+ <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/>
+ <rect x="9" y="3" width="6" height="4" rx="1"/>
+ <path d="M9 12h6M9 16h4"/>
+ </svg>
+ </div>
  <p class="text-white/90 text-sm font-medium mb-1">Пока нет программ</p>
- <p class="text-muted2 text-xs">Создай программу — и сможешь назначать её клиентам</p>
+ <p class="text-muted2 text-xs max-w-[240px]">Создай программу ниже — и сможешь назначать её клиентам</p>
  </div>`;
  return;
  }
