@@ -79,6 +79,7 @@ const screenCalendar = document.getElementById('screen-calendar');
 const screenOnboarding = document.getElementById('screen-onboarding');
 const screenProgramEditor = document.getElementById('screen-program-editor');
 const screenAi = document.getElementById('screen-ai');
+const screenTrainerClients = document.getElementById('screen-trainer-clients');
 
 const userNameEl = document.getElementById('user-name');
 const recentListEl = document.getElementById('recent-list');
@@ -198,6 +199,7 @@ let editGender = null;
 let editGoal = null;
 let editExperience = null;
 
+let obRole = null;
 let obGender = null;
 let obGoal = null;
 let obExperience = null;
@@ -246,6 +248,7 @@ function showScreen(name) {
  if (screenOnboarding) screenOnboarding.classList.toggle('hidden-screen', name !== 'onboarding');
  if (screenProgramEditor) screenProgramEditor.classList.toggle('hidden-screen', name !== 'program-editor');
  if (screenAi) screenAi.classList.toggle('hidden-screen', name !== 'ai');
+ if (screenTrainerClients) screenTrainerClients.classList.toggle('hidden-screen', name !== 'trainer-clients');
 
  document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
  document.getElementById('nav-' + name)?.classList.add('active');
@@ -287,6 +290,9 @@ async function loadMe() {
  if (userNameEl) userNameEl.textContent = me.first_name || me.username || 'Гость';
  currentProfile = me;
  if (!me.onboarded_at) openOnboarding();
+ // trainer nav
+ const navTrainer = document.getElementById('nav-trainer');
+ if (navTrainer) navTrainer.classList.toggle('hidden', me.role !== 'trainer');
  if (typeof window.onGymlyUserLoaded === 'function') {
  try { window.onGymlyUserLoaded(me); } catch (e) { console.error(e); }
  }
@@ -298,6 +304,7 @@ async function loadMe() {
 
 // ============ ОНБОРДИНГ ============
 function openOnboarding() {
+ obRole = currentProfile?.role || null;
  obGender = currentProfile?.gender || null;
  obGoal = currentProfile?.goal || null;
  obExperience = currentProfile?.experience || null;
@@ -306,14 +313,34 @@ function openOnboarding() {
  document.getElementById('ob-input-height').value = currentProfile?.height_cm ?? '';
  document.getElementById('ob-input-age').value = currentProfile?.age ?? '';
 
+ updateObRoleUI();
  updateObGenderUI();
  updateObGoalUI();
  updateObExperienceUI();
  showScreen('onboarding');
 }
 
+function updateObRoleUI() {
+ document.querySelectorAll('[data-ob-role]').forEach(btn => {
+ const a = btn.dataset.obRole === obRole;
+ btn.classList.toggle('bg-primary', a);
+ btn.classList.toggle('text-white', a);
+ btn.classList.toggle('border-primary', a);
+ btn.classList.toggle('bg-surface2', !a);
+ btn.classList.toggle('text-muted', !a);
+ btn.classList.toggle('border-white/5', !a);
+ });
+}
+
 function updateObGenderUI() {
- document.querySelectorAll('[data-ob-gender]').forEach(btn => {
+ document.querySelectorAll('[data-ob-role]').forEach(btn => {
+ btn.addEventListener('click', () => {
+ obRole = btn.dataset.obRole;
+ updateObRoleUI();
+ tg?.HapticFeedback?.selectionChanged?.();
+ });
+});
+document.querySelectorAll('[data-ob-gender]').forEach(btn => {
  const a = btn.dataset.obGender === obGender;
  btn.classList.toggle('bg-primary', a);
  btn.classList.toggle('text-white', a);
@@ -364,6 +391,7 @@ async function saveOnboarding() {
   if (wRaw && (isNaN(w) || w < 20 || w > 400)) { tg?.showAlert('Вес должен быть 20-400 кг'); return; }
   if (hRaw && (isNaN(h) || h < 100 || h > 250)) { tg?.showAlert('Рост должен быть 100-250 см'); return; }
   if (aRaw && (isNaN(a) || a < 10 || a > 100)) { tg?.showAlert('Возраст должен быть 10-100 лет'); return; }
+ if (!obRole) { tg?.showAlert('Выбери: тренируюсь или тренер'); return; }
  if (!obGoal) { tg?.showAlert('Выбери цель'); return; }
  if (!obExperience) { tg?.showAlert('Выбери опыт'); return; }
 
@@ -373,7 +401,7 @@ async function saveOnboarding() {
  method: 'PATCH',
  headers: { ...authHeaders(), 'Content-Type': 'application/json' },
  body: JSON.stringify((function(){
-        const p = { goal: obGoal, experience: obExperience, mark_onboarded: true };
+        const p = { goal: obGoal, experience: obExperience, mark_onboarded: true, role: obRole || 'user' };
         if (wRaw && !isNaN(w)) p.weight_kg = w;
         if (hRaw && !isNaN(h)) p.height_cm = h;
         if (aRaw && !isNaN(a)) p.age = a;
@@ -2259,6 +2287,94 @@ function renderRecords(records) {
  recordsListEl.innerHTML = html;
 }
 
+// ============ ТРЕНЕР: КЛИЕНТЫ ============
+async function loadTrainerClients() {
+ const listEl = document.getElementById('trainer-clients-list');
+ if (!listEl) return;
+ listEl.innerHTML = '<p class="text-muted text-center py-8">Загрузка...</p>';
+ try {
+ const res = await fetch(`${API_URL}/api/trainer/clients`, { headers: authHeaders() });
+ if (!res.ok) throw new Error(`HTTP ${res.status}`);
+ const data = await res.json();
+ renderTrainerClients(data.clients || []);
+ } catch (e) {
+ console.error('loadTrainerClients', e);
+ listEl.innerHTML = '<p class="text-red-400 text-center py-8">Ошибка загрузки</p>';
+ }
+}
+
+function renderTrainerClients(clients) {
+ const listEl = document.getElementById('trainer-clients-list');
+ if (!listEl) return;
+ if (!clients || clients.length === 0) {
+ listEl.innerHTML = `
+ <div class="text-center py-12">
+ <div class="inline-flex items-center justify-center w-20 h-20 rounded-4xl bg-surface mb-5 text-muted/40 empty-icon-ring">
+ <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+ <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+ <circle cx="9" cy="7" r="4"/>
+ <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+ <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+ </svg>
+ </div>
+ <p class="text-white/90 text-sm font-medium mb-1">Пока никого</p>
+ <p class="text-muted2 text-xs">Нажми «Добавить» — получишь ссылку для клиента</p>
+ </div>
+ `;
+ return;
+ }
+ listEl.innerHTML = clients.map(c => {
+ const name = c.first_name || (c.username ? '@' + c.username : 'Клиент');
+ let status, statusCls;
+ if (c.days_since_last == null) {
+ status = 'Ещё не тренировался';
+ statusCls = 'text-muted2';
+ } else if (c.days_since_last === 0) {
+ status = 'Тренировался сегодня';
+ statusCls = 'text-emerald-300/90';
+ } else if (c.days_since_last === 1) {
+ status = 'Тренировался вчера';
+ statusCls = 'text-emerald-300/90';
+ } else if (c.days_since_last <= 7) {
+ status = `${c.days_since_last} дн. назад`;
+ statusCls = 'text-muted';
+ } else {
+ status = `Не тренируется ${c.days_since_last} дн.`;
+ statusCls = 'text-amber-300/80';
+ }
+ const weekText = c.workouts_week ? `${c.workouts_week} трен. за 7 дн.` : '';
+ return `
+ <div class="bg-surface rounded-3xl p-4 card-shadow">
+ <div class="flex items-start justify-between gap-3 mb-1.5">
+ <p class="font-semibold break-words min-w-0 flex-1">${name}</p>
+ ${weekText ? `<span class="text-xs text-muted2 shrink-0">${weekText}</span>` : ''}
+ </div>
+ <p class="text-xs ${statusCls}">${status}</p>
+ </div>
+ `;
+ }).join('');
+}
+
+async function showAddClientLink() {
+ try {
+ const me = currentProfile;
+ if (!me || !me.id) { tg?.showAlert('Не удалось получить твой ID'); return; }
+ const link = `https://t.me/GymlyUp_bot?start=tr_${me.id}`;
+ // Пробуем открыть share в Telegram
+ if (tg && tg.openTelegramLink) {
+ const shareUrl = `https://t.me/share/url?url=${encodeURIComponent(link)}&text=${encodeURIComponent('Привет! Вот ссылка на мой дневник тренировок в Gymly — открой, я буду видеть твой прогресс.')}`;
+ tg.openTelegramLink(shareUrl);
+ } else if (navigator.share) {
+ await navigator.share({ url: link, title: 'Gymly', text: 'Ссылка для клиента' });
+ } else {
+ await navigator.clipboard.writeText(link);
+ tg?.showAlert('Ссылка скопирована: ' + link);
+ }
+ } catch (e) {
+ console.error('showAddClientLink', e);
+ }
+}
+
 // ============ СОБЫТИЯ ============
 document.getElementById('home-add-weight')?.addEventListener('click', () => {
  tg?.HapticFeedback?.impactOccurred('light');
@@ -2435,6 +2551,17 @@ document.getElementById('nav-home')?.addEventListener('click', () => {
  tg?.HapticFeedback?.impactOccurred('light');
  showScreen('home');
  updateStartButton();
+});
+
+document.getElementById('nav-trainer')?.addEventListener('click', () => {
+ tg?.HapticFeedback?.impactOccurred('light');
+ showScreen('trainer-clients');
+ loadTrainerClients();
+});
+
+document.getElementById('add-client-btn')?.addEventListener('click', () => {
+ tg?.HapticFeedback?.impactOccurred('medium');
+ showAddClientLink();
 });
 
 document.getElementById('nav-calendar')?.addEventListener('click', () => {

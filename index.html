@@ -725,11 +725,32 @@
  </div>
 
  </div>
+ <div id="screen-trainer-clients" class="hidden-screen max-w-md mx-auto px-5" style="padding-top: calc(env(safe-area-inset-top, 0) + var(--safe-top-offset, 56px)); padding-bottom: 100px;">
+ <header class="mb-6 h-9 flex items-center justify-between">
+ <h1 class="text-[26px] font-bold tracking-tight">Мои клиенты</h1>
+ <button id="add-client-btn" class="inline-flex items-center justify-center gap-1.5
+ bg-primary/12 hover:bg-primary/18 text-primary2
+ rounded-2xl px-3.5 py-2 text-sm font-medium
+ active:scale-95 transition
+ border border-primary/20">
+ <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+ Добавить
+ </button>
+ </header>
+ <div id="trainer-clients-list" class="space-y-3">
+ <p class="text-muted text-center py-8">Загрузка...</p>
  </div>
+ <p class="text-[10px] text-muted2 text-center mt-6 uppercase tracking-wider">
+ Клиенты, которых ты пригласил
+ </p>
+ </div>
+</div>
 
  <!-- НИЖНЯЯ НАВИГАЦИЯ -->
+ <!-- ЭКРАН: МОИ КЛИЕНТЫ (тренер) -->
+
  <nav id="bottom-nav" class="fixed bottom-0 left-0 right-0
- max-w-md mx-auto grid grid-cols-4 z-40" style="background: rgba(12,12,16,.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);">
+ max-w-md mx-auto grid grid-cols-5 z-40" style="background: rgba(12,12,16,.85); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);">
  <button id="nav-home" class="nav-btn active py-2.5">
  <div class="nav-icon-bg">
  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -746,6 +767,18 @@
  </svg>
  </div>
  <span class="nav-label text-[10px] font-medium">Календарь</span>
+ </button>
+
+ <button id="nav-trainer" class="nav-btn py-2.5 hidden">
+ <div class="nav-icon-bg">
+ <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+ <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/>
+ <circle cx="9" cy="7" r="4"/>
+ <path d="M22 21v-2a4 4 0 0 0-3-3.87"/>
+ <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+ </svg>
+ </div>
+ <span class="nav-label text-[10px] font-medium">Клиенты</span>
  </button>
  <button id="nav-ai" class="nav-btn py-2.5">
  <div class="nav-icon-bg">
@@ -1290,6 +1323,20 @@
  2 вопроса — и сразу первая тренировка.
  </p>
  </header>
+
+ <div class="mb-5">
+ <p class="text-[10px] uppercase tracking-wider text-muted2 mb-2">Кто ты?</p>
+ <div class="grid grid-cols-2 gap-2">
+ <button data-ob-role="user" class="py-3.5 rounded-2xl text-sm font-medium transition
+ border bg-surface2 text-muted border-white/5">
+ Тренируюсь для себя
+ </button>
+ <button data-ob-role="trainer" class="py-3.5 rounded-2xl text-sm font-medium transition
+ border bg-surface2 text-muted border-white/5">
+ Я тренер
+ </button>
+ </div>
+ </div>
 
  <div class="space-y-5">
 
