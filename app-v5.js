@@ -1139,7 +1139,7 @@ function renderWorkoutExercises() {
  <p class="font-semibold break-words min-w-0 flex-1">${ex.name}</p>
  <button class="remove-ex text-muted2 text-xs hover:text-red-400 shrink-0" data-ex-id="${ex.id}">удалить</button>
  </div>
- <p class="last-set-hint hidden text-xs text-muted mb-1"></p>
+ ${(ex.lastWeight != null && ex.lastReps != null) ? `<p class="last-set-hint text-xs text-muted mb-1">Прошлый раз: ${ex.lastWeight} кг × ${ex.lastReps}</p>` : `<p class="last-set-hint hidden text-xs text-muted mb-1"></p>`}
  ${planHint}
  <div class="sets-container space-y-1.5 mb-3" data-ex-id="${ex.id}"></div>
  <div class="flex gap-2 items-stretch">
