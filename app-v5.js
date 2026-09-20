@@ -292,7 +292,14 @@ async function loadMe() {
  if (!me.onboarded_at) openOnboarding();
  // trainer nav
  const navTrainer = document.getElementById('nav-trainer');
- if (navTrainer) navTrainer.classList.toggle('hidden', me.role !== 'trainer');
+ const nav = document.getElementById('bottom-nav');
+ if (me.role === 'trainer') {
+ if (navTrainer) navTrainer.classList.remove('hidden');
+ if (nav) nav.className = nav.className.replace('grid-cols-4', 'grid-cols-5');
+ } else {
+ if (navTrainer) navTrainer.classList.add('hidden');
+ if (nav) nav.className = nav.className.replace('grid-cols-5', 'grid-cols-4');
+ }
  if (typeof window.onGymlyUserLoaded === 'function') {
  try { window.onGymlyUserLoaded(me); } catch (e) { console.error(e); }
  }
