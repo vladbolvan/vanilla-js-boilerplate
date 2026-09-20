@@ -903,6 +903,7 @@ async function startWorkoutFromProgram(programId, dayIndex) {
  weight: t.weight ?? null,
  reps: t.reps ?? null,
  })) : null,
+ fromTrainer: !!(e.targets && e.targets.length),
  is_bodyweight: !!e.is_bodyweight,
  }));
 
@@ -1129,8 +1130,13 @@ async function loadActiveWorkout() {
        sets: [],
        target_sets: p.target_sets,
        target_reps: p.target_reps,
+       targets: (p.targets && p.targets.length) ? p.targets.map(t => ({
+         weight: t.weight ?? null,
+         reps: t.reps ?? null,
+       })) : null,
+       fromTrainer: !!(p.targets && p.targets.length),
        is_bodyweight: !!p.is_bodyweight,
-     };
+       };
    } else {
      if (!map[p.exercise_id].name) map[p.exercise_id].name = pName;
      if (map[p.exercise_id].target_sets == null) map[p.exercise_id].target_sets = p.target_sets;
@@ -1286,16 +1292,11 @@ function renderWorkoutExercises() {
  </div>
  </div>
  ` : '';
- return `
- <div class="bg-surface rounded-3xl p-4 overflow-hidden card-shadow" data-ex-id="${ex.id}">
- <div class="flex items-start justify-between gap-2 mb-2">
- <p class="font-semibold break-words min-w-0 flex-1">${ex.name}</p>
- <button class="remove-ex text-muted2 text-xs hover:text-red-400 shrink-0" data-ex-id="${ex.id}">удалить</button>
+ const bottomHtml = ex.fromTrainer ? `
+ <div class="text-center text-[10px] uppercase tracking-wider text-muted2/60 mt-1">
+ ${_hasTargets ? 'Отметь все подходы — и готово' : '✓ Все подходы выполнены'}
  </div>
- ${(ex.lastWeight != null && ex.lastReps != null) ? `<p class="last-set-hint text-xs text-muted mb-1">Прошлый раз: ${ex.lastWeight} кг × ${ex.lastReps}</p>` : `<p class="last-set-hint hidden text-xs text-muted mb-1"></p>`}
- ${planHint}
- ${slotsHtml}
- <div class="sets-container space-y-1.5 mb-3" data-ex-id="${ex.id}"></div>
+ ` : `
  <div class="flex gap-2 items-stretch">
  ${ex.is_bodyweight ? '' : ` <input type="text" inputmode="decimal" placeholder="Вес"
  class="set-weight flex-1 min-w-0 bg-surface2 rounded-2xl px-3 py-3 text-white text-center
@@ -1310,6 +1311,18 @@ function renderWorkoutExercises() {
  rounded-2xl w-12 shrink-0 font-bold text-white text-xl"
  data-ex-id="${ex.id}">+</button>
  </div>
+ `;
+ return `
+ <div class="bg-surface rounded-3xl p-4 overflow-hidden card-shadow" data-ex-id="${ex.id}">
+ <div class="flex items-start justify-between gap-2 mb-2">
+ <p class="font-semibold break-words min-w-0 flex-1">${ex.name}</p>
+ <button class="remove-ex text-muted2 text-xs hover:text-red-400 shrink-0" data-ex-id="${ex.id}">удалить</button>
+ </div>
+ ${(ex.lastWeight != null && ex.lastReps != null) ? `<p class="last-set-hint text-xs text-muted mb-1">Прошлый раз: ${ex.lastWeight} кг × ${ex.lastReps}</p>` : `<p class="last-set-hint hidden text-xs text-muted mb-1"></p>`}
+ ${planHint}
+ ${slotsHtml}
+ <div class="sets-container space-y-1.5 mb-3" data-ex-id="${ex.id}"></div>
+ ${bottomHtml}
  </div>
  `;
  }).join('');
