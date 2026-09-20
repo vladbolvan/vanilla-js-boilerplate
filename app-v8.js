@@ -2437,29 +2437,30 @@ function renderClientDetail(d) {
 
  let html = '';
 
- // Сводка
+ // Сводка (блоки)
+ const _activeLine = c.last_active_at ? ('Активность: ' + fmtDateTime(c.last_active_at)) : '';
  html += `
- <div class="bg-surface rounded-3xl p-5 card-shadow">
- <p class="text-[10px] uppercase tracking-wider text-muted2 mb-2">Сводка</p>
- <div class="grid grid-cols-2 gap-3 mb-3">
- <div>
- <p class="text-xs text-muted">Тренировок</p>
- <p class="text-2xl font-bold mt-0.5">${s.workouts_count ?? 0}</p>
+ <div class="bg-surface rounded-3xl p-4 card-shadow">
+ <p class="text-[10px] uppercase tracking-wider text-muted2 mb-3 px-1">Сводка</p>
+ <div class="grid grid-cols-2 gap-2">
+ <div class="bg-surface2 rounded-2xl p-3 text-center">
+ <p class="text-[10px] uppercase tracking-wider text-muted2">Тренировок</p>
+ <p class="text-2xl font-bold mt-1 tracking-tight">${s.workouts_count ?? 0}</p>
  </div>
- <div>
- <p class="text-xs text-muted">Подходов</p>
- <p class="text-2xl font-bold mt-0.5">${s.sets_count ?? 0}</p>
+ <div class="bg-surface2 rounded-2xl p-3 text-center">
+ <p class="text-[10px] uppercase tracking-wider text-muted2">Подходов</p>
+ <p class="text-2xl font-bold mt-1 tracking-tight">${s.sets_count ?? 0}</p>
+ </div>
+ <div class="bg-surface2 rounded-2xl p-3 text-center">
+ <p class="text-[10px] uppercase tracking-wider text-muted2">Тоннаж</p>
+ <p class="text-2xl font-bold mt-1 tracking-tight">${fmtVolume(s.total_volume_kg)}</p>
+ </div>
+ <div class="bg-surface2 rounded-2xl p-3 text-center">
+ <p class="text-[10px] uppercase tracking-wider text-muted2">Стрик</p>
+ <p class="text-2xl font-bold mt-1 tracking-tight">${s.streak ?? 0}<span class="text-xs font-normal text-muted ml-1">дн.</span></p>
  </div>
  </div>
- <div class="flex items-center justify-between text-sm">
- <span class="text-muted">Общий тоннаж</span>
- <span class="font-semibold">${fmtVolume(s.total_volume_kg)}</span>
- </div>
- <div class="flex items-center justify-between text-sm mt-1.5">
- <span class="text-muted">Стрик</span>
- <span class="font-semibold">${s.streak ?? 0} дн.</span>
- </div>
- ${c.last_active_at ? `<p class="text-[11px] text-muted2 mt-3">Активность: ${fmtDateTime(c.last_active_at)}</p>` : ''}
+ ${_activeLine ? `<p class="text-[10px] text-muted2 text-center mt-3">${_activeLine}</p>` : ''}
  </div>
  `;
 
