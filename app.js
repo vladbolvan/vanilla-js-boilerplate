@@ -847,7 +847,28 @@ function renderProgramsList() {
 
  progListEl.innerHTML = html;
  progListEl.querySelectorAll('.program-item').forEach(btn => {
- btn.addEventListener('click', () => startWorkoutFromProgram(parseInt(btn.dataset.programId)));
+ btn.addEventListener('click', () => {
+ const _pid = parseInt(btn.dataset.programId);
+ const _p = allPrograms.find(x => x.id === _pid);
+ if (!_p) return;
+ const _daySet = new Set((_p.exercises || []).map(e => e.day_index ?? 0));
+ const _days = [..._daySet].sort((a, b) => a - b);
+ if (_days.length > 1 && tg?.showPopup) {
+   tg.showPopup({
+     title: _p.name || 'Программа',
+     message: 'Программа на несколько дней. Какой день тренируем?',
+     buttons: [
+       ..._days.map(d => ({ id: String(d), type: 'default', text: 'День ' + (d + 1) })),
+       { id: 'cancel', type: 'cancel' },
+     ],
+   }, (id) => {
+     if (id === 'cancel' || id == null) return;
+     startWorkoutFromProgram(_pid, parseInt(id));
+   });
+ } else {
+   startWorkoutFromProgram(_pid, _days[0] ?? null);
+ }
+ });
  });
  progListEl.querySelectorAll('.delete-program').forEach(btn => {
  btn.addEventListener('click', (e) => {
@@ -857,10 +878,12 @@ function renderProgramsList() {
  });
 }
 
-async function startWorkoutFromProgram(programId) {
+async function startWorkoutFromProgram(programId, dayIndex) {
  tg?.HapticFeedback?.impactOccurred('medium');
  try {
- const res = await fetch(`${API_URL}/api/workouts/from-program/${programId}?tz_offset=${getTzOffset()}`, {
+ let _url = `${API_URL}/api/workouts/from-program/${programId}?tz_offset=${getTzOffset()}`;
+ if (dayIndex != null) _url += `&day_index=${dayIndex}`;
+ const res = await fetch(_url, {
  method: 'POST',
  headers: authHeaders(),
  });
