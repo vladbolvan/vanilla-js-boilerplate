@@ -181,6 +181,19 @@ const calendarDayListEl = document.getElementById('calendar-day-list');
 
 const obSaveBtn = document.getElementById('ob-save-btn');
 
+// Мгновенно применяем роль из кэша (до fetch /api/me)
+(function applyCachedRole() {
+ try {
+ const cachedRole = localStorage.getItem('gymly_role');
+ if (cachedRole === 'trainer') {
+ const navTrainer = document.getElementById('nav-trainer');
+ const nav = document.getElementById('bottom-nav');
+ if (navTrainer) navTrainer.classList.remove('hidden');
+ if (nav) nav.className = nav.className.replace('grid-cols-4', 'grid-cols-5');
+ }
+ } catch (_) {}
+})();
+
 // ============ STATE ============
 let allExercises = [];
 let allPrograms = [];
@@ -289,6 +302,7 @@ async function loadMe() {
  const me = await res.json();
  if (userNameEl) userNameEl.textContent = me.first_name || me.username || 'Гость';
  currentProfile = me;
+ try { localStorage.setItem('gymly_role', me.role || 'user'); } catch (_) {}
  if (!me.onboarded_at) openOnboarding();
  // trainer nav
  const navTrainer = document.getElementById('nav-trainer');
