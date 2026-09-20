@@ -81,6 +81,7 @@ const screenProgramEditor = document.getElementById('screen-program-editor');
 const screenAi = document.getElementById('screen-ai');
 const screenTrainerClients = document.getElementById('screen-trainer-clients');
 const screenClientDetail = document.getElementById('screen-client-detail');
+const screenTrainerProgEditor = document.getElementById('screen-program-trainer-editor');
 
 const userNameEl = document.getElementById('user-name');
 const recentListEl = document.getElementById('recent-list');
@@ -264,6 +265,7 @@ function showScreen(name) {
  if (screenAi) screenAi.classList.toggle('hidden-screen', name !== 'ai');
  if (screenTrainerClients) screenTrainerClients.classList.toggle('hidden-screen', name !== 'trainer-clients');
  if (screenClientDetail) screenClientDetail.classList.toggle('hidden-screen', name !== 'client-detail');
+ if (screenTrainerProgEditor) screenTrainerProgEditor.classList.toggle('hidden-screen', name !== 'program-trainer-editor');
 
  document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
  const navName = (name === 'trainer-clients' || name === 'client-detail') ? 'trainer' : name;
@@ -561,7 +563,12 @@ function renderExercisesPicker(list) {
  }
  const inWorkoutIds = new Set(workoutExercises.map(e => e.id));
  const inProgramIds = new Set(editingProgram.exercises.map(e => e.id));
- const usedIds = sheetMode === 'program' ? inProgramIds : inWorkoutIds;
+ let usedIds;
+ if (sheetMode === 'program') usedIds = inProgramIds;
+ else if (sheetMode === 'trainer-prog') {
+ const _day = trainerProgState.days[trainerProgState.activeIdx];
+ usedIds = new Set(((_day && _day.exercises) || []).map(e => e.exercise_id));
+ } else usedIds = inWorkoutIds;
  const available = list.filter(ex => !usedIds.has(ex.id));
 
  if (available.length === 0) {
@@ -598,6 +605,8 @@ function renderExercisesPicker(list) {
  btn.addEventListener('click', () => {
  if (sheetMode === 'program') {
  addExerciseToProgram(parseInt(btn.dataset.id), btn.dataset.name);
+ } else if (sheetMode === 'trainer-prog') {
+ addExerciseToTrainerDay(parseInt(btn.dataset.id), btn.dataset.name);
  } else {
  addExerciseToWorkout(parseInt(btn.dataset.id), btn.dataset.name);
  }
@@ -2645,6 +2654,298 @@ function renderClientDetail(d) {
  });
 }
 
+// ============ ТРЕНЕР: РЕДАКТОР ПРОГРАММЫ (НЕДЕЛЯ) ============
+let trainerProgState = {
+ id: null,
+ name: '',
+ days: [{ day_index: 0, exercises: [] }],
+ activeIdx: 0,
+ returnClientId: null,
+ isNewDraft: false,
+};
+
+async function openTrainerProgramEditor(programId, returnClientId) {
+ closeTrainerProgramsSheet();
+ trainerProgState = {
+ id: null,
+ name: '',
+ days: [{ day_index: 0, exercises: [] }],
+ activeIdx: 0,
+ returnClientId: returnClientId || null,
+ isNewDraft: false,
+ };
+ try {
+ if (programId == null) {
+ // Создаём пустую программу
+ const res = await fetch(`${API_URL}/api/trainer/programs`, {
+ method: 'POST',
+ headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+ body: JSON.stringify({ name: 'Новая программа' }),
+ });
+ if (!res.ok) throw new Error(`HTTP ${res.status}`);
+ const data = await res.json();
+ trainerProgState.id = data.id;
+ trainerProgState.name = data.name || 'Новая программа';
+ trainerProgState.isNewDraft = true;
+ } else {
+ const res = await fetch(`${API_URL}/api/trainer/programs/${programId}`, { headers: authHeaders() });
+ if (!res.ok) throw new Error(`HTTP ${res.status}`);
+ const data = await res.json();
+ trainerProgState.id = data.id;
+ trainerProgState.name = data.name || '';
+ trainerProgState.days = (data.days && data.days.length > 0)
+ ? data.days.map(d => ({
+ day_index: d.day_index,
+ exercises: (d.exercises || []).map(e => ({
+ exercise_id: e.exercise_id,
+ name: e.name,
+ target_sets: e.target_sets,
+ target_reps: e.target_reps,
+ })),
+ }))
+ : [{ day_index: 0, exercises: [] }];
+ trainerProgState.activeIdx = 0;
+ }
+ showScreen('program-trainer-editor');
+ renderTrainerProgEditor();
+ } catch (e) {
+ console.error('openTrainerProgramEditor', e);
+ tg?.showAlert && tg.showAlert('Не удалось открыть программу');
+ }
+}
+
+async function closeTrainerProgEditor(saveDraftDelete = true) {
+ // Если это был черновик (создали только что) и пользователь не сохранил — удалим пустышку
+ if (saveDraftDelete && trainerProgState.isNewDraft && trainerProgState.id) {
+ try {
+ await fetch(`${API_URL}/api/trainer/programs/${trainerProgState.id}`, {
+ method: 'DELETE', headers: authHeaders(),
+ });
+ } catch (_) {}
+ }
+ const backClientId = trainerProgState.returnClientId;
+ trainerProgState = { id: null, name: '', days: [{ day_index: 0, exercises: [] }], activeIdx: 0, returnClientId: null, isNewDraft: false };
+ if (backClientId) {
+ await openClientDetail(backClientId);
+ } else {
+ showScreen('trainer-clients');
+ loadTrainerClients();
+ }
+}
+
+function renderTrainerProgEditor() {
+ const nameInput = document.getElementById('tprog-name-input');
+ if (nameInput) nameInput.value = trainerProgState.name || '';
+ renderTrainerProgTabs();
+ renderTrainerProgDay();
+}
+
+function renderTrainerProgTabs() {
+ const tabsEl = document.getElementById('tprog-days-tabs');
+ if (!tabsEl) return;
+ let html = '';
+ trainerProgState.days.forEach((d, i) => {
+ const active = i === trainerProgState.activeIdx;
+ const cls = active
+ ? 'bg-primary text-white border-primary'
+ : 'bg-surface2 text-muted border-white/5';
+ html += `<button class="tprog-tab px-3 py-2 rounded-2xl text-xs font-medium border transition ${cls}" data-idx="${i}">День ${i + 1}</button>`;
+ });
+ // Кнопка добавить день
+ html += `<button id="tprog-add-day" class="px-3 py-2 rounded-2xl text-xs font-medium border transition bg-primary/10 text-primary2 border-primary/20">+ День</button>`;
+ tabsEl.innerHTML = html;
+
+ tabsEl.querySelectorAll('.tprog-tab').forEach(btn => {
+ btn.addEventListener('click', () => {
+ trainerProgState.activeIdx = parseInt(btn.dataset.idx);
+ tg?.HapticFeedback?.selectionChanged?.();
+ renderTrainerProgEditor();
+ });
+ });
+ document.getElementById('tprog-add-day')?.addEventListener('click', addTrainerProgDay);
+}
+
+function renderTrainerProgDay() {
+ const listEl = document.getElementById('tprog-exercises-list');
+ const emptyEl = document.getElementById('tprog-empty');
+ const removeDayBtn = document.getElementById('tprog-remove-day');
+ if (!listEl) return;
+
+ const day = trainerProgState.days[trainerProgState.activeIdx];
+ const exs = (day && day.exercises) || [];
+
+ if (removeDayBtn) {
+ removeDayBtn.classList.toggle('hidden', trainerProgState.days.length <= 1);
+ }
+
+ if (exs.length === 0) {
+ listEl.innerHTML = '';
+ if (emptyEl) emptyEl.classList.remove('hidden');
+ return;
+ }
+ if (emptyEl) emptyEl.classList.add('hidden');
+
+ listEl.innerHTML = exs.map((ex, i) => `
+ <div class="bg-surface2 rounded-2xl p-3 flex items-center gap-2">
+ <div class="flex-1 min-w-0">
+ <p class="text-sm font-medium truncate">${ex.name}</p>
+ </div>
+ <input type="text" inputmode="numeric" value="${ex.target_sets ?? ''}" placeholder="—"
+ class="tprog-sets w-12 text-center bg-bg rounded-xl py-1.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-primary/40"
+ data-idx="${i}">
+ <span class="text-muted2 text-xs">×</span>
+ <input type="text" inputmode="numeric" value="${ex.target_reps ?? ''}" placeholder="—"
+ class="tprog-reps w-12 text-center bg-bg rounded-xl py-1.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-primary/40"
+ data-idx="${i}">
+ <button class="tprog-remove text-muted2 hover:text-red-400 p-1.5 shrink-0" data-idx="${i}" title="Удалить">
+ <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+ </button>
+ </div>
+ `).join('');
+
+ listEl.querySelectorAll('.tprog-remove').forEach(btn => {
+ btn.addEventListener('click', () => {
+ const idx = parseInt(btn.dataset.idx);
+ trainerProgState.days[trainerProgState.activeIdx].exercises.splice(idx, 1);
+ tg?.HapticFeedback?.impactOccurred('light');
+ renderTrainerProgDay();
+ });
+ });
+
+ // Обновляем таргеты в state при изменении инпутов
+ listEl.querySelectorAll('.tprog-sets').forEach(inp => {
+ inp.addEventListener('input', () => {
+ const idx = parseInt(inp.dataset.idx);
+ const v = inp.value.trim();
+ trainerProgState.days[trainerProgState.activeIdx].exercises[idx].target_sets = v ? parseInt(v) : null;
+ });
+ });
+ listEl.querySelectorAll('.tprog-reps').forEach(inp => {
+ inp.addEventListener('input', () => {
+ const idx = parseInt(inp.dataset.idx);
+ const v = inp.value.trim();
+ trainerProgState.days[trainerProgState.activeIdx].exercises[idx].target_reps = v ? parseInt(v) : null;
+ });
+ });
+}
+
+function addExerciseToTrainerDay(exerciseId, name) {
+ const day = trainerProgState.days[trainerProgState.activeIdx];
+ if (!day) return;
+ if (day.exercises.some(e => e.exercise_id === exerciseId)) return;
+ day.exercises.push({ exercise_id: exerciseId, name, target_sets: null, target_reps: null });
+ tg?.HapticFeedback?.impactOccurred('light');
+ renderTrainerProgDay();
+}
+
+function addTrainerProgDay() {
+ const nextIdx = trainerProgState.days.length;
+ trainerProgState.days.push({ day_index: nextIdx, exercises: [] });
+ trainerProgState.activeIdx = nextIdx;
+ tg?.HapticFeedback?.impactOccurred('light');
+ renderTrainerProgEditor();
+}
+
+function removeCurrentTrainerProgDay() {
+ if (trainerProgState.days.length <= 1) return;
+ trainerProgState.days.splice(trainerProgState.activeIdx, 1);
+ // Переиндексируем
+ trainerProgState.days.forEach((d, i) => { d.day_index = i; });
+ trainerProgState.activeIdx = Math.max(0, trainerProgState.activeIdx - 1);
+ tg?.HapticFeedback?.impactOccurred('medium');
+ renderTrainerProgEditor();
+}
+
+async function saveTrainerProg() {
+ const nameInput = document.getElementById('tprog-name-input');
+ const name = (nameInput?.value || '').trim();
+ if (!name) { tg?.showAlert && tg.showAlert('Введи название программы'); return; }
+ if (name.length > 128) { tg?.showAlert && tg.showAlert('Название слишком длинное'); return; }
+
+ const saveBtn = document.getElementById('tprog-save');
+ if (saveBtn) saveBtn.style.opacity = '0.6';
+
+ const payload = {
+ name,
+ days: trainerProgState.days.map(d => ({
+ day_index: d.day_index,
+ exercises: d.exercises.map(e => ({
+ exercise_id: e.exercise_id,
+ target_sets: e.target_sets,
+ target_reps: e.target_reps,
+ })),
+ })),
+ };
+
+ try {
+ const res = await fetch(`${API_URL}/api/trainer/programs/${trainerProgState.id}`, {
+ method: 'PUT',
+ headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+ body: JSON.stringify(payload),
+ });
+ if (!res.ok) throw new Error(`HTTP ${res.status}`);
+
+ trainerProgState.name = name;
+ trainerProgState.isNewDraft = false;
+ tg?.HapticFeedback?.notificationOccurred('success');
+
+ // Если пришли из карточки клиента — сразу назначим
+ const returnClientId = trainerProgState.returnClientId;
+ if (returnClientId && trainerProgState.id) {
+ try {
+ await fetch(`${API_URL}/api/trainer/clients/${returnClientId}/assign_program`, {
+ method: 'POST',
+ headers: { ...authHeaders(), 'Content-Type': 'application/json' },
+ body: JSON.stringify({ program_id: trainerProgState.id }),
+ });
+ } catch (_) {}
+ }
+
+ // Сбросим черновик (уже сохранён)
+ trainerProgState.isNewDraft = false;
+ trainerProgState.returnClientId = returnClientId;
+
+ // Выйти с обновлением
+ trainerProgState.isNewDraft = false;
+ const savedName = name;
+ if (returnClientId) {
+ trainerProgState.returnClientId = null;
+ trainerProgState.isNewDraft = false;
+ await openClientDetail(returnClientId);
+ } else {
+ trainerProgState.isNewDraft = false;
+ showScreen('trainer-clients');
+ loadTrainerClients();
+ }
+ } catch (e) {
+ console.error('saveTrainerProg', e);
+ tg?.showAlert && tg.showAlert('Не удалось сохранить программу');
+ } finally {
+ if (saveBtn) saveBtn.style.opacity = '1';
+ }
+}
+
+async function deleteTrainerProg() {
+ const ok = await new Promise(resolve => {
+ if (tg?.showConfirm) tg.showConfirm('Удалить программу?', (yes) => resolve(yes));
+ else resolve(confirm('Удалить программу?'));
+ });
+ if (!ok) return;
+ if (!trainerProgState.id) { closeTrainerProgEditor(true); return; }
+ try {
+ const res = await fetch(`${API_URL}/api/trainer/programs/${trainerProgState.id}`, {
+ method: 'DELETE', headers: authHeaders(),
+ });
+ if (!res.ok) throw new Error(`HTTP ${res.status}`);
+ tg?.HapticFeedback?.notificationOccurred('success');
+ trainerProgState.isNewDraft = false; // уже удалено
+ closeTrainerProgEditor(false);
+ } catch (e) {
+ console.error('deleteTrainerProg', e);
+ tg?.showAlert && tg.showAlert('Не удалось удалить программу');
+ }
+}
+
 // ============ ТРЕНЕР: ВЫБОР ПРОГРАММЫ ДЛЯ КЛИЕНТА ============
 let assignTargetClientId = null;
 
@@ -2704,7 +3005,8 @@ function renderTrainerProgramsForAssign(programs) {
  ? `${p.days_count} дн. · ${p.exercises_count} упражнений`
  : `${p.exercises_count} упражнений`;
  return `
- <button class="assign-prog-item w-full bg-surface2 hover:bg-surface active:scale-[0.98] transition rounded-2xl p-4 text-left mb-2"
+ <div class="flex items-center gap-2 mb-2">
+ <button class="assign-prog-item flex-1 bg-surface2 hover:bg-surface active:scale-[0.98] transition rounded-2xl p-4 text-left"
  data-program-id="${p.id}">
  <div class="flex items-center justify-between gap-2">
  <div class="min-w-0">
@@ -2713,11 +3015,25 @@ function renderTrainerProgramsForAssign(programs) {
  </div>
  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8b8b9e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18l6-6-6-6"/></svg>
  </div>
- </button>`;
+ </button>
+ <button class="assign-prog-edit bg-surface2 hover:bg-surface p-3 rounded-2xl active:scale-95 transition shrink-0"
+ data-program-id="${p.id}" title="Редактировать">
+ <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8b8b9e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+ <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+ <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+ </svg>
+ </button>
+ </div>`;
  }).join('');
 
  listEl.querySelectorAll('.assign-prog-item').forEach(btn => {
  btn.addEventListener('click', () => assignProgramToClient(parseInt(btn.dataset.programId)));
+ });
+ listEl.querySelectorAll('.assign-prog-edit').forEach(btn => {
+ btn.addEventListener('click', (e) => {
+ e.stopPropagation();
+ openTrainerProgramEditor(parseInt(btn.dataset.programId), null);
+ });
  });
 }
 
@@ -2952,6 +3268,13 @@ document.getElementById('trainer-programs-sheet-close')?.addEventListener('click
 document.getElementById('trainer-programs-sheet-backdrop')?.addEventListener('click', (e) => {
  if (e.target === document.getElementById('trainer-programs-sheet-backdrop')) closeTrainerProgramsSheet();
 });
+
+document.getElementById('tprog-back')?.addEventListener('click', () => { tg?.HapticFeedback?.impactOccurred('light'); closeTrainerProgEditor(true); });
+document.getElementById('tprog-save')?.addEventListener('click', saveTrainerProg);
+document.getElementById('tprog-delete')?.addEventListener('click', deleteTrainerProg);
+document.getElementById('tprog-add-exercise')?.addEventListener('click', () => { tg?.HapticFeedback?.impactOccurred('light'); openSheet('trainer-prog'); });
+document.getElementById('tprog-remove-day')?.addEventListener('click', removeCurrentTrainerProgDay);
+document.getElementById('tprog-create-new-from-sheet')?.addEventListener('click', () => { tg?.HapticFeedback?.impactOccurred('light'); openTrainerProgramEditor(null, assignTargetClientId); });
 
 document.getElementById('client-detail-back')?.addEventListener('click', () => {
  tg?.HapticFeedback?.impactOccurred('light');
