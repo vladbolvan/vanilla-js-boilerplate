@@ -2756,6 +2756,10 @@ async function openTrainerProgramEditor(programId, returnClientId) {
  name: e.name,
  target_sets: e.target_sets,
  target_reps: e.target_reps,
+ targets: (e.targets && e.targets.length) ? e.targets.map(t => ({
+ weight: t.weight ?? null,
+ reps: t.reps ?? null,
+ })) : [],
  })),
  }))
  : [{ day_index: 0, exercises: [] }];
@@ -2840,23 +2844,43 @@ function renderTrainerProgDay() {
  }
  if (emptyEl) emptyEl.classList.add('hidden');
 
- listEl.innerHTML = exs.map((ex, i) => `
- <div class="bg-surface2 rounded-2xl p-3 flex items-center gap-2">
- <div class="flex-1 min-w-0">
- <p class="text-sm font-medium truncate">${ex.name}</p>
- </div>
- <input type="text" inputmode="numeric" value="${ex.target_sets ?? ''}" placeholder="—"
- class="tprog-sets w-12 text-center bg-bg rounded-xl py-1.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-primary/40"
- data-idx="${i}">
+ listEl.innerHTML = exs.map((ex, i) => {
+ if (!ex.targets || ex.targets.length === 0) {
+ if (ex.target_sets || ex.target_reps) {
+ const n = Math.max(1, parseInt(ex.target_sets) || 1);
+ ex.targets = Array.from({length: n}, () => ({ weight: null, reps: ex.target_reps ?? null }));
+ } else {
+ ex.targets = [{ weight: null, reps: null }];
+ }
+ }
+ const rowsHtml = ex.targets.map((t, ri) => `
+ <div class="flex items-center gap-2 mt-1.5">
+ <span class="text-muted2 text-[10px] w-4 shrink-0 text-center">${ri + 1}</span>
+ <input type="text" inputmode="decimal" value="${t.weight ?? ''}" placeholder="кг"
+ class="tprog-tw flex-1 min-w-0 text-center bg-bg rounded-xl py-1.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-primary/40"
+ data-ex="${i}" data-row="${ri}">
  <span class="text-muted2 text-xs">×</span>
- <input type="text" inputmode="numeric" value="${ex.target_reps ?? ''}" placeholder="—"
- class="tprog-reps w-12 text-center bg-bg rounded-xl py-1.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-primary/40"
- data-idx="${i}">
- <button class="tprog-remove text-muted2 hover:text-red-400 p-1.5 shrink-0" data-idx="${i}" title="Удалить">
- <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+ <input type="text" inputmode="numeric" value="${t.reps ?? ''}" placeholder="повт"
+ class="tprog-tr flex-1 min-w-0 text-center bg-bg rounded-xl py-1.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-primary/40"
+ data-ex="${i}" data-row="${ri}">
+ <button class="tprog-rm-row text-muted2 hover:text-red-400 p-1 shrink-0" data-ex="${i}" data-row="${ri}" title="Удалить подход">
+ <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
  </button>
  </div>
  `).join('');
+ return `
+ <div class="bg-surface2 rounded-2xl p-3">
+ <div class="flex items-center gap-2">
+ <p class="text-sm font-medium flex-1 min-w-0 truncate">${ex.name}</p>
+ <button class="tprog-remove text-muted2 hover:text-red-400 p-1.5 shrink-0" data-idx="${i}" title="Удалить упражнение">
+ <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+ </button>
+ </div>
+ <div class="tprog-rows">${rowsHtml}</div>
+ <button class="tprog-add-row w-full mt-2 text-[10px] text-primary2/80 hover:text-primary2 py-1.5 rounded-xl border border-dashed border-primary/25" data-ex="${i}">+ Подход</button>
+ </div>
+ `;
+ }).join('');
 
  listEl.querySelectorAll('.tprog-remove').forEach(btn => {
  btn.addEventListener('click', () => {
@@ -2867,19 +2891,51 @@ function renderTrainerProgDay() {
  });
  });
 
- // Обновляем таргеты в state при изменении инпутов
- listEl.querySelectorAll('.tprog-sets').forEach(inp => {
- inp.addEventListener('input', () => {
- const idx = parseInt(inp.dataset.idx);
- const v = inp.value.trim();
- trainerProgState.days[trainerProgState.activeIdx].exercises[idx].target_sets = v ? parseInt(v) : null;
+ listEl.querySelectorAll('.tprog-rm-row').forEach(btn => {
+ btn.addEventListener('click', () => {
+ const ei = parseInt(btn.dataset.ex);
+ const ri = parseInt(btn.dataset.row);
+ const ex = trainerProgState.days[trainerProgState.activeIdx].exercises[ei];
+ if (!ex || !ex.targets) return;
+ ex.targets.splice(ri, 1);
+ if (ex.targets.length === 0) ex.targets = [{ weight: null, reps: null }];
+ tg?.HapticFeedback?.impactOccurred('light');
+ renderTrainerProgDay();
  });
  });
- listEl.querySelectorAll('.tprog-reps').forEach(inp => {
+
+ listEl.querySelectorAll('.tprog-add-row').forEach(btn => {
+ btn.addEventListener('click', () => {
+ const ei = parseInt(btn.dataset.ex);
+ const ex = trainerProgState.days[trainerProgState.activeIdx].exercises[ei];
+ if (!ex) return;
+ if (!ex.targets) ex.targets = [];
+ ex.targets.push({ weight: null, reps: null });
+ tg?.HapticFeedback?.impactOccurred('light');
+ renderTrainerProgDay();
+ });
+ });
+
+ listEl.querySelectorAll('.tprog-tw').forEach(inp => {
  inp.addEventListener('input', () => {
- const idx = parseInt(inp.dataset.idx);
+ const ei = parseInt(inp.dataset.ex);
+ const ri = parseInt(inp.dataset.row);
+ const ex = trainerProgState.days[trainerProgState.activeIdx].exercises[ei];
+ if (!ex || !ex.targets || !ex.targets[ri]) return;
+ const v = inp.value.trim().replace(',', '.');
+ const num = v ? parseFloat(v) : null;
+ ex.targets[ri].weight = (num != null && !isNaN(num)) ? num : null;
+ });
+ });
+ listEl.querySelectorAll('.tprog-tr').forEach(inp => {
+ inp.addEventListener('input', () => {
+ const ei = parseInt(inp.dataset.ex);
+ const ri = parseInt(inp.dataset.row);
+ const ex = trainerProgState.days[trainerProgState.activeIdx].exercises[ei];
+ if (!ex || !ex.targets || !ex.targets[ri]) return;
  const v = inp.value.trim();
- trainerProgState.days[trainerProgState.activeIdx].exercises[idx].target_reps = v ? parseInt(v) : null;
+ const num = v ? parseInt(v) : null;
+ ex.targets[ri].reps = (num != null && !isNaN(num)) ? num : null;
  });
  });
 }
@@ -2888,7 +2944,7 @@ function addExerciseToTrainerDay(exerciseId, name) {
  const day = trainerProgState.days[trainerProgState.activeIdx];
  if (!day) return;
  if (day.exercises.some(e => e.exercise_id === exerciseId)) return;
- day.exercises.push({ exercise_id: exerciseId, name, target_sets: null, target_reps: null });
+ day.exercises.push({ exercise_id: exerciseId, name, target_sets: null, target_reps: null, targets: [] });
  tg?.HapticFeedback?.impactOccurred('light');
  renderTrainerProgDay();
 }
@@ -2924,11 +2980,15 @@ async function saveTrainerProg() {
  name,
  days: trainerProgState.days.map(d => ({
  day_index: d.day_index,
- exercises: d.exercises.map(e => ({
+ exercises: d.exercises.map(e => {
+ const _hasTargets = Array.isArray(e.targets) && e.targets.some(t => t.weight != null || t.reps != null);
+ return {
  exercise_id: e.exercise_id,
- target_sets: e.target_sets,
- target_reps: e.target_reps,
- })),
+ target_sets: (e.targets && e.targets.length) ? e.targets.length : e.target_sets,
+ target_reps: (e.targets && e.targets.length && e.targets[0]) ? e.targets[0].reps : e.target_reps,
+ targets: _hasTargets ? e.targets : null,
+ };
+ }),
  })),
  };
 
