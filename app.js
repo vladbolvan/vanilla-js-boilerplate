@@ -1310,9 +1310,29 @@ function renderWorkoutExercises() {
  <div class="space-y-2">
  ${ex.targets.map((t, si) => {
  const _isBWslot = !!ex.is_bodyweight;
+ const _cm = ex.cardio_metric;
+ const _isCardio = !!_cm;
+ const _showT = _isCardio && (_cm === 'time' || _cm === 'both');
+ const _showD = _isCardio && (_cm === 'distance' || _cm === 'both');
+ const _durM = t.duration_sec != null ? Math.floor(t.duration_sec / 60) : '';
+ const _durS = t.duration_sec != null ? (t.duration_sec % 60) : '';
+ const _distKm = t.distance_m != null ? (t.distance_m / 1000) : '';
  return `
  <div class="target-slot flex items-center gap-1.5" data-slot="${si}">
  <span class="inline-flex items-center justify-center w-6 h-6 rounded-lg bg-primary/15 text-primary2 text-[10px] font-semibold shrink-0 tabular-nums">${si + 1}</span>
+ ${_isCardio ? `
+ ${_showT ? `<input type="text" inputmode="numeric" value="${_durM}" placeholder="мин"
+ class="slot-dur-m w-full min-w-0 bg-surface2 rounded-xl px-2 py-2.5 text-white text-center text-sm
+ placeholder-muted2/60 focus:outline-none focus:ring-1 focus:ring-primary/40 transition">
+ <span class="text-muted2/50 text-[10px] shrink-0 select-none">:</span>
+ <input type="text" inputmode="numeric" value="${_durS}" placeholder="сек"
+ class="slot-dur-s w-full min-w-0 bg-surface2 rounded-xl px-2 py-2.5 text-white text-center text-sm
+ placeholder-muted2/60 focus:outline-none focus:ring-1 focus:ring-primary/40 transition">` : ''}
+ ${(_showT && _showD) ? '<span class="text-muted2/50 text-[10px] shrink-0 select-none">·</span>' : ''}
+ ${_showD ? `<input type="text" inputmode="decimal" value="${_distKm}" placeholder="км"
+ class="slot-dist flex-1 min-w-0 bg-surface2 rounded-xl px-2 py-2.5 text-white text-center text-sm
+ placeholder-muted2/60 focus:outline-none focus:ring-1 focus:ring-primary/40 transition">` : ''}
+ ` : `
  ${_isBWslot ? '' : `
  <input type="text" inputmode="decimal" value="${t.weight ?? ''}" placeholder="кг"
  class="slot-weight flex-1 min-w-0 bg-surface2 rounded-xl px-3 py-2.5 text-white text-center text-sm
@@ -1322,6 +1342,7 @@ function renderWorkoutExercises() {
  <input type="text" inputmode="numeric" value="${t.reps ?? ''}" placeholder="повт"
  class="slot-reps flex-1 min-w-0 bg-surface2 rounded-xl px-3 py-2.5 text-white text-center text-sm
  placeholder-muted2/60 focus:outline-none focus:ring-1 focus:ring-primary/40 transition">
+ `}
  <button class="slot-done bg-primary hover:bg-primary/90 active:scale-95 transition
  rounded-xl w-10 h-10 shrink-0 font-bold text-white text-lg
  flex items-center justify-center shadow-[0_6px_16px_-6px_rgba(124,108,255,0.55)]"
@@ -1338,10 +1359,18 @@ function renderWorkoutExercises() {
  </div>
  ` : _isCardio ? `
  <div class="flex gap-2 items-stretch">
- ${(ex.cardio_metric === 'time' || ex.cardio_metric === 'both') ? `<input type="text" inputmode="numeric" placeholder="мм:сс"
- class="set-duration flex-1 min-w-0 bg-surface2 rounded-2xl px-3 py-3 text-white text-center
+ ${(ex.cardio_metric === 'time' || ex.cardio_metric === 'both') ? `
+ <div class="flex items-center gap-1 flex-1 min-w-0">
+ <input type="text" inputmode="numeric" placeholder="мин"
+ class="set-dur-m w-full min-w-0 bg-surface2 rounded-2xl px-2 py-3 text-white text-center
  focus:outline-none focus:ring-2 focus:ring-primary/40 transition"
- data-ex-id="${ex.id}">` : ''}
+ data-ex-id="${ex.id}">
+ <span class="text-muted2 shrink-0 select-none">:</span>
+ <input type="text" inputmode="numeric" placeholder="сек"
+ class="set-dur-s w-full min-w-0 bg-surface2 rounded-2xl px-2 py-3 text-white text-center
+ focus:outline-none focus:ring-2 focus:ring-primary/40 transition"
+ data-ex-id="${ex.id}">
+ </div>` : ''}
  ${(ex.cardio_metric === 'distance' || ex.cardio_metric === 'both') ? `<input type="text" inputmode="decimal" placeholder="км"
  class="set-distance flex-1 min-w-0 bg-surface2 rounded-2xl px-3 py-3 text-white text-center
  focus:outline-none focus:ring-2 focus:ring-primary/40 transition"
@@ -1518,11 +1547,18 @@ async function addSetInline(exerciseId) {
  let weight = 0, reps = 0, duration_sec = null, distance_m = null;
 
  if (_isCardio) {
- const durInput = card.querySelector('.set-duration');
+ const durM = card.querySelector('.set-dur-m');
+ const durS = card.querySelector('.set-dur-s');
  const distInput = card.querySelector('.set-distance');
- if (durInput && durInput.value.trim()) {
- duration_sec = parseTimeToSec(durInput.value);
- if (duration_sec == null) { tg?.showAlert('Время в формате мм:сс или ч:мм:сс'); return; }
+ if ((durM && durM.value.trim()) || (durS && durS.value.trim())) {
+ const _m = parseInt(durM?.value || '0') || 0;
+ const _s = parseInt(durS?.value || '0') || 0;
+ if (_m < 0 || _m > 999 || _s < 0 || _s > 59) {
+ tg?.showAlert('Минуты 0-999, секунды 0-59');
+ return;
+ }
+ duration_sec = _m * 60 + _s;
+ if (duration_sec <= 0) duration_sec = null;
  }
  if (distInput && distInput.value.trim()) {
  distance_m = parseDistanceKmToM(distInput.value);
@@ -1548,7 +1584,8 @@ async function addSetInline(exerciseId) {
  };
  we.sets.push(optimisticSet);
  renderSetsForExercise(exerciseId, we.sets);
- card.querySelector('.set-duration')?.blur();
+ card.querySelector('.set-dur-m')?.blur();
+ card.querySelector('.set-dur-s')?.blur();
  card.querySelector('.set-distance')?.blur();
  card.querySelector('.set-reps')?.blur();
  tg?.HapticFeedback?.notificationOccurred('success');
@@ -1575,7 +1612,7 @@ async function addSetInline(exerciseId) {
  if (idx !== -1) we.sets[idx] = realSet;
  renderSetsForExercise(exerciseId, we.sets);
  // Очистим инпуты
- card.querySelectorAll('.set-duration, .set-distance, .set-weight, .set-reps').forEach(i => i.value = '');
+ card.querySelectorAll('.set-dur-m, .set-dur-s, .set-distance, .set-weight, .set-reps').forEach(i => i.value = '');
  startRestTimer();
  calendarCache.clear();
  } catch (e) {
@@ -1594,19 +1631,41 @@ async function commitTargetSlot(exerciseId, slotIdx) {
  if (!slotEl) return;
 
  const _isBW = !!we.is_bodyweight;
+ const _isCardio = !!we.cardio_metric;
+ let weight = 0, reps = 0, duration_sec = null, distance_m = null;
+
+ if (_isCardio) {
+ const durM = slotEl.querySelector('.slot-dur-m');
+ const durS = slotEl.querySelector('.slot-dur-s');
+ const dist = slotEl.querySelector('.slot-dist');
+ if ((durM && durM.value.trim()) || (durS && durS.value.trim())) {
+ const _m = parseInt(durM?.value || '0') || 0;
+ const _s = parseInt(durS?.value || '0') || 0;
+ if (_m < 0 || _m > 999 || _s < 0 || _s > 59) { tg?.showAlert('Минуты 0-999, секунды 0-59'); return; }
+ duration_sec = _m * 60 + _s;
+ if (duration_sec <= 0) duration_sec = null;
+ }
+ if (dist && dist.value.trim()) {
+ const _km = parseFloat(dist.value.trim().replace(',', '.'));
+ if (!isNaN(_km) && _km >= 0) distance_m = Math.round(_km * 1000);
+ }
+ if (duration_sec == null && distance_m == null) { tg?.showAlert('Заполни время или дистанцию'); return; }
+ } else {
  const wInput = slotEl.querySelector('.slot-weight');
  const rInput = slotEl.querySelector('.slot-reps');
- const weight = _isBW ? 0 : parseWeightInput(wInput?.value ?? '');
- const reps = parseInt(rInput?.value ?? '');
-
+ weight = _isBW ? 0 : parseWeightInput(wInput?.value ?? '');
+ reps = parseInt(rInput?.value ?? '');
  if (!_isBW && (isNaN(weight) || weight < 0)) { tg?.showAlert('Введи вес'); return; }
  if (isNaN(reps) || reps < 1) { tg?.showAlert('Введи повторы'); return; }
+ }
 
  const tempId = 'temp_' + Date.now();
- const optimisticSet = { id: tempId, exercise_id: exerciseId, set_number: we.sets.length + 1, weight, reps };
+ const optimisticSet = {
+ id: tempId, exercise_id: exerciseId, set_number: we.sets.length + 1,
+ weight, reps, duration_sec, distance_m,
+ };
  we.sets.push(optimisticSet);
 
- // Убираем использованный слот
  we.targets.splice(slotIdx, 1);
  if (we.targets.length === 0) we.targets = null;
 
@@ -1625,6 +1684,8 @@ async function commitTargetSlot(exerciseId, slotIdx) {
 
  try {
  const params = new URLSearchParams({ exercise_id: exerciseId, weight, reps });
+ if (duration_sec != null) params.set('duration_sec', duration_sec);
+ if (distance_m != null) params.set('distance_m', distance_m);
  const res = await fetch(`${API_URL}/api/workouts/${currentWorkoutId}/sets?${params}`, {
  method: 'POST', headers: authHeaders(),
  });
@@ -3006,11 +3067,14 @@ async function openTrainerProgramEditor(programId, returnClientId) {
  name: e.name,
  muscle_group: e.muscle_group || null,
  is_bodyweight: !!e.is_bodyweight,
+ cardio_metric: e.cardio_metric || null,
  target_sets: e.target_sets,
  target_reps: e.target_reps,
  targets: (e.targets && e.targets.length) ? e.targets.map(t => ({
  weight: t.weight ?? null,
  reps: t.reps ?? null,
+ duration_sec: t.duration_sec ?? null,
+ distance_m: t.distance_m ?? null,
  })) : [],
  })),
  }))
@@ -3097,39 +3161,64 @@ function renderTrainerProgDay() {
  if (emptyEl) emptyEl.classList.add('hidden');
 
  listEl.innerHTML = exs.map((ex, i) => {
+ const _isBW = !!ex.is_bodyweight;
+ const _cm = ex.cardio_metric;
+ const _isCardio = !!_cm;
+ const _emptyRow = _isCardio ? { duration_sec: null, distance_m: null } : { weight: null, reps: null };
  if (!ex.targets || ex.targets.length === 0) {
  if (ex.target_sets || ex.target_reps) {
  const n = Math.max(1, parseInt(ex.target_sets) || 1);
- ex.targets = Array.from({length: n}, () => ({ weight: null, reps: ex.target_reps ?? null }));
+ ex.targets = Array.from({length: n}, () => (_isCardio ? {..._emptyRow} : { weight: null, reps: ex.target_reps ?? null }));
  } else {
- ex.targets = [{ weight: null, reps: null }];
+ ex.targets = [{..._emptyRow}];
  }
  }
- const _isBW = !!ex.is_bodyweight;
- const rowsHtml = ex.targets.map((t, ri) => `
- <div class="flex items-center gap-1.5">
+ const rowsHtml = ex.targets.map((t, ri) => {
+ const _showTime = _isCardio && (_cm === 'time' || _cm === 'both');
+ const _showDist = _isCardio && (_cm === 'distance' || _cm === 'both');
+ const _durM = t.duration_sec != null ? Math.floor(t.duration_sec / 60) : '';
+ const _durS = t.duration_sec != null ? (t.duration_sec % 60) : '';
+ const _distKm = t.distance_m != null ? (t.distance_m / 1000) : '';
+ return `
+ <div class="flex items-center gap-1.5 mt-1.5">
  <span class="inline-flex items-center justify-center w-6 h-6 rounded-lg bg-bg text-muted2 text-[10px] font-semibold shrink-0 tabular-nums">${ri + 1}</span>
+ ${_isCardio ? `
+ ${_showTime ? `<input type="text" inputmode="numeric" value="${_durM}" placeholder="мин"
+ class="tprog-dm flex-1 min-w-0 text-center bg-bg rounded-xl py-1.5 text-xs text-white placeholder-muted2/60 focus:outline-none focus:ring-1 focus:ring-primary/40"
+ data-ex="${i}" data-row="${ri}">
+ <span class="text-muted2/50 text-[10px] shrink-0 select-none">:</span>
+ <input type="text" inputmode="numeric" value="${_durS}" placeholder="сек"
+ class="tprog-ds flex-1 min-w-0 text-center bg-bg rounded-xl py-1.5 text-xs text-white placeholder-muted2/60 focus:outline-none focus:ring-1 focus:ring-primary/40"
+ data-ex="${i}" data-row="${ri}">` : ''}
+ ${(_showTime && _showDist) ? '<span class="text-muted2/50 text-[10px] shrink-0 select-none">·</span>' : ''}
+ ${_showDist ? `<input type="text" inputmode="decimal" value="${_distKm}" placeholder="км"
+ class="tprog-dk flex-1 min-w-0 text-center bg-bg rounded-xl py-1.5 text-xs text-white placeholder-muted2/60 focus:outline-none focus:ring-1 focus:ring-primary/40"
+ data-ex="${i}" data-row="${ri}">` : ''}
+ ` : `
  ${_isBW ? '' : `
  <input type="text" inputmode="decimal" value="${t.weight ?? ''}" placeholder="кг"
- class="tprog-tw flex-1 min-w-0 text-center bg-bg rounded-xl py-2 text-sm text-white placeholder-muted2/60 focus:outline-none focus:ring-1 focus:ring-primary/40 transition"
+ class="tprog-tw flex-1 min-w-0 text-center bg-bg rounded-xl py-1.5 text-xs text-white placeholder-muted2/60 focus:outline-none focus:ring-1 focus:ring-primary/40"
  data-ex="${i}" data-row="${ri}">
- <span class="text-muted2/50 text-[10px] shrink-0 select-none">×</span>
- `}
+ <span class="text-muted2/50 text-[10px] shrink-0 select-none">×</span>`}
  <input type="text" inputmode="numeric" value="${t.reps ?? ''}" placeholder="повт"
- class="tprog-tr flex-1 min-w-0 text-center bg-bg rounded-xl py-2 text-sm text-white placeholder-muted2/60 focus:outline-none focus:ring-1 focus:ring-primary/40 transition"
+ class="tprog-tr flex-1 min-w-0 text-center bg-bg rounded-xl py-1.5 text-xs text-white placeholder-muted2/60 focus:outline-none focus:ring-1 focus:ring-primary/40"
  data-ex="${i}" data-row="${ri}">
- <button class="tprog-rm-row text-muted2/50 hover:text-red-400 p-1.5 shrink-0 rounded-lg transition active:scale-90" data-ex="${i}" data-row="${ri}" title="Удалить подход">
+ `}
+ <button class="tprog-rm-row text-muted2/50 hover:text-red-400 p-1 shrink-0 rounded-lg transition active:scale-90" data-ex="${i}" data-row="${ri}" title="Удалить подход">
  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
  </button>
  </div>
- `).join('');
+ `}).join('');
+ const _badge = _isCardio
+ ? '<span class="text-[9px] uppercase tracking-wider text-amber-300/90 bg-amber-400/10 rounded-full px-2 py-0.5 shrink-0 border border-amber-400/20">кардио</span>'
+ : (_isBW ? '<span class="text-[9px] uppercase tracking-wider text-primary2/80 bg-primary/10 rounded-full px-2 py-0.5 shrink-0 border border-primary/20">своё тело</span>' : '');
  return `
  <div class="bg-surface2 rounded-3xl p-4 border border-white/[0.06]">
  <div class="flex items-start gap-2 mb-3">
  <div class="flex-1 min-w-0">
  <div class="flex items-center gap-2 flex-wrap">
  <p class="font-semibold text-sm text-white/95 break-words">${ex.name}</p>
- ${_isBW ? '<span class="text-[9px] uppercase tracking-wider text-primary2/80 bg-primary/10 rounded-full px-2 py-0.5 shrink-0 border border-primary/20">своё тело</span>' : ''}
+ ${_badge}
  </div>
  ${ex.muscle_group ? `<p class="text-[10px] uppercase tracking-wider text-muted2 mt-1">${ex.muscle_group}</p>` : ''}
  </div>
@@ -3166,7 +3255,7 @@ function renderTrainerProgDay() {
  const ex = trainerProgState.days[trainerProgState.activeIdx].exercises[ei];
  if (!ex || !ex.targets) return;
  ex.targets.splice(ri, 1);
- if (ex.targets.length === 0) ex.targets = [{ weight: null, reps: null }];
+ if (ex.targets.length === 0) ex.targets = [ex.cardio_metric ? { duration_sec: null, distance_m: null } : { weight: null, reps: null }];
  tg?.HapticFeedback?.impactOccurred('light');
  renderTrainerProgDay();
  });
@@ -3178,33 +3267,46 @@ function renderTrainerProgDay() {
  const ex = trainerProgState.days[trainerProgState.activeIdx].exercises[ei];
  if (!ex) return;
  if (!ex.targets) ex.targets = [];
- ex.targets.push({ weight: null, reps: null });
+ ex.targets.push(ex.cardio_metric ? { duration_sec: null, distance_m: null } : { weight: null, reps: null });
  tg?.HapticFeedback?.impactOccurred('light');
  renderTrainerProgDay();
  });
  });
 
- listEl.querySelectorAll('.tprog-tw').forEach(inp => {
+ const _bindNum = (cls, setter) => {
+ listEl.querySelectorAll(cls).forEach(inp => {
  inp.addEventListener('input', () => {
  const ei = parseInt(inp.dataset.ex);
  const ri = parseInt(inp.dataset.row);
  const ex = trainerProgState.days[trainerProgState.activeIdx].exercises[ei];
  if (!ex || !ex.targets || !ex.targets[ri]) return;
- const v = inp.value.trim().replace(',', '.');
- const num = v ? parseFloat(v) : null;
- ex.targets[ri].weight = (num != null && !isNaN(num)) ? num : null;
+ setter(ex.targets[ri], inp.value);
  });
  });
- listEl.querySelectorAll('.tprog-tr').forEach(inp => {
- inp.addEventListener('input', () => {
- const ei = parseInt(inp.dataset.ex);
- const ri = parseInt(inp.dataset.row);
+ };
+ _bindNum('.tprog-tw', (t, v) => { const s = v.trim().replace(',', '.'); const n = s ? parseFloat(s) : null; t.weight = (n != null && !isNaN(n)) ? n : null; });
+ _bindNum('.tprog-tr', (t, v) => { const s = v.trim(); const n = s ? parseInt(s) : null; t.reps = (n != null && !isNaN(n)) ? n : null; });
+ _bindNum('.tprog-dk', (t, v) => { const s = v.trim().replace(',', '.'); const n = s ? parseFloat(s) : null; t.distance_m = (n != null && !isNaN(n) && n >= 0) ? Math.round(n * 1000) : null; });
+ // Время: два поля обновляют duration_sec
+ const _updateDur = (rowEl) => {
+ if (!rowEl) return;
+ const dm = rowEl.querySelector('.tprog-dm');
+ const ds = rowEl.querySelector('.tprog-ds');
+ if (!dm && !ds) return;
+ const ei = parseInt((dm || ds).dataset.ex);
+ const ri = parseInt((dm || ds).dataset.row);
  const ex = trainerProgState.days[trainerProgState.activeIdx].exercises[ei];
  if (!ex || !ex.targets || !ex.targets[ri]) return;
- const v = inp.value.trim();
- const num = v ? parseInt(v) : null;
- ex.targets[ri].reps = (num != null && !isNaN(num)) ? num : null;
- });
+ const _m = parseInt(dm?.value || '0') || 0;
+ const _s = parseInt(ds?.value || '0') || 0;
+ if ((dm?.value || ds?.value)) {
+ ex.targets[ri].duration_sec = _m * 60 + _s;
+ } else {
+ ex.targets[ri].duration_sec = null;
+ }
+ };
+ listEl.querySelectorAll('.tprog-dm, .tprog-ds').forEach(inp => {
+ inp.addEventListener('input', () => _updateDur(inp.closest('.flex')));
  });
 }
 
@@ -3213,14 +3315,17 @@ function addExerciseToTrainerDay(exerciseId, name) {
  if (!day) return;
  if (day.exercises.some(e => e.exercise_id === exerciseId)) return;
  const _ref = allExercises.find(x => x.id === exerciseId);
+ const _cm = (_ref && _ref.cardio_metric) || null;
+ const _emptyRow = _cm ? { duration_sec: null, distance_m: null } : { weight: null, reps: null };
  day.exercises.push({
  exercise_id: exerciseId,
  name,
  muscle_group: _ref?.muscle_group || null,
  is_bodyweight: !!(_ref && _ref.is_bodyweight),
+ cardio_metric: _cm,
  target_sets: null,
  target_reps: null,
- targets: [],
+ targets: [_emptyRow],
  });
  tg?.HapticFeedback?.impactOccurred('light');
  renderTrainerProgDay();
@@ -3258,7 +3363,11 @@ async function saveTrainerProg() {
  days: trainerProgState.days.map(d => ({
  day_index: d.day_index,
  exercises: d.exercises.map(e => {
- const _hasTargets = Array.isArray(e.targets) && e.targets.some(t => t.weight != null || t.reps != null);
+ const _hasTargets = Array.isArray(e.targets) && e.targets.some(t =>
+ e.cardio_metric
+ ? (t.duration_sec != null || t.distance_m != null)
+ : (t.weight != null || t.reps != null)
+ );
  return {
  exercise_id: e.exercise_id,
  target_sets: (e.targets && e.targets.length) ? e.targets.length : e.target_sets,
